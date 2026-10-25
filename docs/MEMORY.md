@@ -137,7 +137,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | --- | --- | --- | --- |
 | — | Plan | CLAUDE.md, this file, PLAN-0.1 with questions | ✅ |
 | **0.1.0** | Data, charts, selection | Shell, updater, File page, Violet design and logo; 100 referenced materials; Browse; Datasheet; property charts (bubbles, family envelopes, hover, click, zoom, pan, guides, legend); limits, line, box and family stages; Results with reasons and ranking; Add Material + user database; `.datlas`; print; SVG/PNG export; whole UI laid out | ✅ |
-| 0.1.1 | Units, search, charts | SI/imperial, search everywhere, several charts improvements, bar charts, Copy Picture | 🔜 |
+| 0.1.1 | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | Proposed: design goal drop-down with derived per-volume axes, Home tiles (Material Library, Add, Sources, Roadmap) and a Sources page, SI/imperial, search everywhere, bar charts, Copy Picture, label fixes. Waiting for the user's choices. | 🔜 |
 | 0.2.0 | Indices | Index builder (~40 indices); expression axes; derived properties (GridCraft) | ⬜ |
 | 0.3.0 | Compare and report | Compare + radar; selection report; ~250 materials, values checked | ⬜ |
 | 0.3.1 | Own data | Several databases, Excel/CSV import with mapping; label placement; style presets; polygon stage | ⬜ |
@@ -169,11 +169,20 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Checked: Playwright with the real engine (30 checks); the real app under Xvfb (Home, "Hot, stiff and light", hover with the failure reason, dragging the line: chart stage 24 → 57).
 - Fixed while testing: a click on a bubble under the selection line was swallowed by the line; one convex envelope per family covered half the chart (now groups); ρ shown as "P" in uppercase mono headings; symbols with underscores (K_Ic).
 
+### 2026-10-25: Session 3 (review of 0.1.0, plan for 0.1.1)
+- The user reviewed 0.1.0 (3 screenshots).
+  - Wants the **design goal drop-down** from their earlier attempt (16 goals in groups: minimum mass, cost, carbon; elastic design; damage tolerance; thermal).
+  - Wants Home tiles **Material Library → Add a material → Sources → Roadmap**.
+  - Print is fine.
+  - Asked for an updated memory and a list of what can come in 0.1.1 and after, so they can choose.
+- Diagnosis: 6 goals exist only as templates making new selections; the cost and carbon goals need per-volume axes (Cₘ·ρ, CO₂·ρ), which 0.1.0 lacks.
+- Wrote [PLAN-0.1.1.md](PLAN-0.1.1.md): the proposal, a menu of ~40 items (A–G with IDs), size, 6 questions. No code changed. **Waiting for the answers.**
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** the user reviews 0.1.0 (screenshots welcome). Then 0.1.1: units, search everywhere, bar charts, Copy Picture.
+**Next:** the user answers [PLAN-0.1.1.md](PLAN-0.1.1.md) §6; then build and release 0.1.1.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
