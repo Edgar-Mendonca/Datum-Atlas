@@ -7,7 +7,8 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the Ashby method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.1.0** (2026-10-25). Plan and answers: [PLAN-0.1.md](PLAN-0.1.md) |
+| **Current version** | **0.1.0** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.1.0). Plan and answers: [PLAN-0.1.md](PLAN-0.1.md) |
+| **Installer** | NSIS `.exe`, per-user: **2.2 MB** (0.1.0); UI bundle 158 kB JS (52 kB gzip) |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
 | **Stack** | Rust engine (`crates/core`) + Rust shell (`src-tauri`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. Own SVG chart engine (geometry in Rust). Chart.js later for bar/radar, GridCraft later for expressions. **No Python.** |
@@ -164,6 +165,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - Shell: commands, user database `My materials.datdb`, options, recovery, updater for this repo.
   - Window: chart view, Browse, Datasheet, Stages, Results, Add Material, Setup, Data, laid-out pages (Compare, Index, Report), ribbon with every planned command, File page, Print, Options, Help.
   - New violet logo and Windows icons; README with screenshots; CHANGELOG.
+- Released 0.1.0 with `release.yml` (workflow_dispatch): CI and Release green; installer 2.2 MB.
 - Checked: Playwright with the real engine (30 checks); the real app under Xvfb (Home, "Hot, stiff and light", hover with the failure reason, dragging the line: chart stage 24 → 57).
 - Fixed while testing: a click on a bubble under the selection line was swallowed by the line; one convex envelope per family covered half the chart (now groups); ρ shown as "P" in uppercase mono headings; symbols with underscores (K_Ic).
 
