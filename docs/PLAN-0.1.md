@@ -1,6 +1,6 @@
 # Datum Atlas 0.1: plan and questions
 
-Status: **answered (§10); building 0.1.0.** §10 overrides the earlier sections where they differ.
+Status: **answered (§10); 0.1.0 built and released.** §10 overrides the earlier sections where they differ.
 
 <img src="brand/datum-atlas-icon.svg" width="96" align="right" alt="Draft Datum Atlas icon">
 
