@@ -43,10 +43,37 @@ impl Db {
             d.materials.extend(u.materials.iter().cloned().map(|mut m| { m.user = true; m }));
             d.user_count = u.materials.len();
         }
+        d.materials.iter_mut().for_each(derive);
+        d.sources.push(Source { id: DERIVED.into(), title: "Calculated by Datum Atlas from the material's other values".into(), publisher: "Datum Atlas".into(), kind: "derived".into(), licence: "MIT".into(), note: "Products use low × low and high × high; quotients use low ÷ high and high ÷ low, so the range holds every combination.".into(), ..Default::default() });
         d
     }
     pub fn get(&self, id: &str) -> Option<&Material> {
         self.materials.iter().find(|m| m.id == id)
+    }
+}
+
+pub const DERIVED: &str = "derived";
+
+/// Adds the derived properties (price, CO₂ and energy per volume, specific stiffness and
+/// strength, thermal diffusivity) from the material's own ranges.
+pub fn derive(m: &mut Material) {
+    let r = |k: &str| m.props.get(k).and_then(Val::range);
+    let mul = |a: Option<(f64, f64)>, b: Option<(f64, f64)>, k: f64| Some((a?.0 * b?.0 * k, a?.1 * b?.1 * k));
+    let div = |a: Option<(f64, f64)>, b: Option<(f64, f64)>, k: f64| Some((a?.0 / b?.1 * k, a?.1 / b?.0 * k));
+    let (rho, e, sy, lam, cp) = (r("rho"), r("E"), r("sy"), r("lam"), r("cp"));
+    let new = [
+        ("cv", mul(r("price"), rho, 1.0)),
+        ("co2v", mul(r("co2"), rho, 1.0)),
+        ("eev", mul(r("ee"), rho, 1.0)),
+        ("es", div(e, rho, 1000.0)),
+        ("ss", div(sy, rho, 1000.0)),
+        ("diff", div(lam, mul(rho, cp, 1.0), 1e6)),
+        ("shock", div(r("ts"), mul(e, r("alpha"), 1.0), 1000.0)),
+    ];
+    for (k, v) in new {
+        if let Some((a, b)) = v.filter(|(a, b)| a.is_finite() && b.is_finite() && *a > 0.0) {
+            m.props.insert(k.into(), Val::Range(a, b, DERIVED.into()));
+        }
     }
 }
 
@@ -143,4 +170,9 @@ pub fn check_user(m: &Material, sources: &[Source]) -> Result<(), String> {
         Some(e) => Err(e.split_once(": ").map(|(_, e)| e.to_string()).unwrap_or(e).replace("source \"\" not found", "give a source (a book, datasheet, test report or your own measurement)")),
         None => Ok(()),
     }
+}
+
+/// The property list for the window, each with its imperial unit: `imperial: [unit, factor, offset]`.
+pub fn props_out() -> serde_json::Value {
+    serde_json::json!(PROPS.iter().map(|p| { let mut v = serde_json::json!(p); v["imperial"] = serde_json::json!(crate::units::imperial(p.unit)); v }).collect::<Vec<_>>())
 }

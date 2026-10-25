@@ -11,27 +11,31 @@ export const listen = (e: string, f: (p: any) => void) => window.__TAURI__?.even
 export type Val = [number, number, string] | [number, number, string, number] | [boolean, string] | [string, string];
 export interface Material {
   id: string; name: string; family: string[]; syn: string[]; des: Record<string, string>; props: Record<string, Val>;
-  notes: string; uses: string; status: string; user: boolean;
+  notes: string; uses: string; status: string; user: boolean; checked: string[];
 }
 export interface Source { id: string; title: string; author: string; publisher: string; year: string; url: string; licence: string; kind: string; note: string }
-export interface Prop { key: string; name: string; sym: string; group: string; unit: string; kind: "range" | "flag" | "rating"; log: boolean; about: string }
+export interface Prop { key: string; name: string; sym: string; group: string; unit: string; kind: "range" | "flag" | "rating"; log: boolean; about: string; imperial: [string, number, number] | null }
 export interface Node { path: string; name: string; depth: number; count: number }
 export interface Db { materials: Material[]; sources: Source[]; userCount: number; props: Prop[]; tree: Node[]; rev: number }
 
 export type ChartSel = { Line: { slope: number; x: number; y: number; above: boolean } } | { Box: { x0: number; x1: number; y0: number; y1: number } };
-export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; select: ChartSel | null }
-export interface Limit { prop: string; min: number | null; max: number | null; flag: boolean | null; rating: string | null }
+export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; select: ChartSel | null; goal: string; kind: string }
+export interface Limit { prop: string; min: number | null; max: number | null; flag: boolean | null; rating: string | null; goal: boolean }
 export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number }
 export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any }
 
 export interface Bubble { id: string; name: string; fam: number; class: string; c: [number, number]; r: [number, number]; x: [number, number]; y: [number, number] }
 export interface Hull { name: string; fam: number; pts: [number, number][]; at: [number, number]; label: boolean; ids: string[] }
 export interface Axis { key: string; name: string; sym: string; unit: string; log: boolean; lim: [number, number] }
-export interface ChartOut { id: number; x: Axis; y: Axis; families: string[]; bubbles: Bubble[]; hulls: Hull[]; missing: [string, string][] }
+export interface ChartOut { id: number; x: Axis; y: Axis; families: string[]; bubbles: Bubble[]; hulls: Hull[]; missing: [string, string][]; bands: { name: string; fam: number; from: number; to: number }[] }
 export interface Row { id: string; name: string; family: string; pass: boolean; reasons: string[]; index: number | null; ratio: number | null; rank: number | null }
 export interface Results { total: number; pass: number; stages: { kind: string; name: string; chart: number; pass: number }[]; rows: Row[]; indexName: string; rankChart: number; lines: { chart: number; name: string; value: number }[] }
 export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; dbRev: number }
-export interface Options { theme: string; autosave: number; beta: boolean; openLast: boolean; labels: boolean; guides: boolean; dpi: number; paper: string; landscape: boolean; company: string; logo: string }
+export interface Goal {
+  id: string; group: string; name: string; index: string; x: string; y: string; slope: number; above: boolean;
+  function: string; constraint: string; objective: string; free: string; why: string; limits: [string, number | null, number | null][];
+}
+export interface Options { theme: string; autosave: number; beta: boolean; openLast: boolean; labels: boolean; guides: boolean; dpi: number; units: string; paper: string; landscape: boolean; company: string; logo: string }
 
 /** Three significant figures without trailing zeros (crates/core units::fmt). */
 export const fmt = (v: number | null | undefined): string => {

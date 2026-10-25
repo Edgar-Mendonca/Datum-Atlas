@@ -59,6 +59,50 @@ pub struct ChartOut {
     pub bubbles: Vec<Bubble>,
     pub hulls: Vec<Hull>,
     pub missing: Vec<(String, String)>,
+    /// Bar charts: each family's span on the x axis, for its label.
+    pub bands: Vec<Band>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Band {
+    pub name: String,
+    pub fam: usize,
+    pub from: f64,
+    pub to: f64,
+}
+
+/// A bar chart of one property (`c.y`): a floating bar per material from low to high, grouped by
+/// family and sorted within it. Bars reuse `Bubble` (c = centre, r = half-width and half-height).
+fn bars(db: &Db, c: &Chart) -> ChartOut {
+    let families: Vec<String> = FAMILIES.iter().map(|s| s.to_string()).collect();
+    let (mut bubbles, mut missing, mut bands) = (vec![], vec![], vec![]);
+    let mut slot = 0.0;
+    for (k, fam) in FAMILIES.iter().enumerate() {
+        if c.hidden.iter().any(|h| h == fam) { continue; }
+        let mut mine: Vec<(&Material, Pair, Pair)> = vec![];
+        for m in db.materials.iter().filter(|m| m.family.first().map(String::as_str) == Some(*fam)) {
+            let name = prop(&c.y).map_or(c.y.as_str(), |p| p.name).to_lowercase();
+            match m.props.get(&c.y).and_then(Val::range) {
+                Some(r) => match span(r.0, r.1, c.log_y) { Some(sp) => mine.push((m, r, sp)), None => missing.push((m.id.clone(), format!("{name} is not above zero, so it cannot go on a log axis"))) },
+                None => missing.push((m.id.clone(), format!("no {name}"))),
+            }
+        }
+        if mine.is_empty() { continue; }
+        mine.sort_by(|a, b| a.2 .0.total_cmp(&b.2 .0));
+        let from = slot;
+        for (m, r, sp) in mine {
+            bubbles.push(Bubble { id: m.id.clone(), name: m.name.clone(), fam: k, class: m.family.get(1).cloned().unwrap_or_default(), c: [slot + 0.5, sp.0], r: [0.38, sp.1], x: [0.0, 0.0], y: [r.0, r.1] });
+            slot += 1.0;
+        }
+        bands.push(Band { name: fam.to_string(), fam: k, from, to: slot });
+        slot += 1.5;
+    }
+    let (lo, hi) = bubbles.iter().fold((f64::MAX, f64::MIN), |(a, b), q| (a.min(q.c[1] - q.r[1]), b.max(q.c[1] + q.r[1])));
+    let (lo, hi) = if lo > hi { (0.0, 1.0) } else { (lo, hi) };
+    let w = (hi - lo).max(if c.log_y { 1.0 } else { hi.abs().max(1.0) * 0.1 });
+    let x = Axis { key: "family".into(), name: "Materials, by family".into(), sym: String::new(), unit: String::new(), log: false, lim: [-1.0, slot.max(1.0)] };
+    ChartOut { id: c.id, x, y: axis(&c.y, c.log_y, [lo - w * 0.06, hi + w * 0.06]), families, bubbles, hulls: vec![], missing, bands }
 }
 
 fn axis(key: &str, log: bool, lim: [f64; 2]) -> Axis {
@@ -68,6 +112,7 @@ fn axis(key: &str, log: bool, lim: [f64; 2]) -> Axis {
 
 /// Lays out a chart. Families hidden on the chart are left out (not listed as missing).
 pub fn build(db: &Db, c: &Chart) -> ChartOut {
+    if c.kind == "bar" { return bars(db, c); }
     let families: Vec<String> = FAMILIES.iter().map(|s| s.to_string()).collect();
     let (mut bubbles, mut missing) = (vec![], vec![]);
     for m in &db.materials {
@@ -122,5 +167,5 @@ pub fn build(db: &Db, c: &Chart) -> ChartOut {
             }
         }
     }
-    ChartOut { id: c.id, x: axis(&c.x, c.log_x, lx), y: axis(&c.y, c.log_y, ly), families, bubbles, hulls, missing }
+    ChartOut { id: c.id, x: axis(&c.x, c.log_x, lx), y: axis(&c.y, c.log_y, ly), families, bubbles, hulls, missing, bands: vec![] }
 }

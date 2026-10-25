@@ -136,7 +136,7 @@ fn index_line_passes_materials_on_the_right_side_for_slopes_1_2_3() {
     }
     // E^½/ρ ranking: the best first, ratio 1, falling.
     let r = run(&d, &project(Some(ChartSel::Line { slope: 2.0, x: 1000.0, y: 10.0, above: true })));
-    assert_eq!(r.index_name, "E^½/ρ");
+    assert_eq!(r.index_name, "E½/ρ");
     // The line through ρ = 1000 kg/m³, E = 10 GPa: E^½/ρ = √10 / 1000.
     assert!((r.lines[0].value - 10f64.sqrt() / 1000.0).abs() < 1e-12);
     let ranked: Vec<_> = r.rows.iter().filter(|x| x.pass).collect();
@@ -193,7 +193,7 @@ fn stages_combine_and_count() {
 
 #[test]
 fn project_edits_undo_and_round_trip() {
-    let mut doc = Doc::new(crate::templates::build(Some("beam")).unwrap());
+    let mut doc = Doc::new(crate::templates::build(&db(), Some("beam")).unwrap());
     let id = doc.p.charts[0].id;
     doc.apply(Op::Select { chart: id, select: Some(ChartSel::Line { slope: 2.0, x: 1000.0, y: 20.0, above: true }) }).unwrap();
     doc.apply(Op::SetStages { stages: Stages { limits: vec![Limit { prop: "tmax".into(), min: Some(100.0), ..Default::default() }], ..Default::default() } }).unwrap();
@@ -208,7 +208,7 @@ fn project_edits_undo_and_round_trip() {
     assert_eq!(back, doc.p);
     assert!(Project::from_json(r#"{"format": 99}"#).is_err());
     for t in crate::templates::list() {
-        let p = crate::templates::build(Some(t.id)).unwrap();
+        let p = crate::templates::build(&db(), Some(t.id)).unwrap();
         assert_eq!(p.charts.len(), 1, "{}", t.id);
         assert!(run(&db(), &p).total >= 100);
     }
@@ -239,4 +239,66 @@ fn tree_and_search() {
     assert_eq!(t.iter().filter(|n| n.depth == 0).map(|n| n.count).sum::<usize>(), d.materials.len());
     assert!(db::search(&d.materials, "A96061").iter().any(|m| m.id == "al-6061-t6"));
     assert!(db::search(&d.materials, "marine stainless").iter().any(|m| m.id == "ss-316"));
+}
+
+#[test]
+fn derived_properties_span_every_combination() {
+    let d = db();
+    let m = d.get("al-6061-t6").unwrap();
+    let (cv, es) = (m.props["cv"].range().unwrap(), m.props["es"].range().unwrap());
+    assert!((cv.0 - 2.5 * 2690.0).abs() < 1e-9 && (cv.1 - 3.5 * 2710.0).abs() < 1e-9);
+    assert!((es.0 - 68.0 / 2710.0 * 1000.0).abs() < 1e-9 && (es.1 - 70.0 / 2690.0 * 1000.0).abs() < 1e-9);
+    assert_eq!(m.props["cv"].src(), db::DERIVED);
+    // Diffusivity of copper is about 110 mm²/s; thermal shock of soda-lime glass is tens of degrees.
+    let a = d.get("cu-c11000").unwrap().props["diff"].range().unwrap();
+    assert!(a.0 > 90.0 && a.1 < 130.0, "{a:?}");
+    let s = d.get("glass-soda").unwrap().props["shock"].range().unwrap();
+    assert!(s.0 > 20.0 && s.1 < 200.0, "{s:?}");
+    assert!(!d.get("bone").unwrap().props.contains_key("cv"), "no price, no price per volume");
+}
+
+#[test]
+fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
+    let d = db();
+    assert_eq!(crate::goals::GOALS.len(), 22);
+    let mut p = crate::templates::build(&d, Some("blank")).unwrap();
+    p.stages.limits.push(Limit { prop: "price".into(), max: Some(50.0), ..Default::default() });
+    let cid = p.charts[0].id;
+    for g in crate::goals::GOALS {
+        let mut doc = Doc::new(p.clone());
+        doc.apply(crate::goals::apply(&d, &doc.p, cid, g.id).unwrap()).unwrap();
+        let c = &doc.p.charts[0];
+        assert_eq!((c.x.as_str(), c.y.as_str(), c.goal.as_str()), (g.x, g.y, g.id));
+        let r = run(&d, &doc.p);
+        assert!(r.pass > 0, "{}: nothing passes", g.id);
+        // Your own limit stays; the goal's are added and marked.
+        assert!(doc.p.stages.limits.iter().any(|l| l.prop == "price" && !l.goal));
+        assert_eq!(doc.p.stages.limits.iter().filter(|l| l.goal).count(), g.limits.len(), "{}", g.id);
+        // The ranking follows the index computed by hand from the geometric means.
+        let gm = |m: &Material, k: &str| { let (a, b) = m.props[k].range().unwrap(); (a * b).sqrt() };
+        let ranked: Vec<_> = r.rows.iter().filter(|x| x.pass).take(3).collect();
+        let idx = |id: &str| { let m = d.get(id).unwrap(); if g.slope == 0.0 { gm(m, g.y) } else { gm(m, g.y).powf(1.0 / g.slope) / gm(m, g.x) } };
+        for w in ranked.windows(2) {
+            let (a, b) = (idx(&w[0].id), idx(&w[1].id));
+            assert!(if g.above { a >= b * (1.0 - 1e-9) } else { a <= b * (1.0 + 1e-9) }, "{}: {} then {}", g.id, w[0].name, w[1].name);
+        }
+    }
+    // Explore removes the line and the goal's limits.
+    let mut doc = Doc::new(p.clone());
+    doc.apply(crate::goals::apply(&d, &doc.p, cid, "spring").unwrap()).unwrap();
+    doc.apply(crate::goals::apply(&d, &doc.p, cid, "").unwrap()).unwrap();
+    assert!(doc.p.charts[0].select.is_none() && doc.p.charts[0].goal.is_empty() && doc.p.stages.limits.iter().all(|l| !l.goal));
+    let r = run(&d, &{ let mut q = p.clone(); q.charts[0].x = "cv".into(); q.charts[0].select = Some(ChartSel::Line { slope: 2.0, x: 1e4, y: 10.0, above: true }); q });
+    assert_eq!(r.index_name, "E½/(Cₘρ)");
+}
+
+#[test]
+fn bar_charts_group_by_family_and_sort() {
+    let d = db();
+    let out = build(&d, &Chart { kind: "bar".into(), y: "E".into(), ..Default::default() });
+    assert_eq!(out.bubbles.len(), d.materials.len());
+    assert_eq!(out.bands.len(), 7);
+    let metals: Vec<_> = out.bubbles.iter().filter(|b| b.fam == 0).collect();
+    assert!(metals.windows(2).all(|w| w[0].c[1] <= w[1].c[1] && w[0].c[0] < w[1].c[0]));
+    assert!(out.bands.windows(2).all(|w| w[0].to < w[1].from));
 }

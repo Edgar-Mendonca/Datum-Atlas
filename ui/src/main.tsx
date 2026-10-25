@@ -10,21 +10,22 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import "./styles.css";
 import { invoke, listen, Out, Options } from "./api";
-import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, setThemeRaw, applyTheme, view, show, View, chart, db, loadDb, mat, cur, P, setChartId } from "./store";
+import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, setThemeRaw, applyTheme, view, show, View, chart, db, loadDb, mat, cur, P, setChartId, setGoals, imperial, setUnits } from "./store";
 import { C } from "./cmds";
 import { TitleBar, Ribbon, palette } from "./ribbon";
 import { Backstage, update, checkUpdate } from "./backstage";
-import { ChartView, ChartBar, Legend } from "./chart";
+import { ChartView, ChartBar, ChartTools, Legend } from "./chart";
 import { Browse, Datasheet } from "./browse";
 import { StagePanel, StagesPage, ResultsPage } from "./stages";
-import { SetupPage, DataPage, ComparePage, IndexPage, ReportPage } from "./pages";
+import { SetupPage, DataPage, SourcesPage, ComparePage, IndexPage, ReportPage } from "./pages";
+import { Goal } from "./api";
 import { Menu, Toast, Dialog, Icon } from "./ui";
 import * as D from "./dialogs";
 
 /** The sidebar: Setup first, then the materials, the selection, and the outputs (FAMILY §6). */
 const SIDE: ([View, string, string] | "-")[] = [
   ["setup", "setup", "Setup"], "-", ["browse", "tree", "Browse"], ["datasheet", "datasheet", "Datasheet"], ["charts", "atlas", "Charts"], "-",
-  ["stages", "filter", "Stages"], ["results", "results", "Results"], ["compare", "compare", "Compare"], ["index", "builder", "Index"], "-", ["report", "report", "Report"], ["data", "db", "Data"],
+  ["stages", "filter", "Stages"], ["results", "results", "Results"], ["compare", "compare", "Compare"], ["index", "builder", "Index"], "-", ["report", "report", "Report"], ["data", "db", "Data"], ["sources", "source", "Sources"],
 ];
 
 const ChartsPage = () => (
@@ -34,6 +35,7 @@ const ChartsPage = () => (
         <div class="ctabs"><For each={P().charts}>{x => <button classList={{ on: x.id === c().id }} onClick={() => setChartId(x.id)}><Icon n="atlas" />{x.name}</button>}</For>
           <button class="add" title="New chart" onClick={() => C.newChart()}>＋</button></div>
         <ChartBar c={c()} />
+        <ChartTools c={c()} />
         <Show when={out()!.charts.find(o => o.id === c().id)}>{o => <Legend c={c()} o={o()} />}</Show>
         <div class="board"><For each={[c().id]}>{() => <ChartView c={c()} />}</For></div>
       </div>
@@ -49,7 +51,7 @@ const Status = () => (
     <Show when={out()?.results.stages.length}><span class="muted">{out()!.results.pass} of {out()!.results.total} pass the selection</span></Show>
     <Show when={cur() && mat(cur())}><span class="muted">Selected: {mat(cur())!.name}</span></Show>
     <span class="grow" />
-    <span class="muted">SI units</span>
+    <button class="mode" title="Switch units" onClick={() => setUnits(imperial() ? "si" : "imperial")}>{imperial() ? "Imperial units" : "SI units"}</button>
     <span class="vsc"><button title="Chart" onClick={() => show("charts")}><Icon n="atlas" /></button><button title="Browse" onClick={() => show("browse")}><Icon n="tree" /></button><button title="Results" onClick={() => show("results")}><Icon n="results" /></button></span>
   </footer>
 );
@@ -59,6 +61,7 @@ const App = () => {
     try {
       const o = await invoke<Options>("options"); setOpts(o); setThemeRaw(o.theme || "auto"); applyTheme();
       await loadDb();
+      setGoals(await invoke<Goal[]>("goal_list"));
       setOut(await invoke<Out>("state"));
       const start = await invoke<string | null>("startup_file");
       if (start) await loadOut("open", { path: start });
@@ -104,6 +107,7 @@ const App = () => {
               <Match when={view() === "index"}><IndexPage /></Match>
               <Match when={view() === "report"}><ReportPage /></Match>
               <Match when={view() === "data"}><DataPage /></Match>
+              <Match when={view() === "sources"}><SourcesPage /></Match>
             </Switch>
           </Show>
         </div>

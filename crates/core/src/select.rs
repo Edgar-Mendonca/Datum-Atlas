@@ -57,7 +57,8 @@ pub struct LineVal {
 pub fn index_name(c: &Chart, n: f64) -> String {
     let (x, y) = (prop(&c.x).map_or("X", |p| p.sym), prop(&c.y).map_or("Y", |p| p.sym));
     if !(c.log_x && c.log_y) { return format!("{y} − {}·{x}", fmt(n)); }
-    let pow = |k: f64| if (k - 1.0).abs() < 1e-9 { String::new() } else if (k - 2.0).abs() < 1e-9 { "^½".into() } else if (k - 0.5).abs() < 1e-9 { "²".into() } else if (k - 3.0).abs() < 1e-9 { "^⅓".into() } else { format!("^(1/{})", fmt(k)) };
+    let pow = |k: f64| [(1.0, ""), (2.0, "½"), (3.0, "⅓"), (4.0, "¼"), (1.5, "⅔"), (0.5, "²"), (1.0 / 3.0, "³")].iter().find(|(v, _)| (v - k).abs() < 1e-9).map_or_else(|| format!("^(1/{})", fmt(k)), |(_, s)| s.to_string());
+    let x = if x.chars().count() > 2 { format!("({x})") } else { x.into() };
     if n.abs() < 1e-9 { y.into() } else if n > 0.0 { format!("{y}{}/{x}", pow(n)) } else { format!("{y}{}·{x}", pow(-n)) }
 }
 

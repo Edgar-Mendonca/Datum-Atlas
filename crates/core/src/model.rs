@@ -43,6 +43,8 @@ pub struct Material {
     pub uses: String,
     /// "draft" until every value has been checked against its source, then "checked".
     pub status: String,
+    /// Properties whose values were checked against their source.
+    pub checked: Vec<String>,
     /// Set when loaded from the user's own database (not saved).
     #[serde(skip_deserializing)]
     pub user: bool,
@@ -135,6 +137,13 @@ pub const PROPS: &[Property] = &[
     p("co2", "CO₂ footprint, primary production", "CO₂", "Eco", "kg/kg", true, "Carbon dioxide (equivalent) released to make one kilogram from raw materials."),
     p("ee", "Embodied energy, primary production", "Hm", "Eco", "MJ/kg", true, "Energy used to make one kilogram from raw materials."),
     f("recyclable", "Recyclable", "Eco", "Can be recycled into the same kind of material."),
+    p("cv", "Price per volume", "Cₘρ", "Derived", "USD/m³", true, "Price × density: what a cubic metre costs. Used by the minimum-cost indices."),
+    p("co2v", "CO₂ per volume", "CO₂ρ", "Derived", "kg CO₂/m³", true, "CO₂ footprint × density. Used by the minimum-carbon indices."),
+    p("eev", "Embodied energy per volume", "Hₘρ", "Derived", "MJ/m³", true, "Embodied energy × density."),
+    p("es", "Specific stiffness", "E/ρ", "Derived", "GPa/(Mg/m³)", true, "Young's modulus ÷ density: stiffness per weight (the index of a light, stiff tie)."),
+    p("ss", "Specific strength", "σy/ρ", "Derived", "MPa/(Mg/m³)", true, "Yield strength ÷ density: strength per weight (the index of a light, strong tie)."),
+    p("diff", "Thermal diffusivity", "a", "Derived", "mm²/s", true, "λ/(ρ cₚ): how fast heat spreads through the material."),
+    p("shock", "Thermal shock resistance", "ΔT", "Derived", "°C (jump)", true, "σts/(Eα): the largest sudden temperature change before a constrained surface cracks (an estimate)."),
 ];
 
 pub const FAMILIES: &[&str] = &["Metals", "Polymers", "Elastomers", "Ceramics and glasses", "Composites", "Foams", "Natural materials"];
@@ -184,11 +193,15 @@ pub struct Chart {
     /// Slopes of the guide lines shown (e.g. 1, 2, 3).
     pub guides: Vec<f64>,
     pub select: Option<ChartSel>,
+    /// The design goal that set the axes and the line ("" when exploring).
+    pub goal: String,
+    /// "bubble" (two properties) or "bar" (the y property for every material).
+    pub kind: String,
 }
 
 impl Default for Chart {
     fn default() -> Self {
-        Self { id: 0, name: String::new(), x: "rho".into(), y: "E".into(), log_x: true, log_y: true, hull: "family".into(), labels: false, hidden: vec![], guides: vec![], select: None }
+        Self { id: 0, name: String::new(), x: "rho".into(), y: "E".into(), log_x: true, log_y: true, hull: "family".into(), labels: false, hidden: vec![], guides: vec![], select: None, goal: String::new(), kind: "bubble".into() }
     }
 }
 
@@ -228,6 +241,8 @@ pub struct Limit {
     pub max: Option<f64>,
     pub flag: Option<bool>,
     pub rating: Option<String>,
+    /// Added by a design goal (a new goal replaces these, never your own limits).
+    pub goal: bool,
 }
 
 impl Project {
@@ -274,5 +289,6 @@ impl Project {
 
 /// "Young's modulus vs Density".
 pub fn chart_name(c: &Chart) -> String {
+    if c.kind == "bar" { return prop(&c.y).map_or("?", |p| p.name).into(); }
     format!("{} vs {}", prop(&c.y).map_or("?", |p| p.name), prop(&c.x).map_or("?", |p| p.name))
 }

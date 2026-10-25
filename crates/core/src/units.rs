@@ -17,6 +17,9 @@ pub fn imperial(unit: &str) -> Option<(&'static str, f64, f64)> {
         "MJ/kg" => ("BTU/lb", 429.922_614, 0.0),
         "kg/kg" => ("lb/lb", 1.0, 0.0),
         "µΩ·cm" => ("µΩ·cm", 1.0, 0.0),
+        "USD/m³" => ("USD/ft³", 0.028_316_846_6, 0.0),
+        "kg CO₂/m³" => ("lb CO₂/ft³", 0.062_427_96, 0.0),
+        "MJ/m³" => ("BTU/ft³", 26.839_19, 0.0),
         _ => return None,
     })
 }

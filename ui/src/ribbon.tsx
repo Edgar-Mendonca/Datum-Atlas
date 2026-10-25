@@ -1,13 +1,14 @@
 // Title bar, quick access toolbar, Tell Me and the ribbon (Home, Select, Chart, Data, Report, View,
 // Help, and Chart Tools › Format while a chart is open).
 import { For, Show, JSX, createSignal, createMemo, onMount } from "solid-js";
-import { call, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, view, show, chart, setChart, P, setChartId } from "./store";
+import { call, out, tab, setTab, setBackstage, openMenu, Item, closeDialog, openDialog, theme, setTheme, view, show, chart, setChart, P, setChartId, db, openSheet, setCur, goals, setGoal, imperial, setUnits } from "./store";
 import { C, ALL_CMDS } from "./cmds";
 import * as D from "./dialogs";
 import { Icon } from "./ui";
 import { feature } from "./features";
 import { soon } from "./roadmap";
-import { tool, setTool } from "./chart";
+import { tool, setTool, copyChart } from "./chart";
+import { helpCard, HELP } from "./help";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Atlas";
 const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
@@ -30,14 +31,23 @@ const N = (p: { i: string; l: string; id: string; big?: boolean }) => { const f 
 /** Tell Me / command search (Ctrl+K, Alt+Q). */
 export const palette = () => openDialog(() => {
   const [q, setQ] = createSignal(""), [k, setK] = createSignal(0);
-  const list = createMemo(() => { const s = q().toLowerCase(); return ALL_CMDS.filter(c => c[0].toLowerCase().includes(s)).slice(0, 14); });
+  /** Commands, then materials found by name, designation, synonym or use (Enter opens the datasheet). */
+  const list = createMemo(() => {
+    const s = q().toLowerCase(), words = s.split(/\s+/).filter(Boolean);
+    const cmds = ALL_CMDS.filter(c => c[0].toLowerCase().includes(s)).slice(0, words.length ? 8 : 14);
+    const mats = !words.length ? [] : db().materials.filter(m => { const hay = `${m.name} ${m.syn.join(" ")} ${Object.entries(m.des).map(([k, v]) => `${k} ${v}`).join(" ")} ${m.uses}`.toLowerCase(); return words.every(w => hay.includes(w)); })
+      .slice(0, 8).map(m => [`Material: ${m.name}`, () => { setCur(m.id); openSheet(m.id); }, Object.entries(m.des).slice(0, 2).map(([k, v]) => `${k} ${v}`).join(" · ")] as [string, () => void, string]);
+    const gs = !words.length ? [] : goals().filter(g => words.every(w => `${g.name} ${g.index} ${g.group}`.toLowerCase().includes(w)))
+      .slice(0, 5).map(g => [`Goal: ${g.name} (${g.index})`, () => { show("charts"); setGoal(g.id); }, g.group] as [string, () => void, string]);
+    return [...gs, ...mats, ...cmds].slice(0, 16);
+  });
   const go = (i: number) => { const c = list()[i]; if (c) { closeDialog(); setTimeout(() => c[1]()); } };
   let input!: HTMLInputElement;
   onMount(() => input.focus());
   return (
     <div class="ov top" onMouseDown={e => e.target === e.currentTarget && closeDialog()}>
       <div class="pal">
-        <input ref={input} placeholder="Tell me what you want to do" value={q()} onInput={e => { setQ(e.currentTarget.value); setK(0); }}
+        <input ref={input} placeholder="Tell me what you want to do, or search a material (name, UNS, EN…)" value={q()} onInput={e => { setQ(e.currentTarget.value); setK(0); }}
           onKeyDown={e => { if (e.key === "ArrowDown") { e.preventDefault(); setK(Math.min(list().length - 1, k() + 1)); } else if (e.key === "ArrowUp") { e.preventDefault(); setK(Math.max(0, k() - 1)); } else if (e.key === "Enter") { e.preventDefault(); go(k()); } else if (e.key === "Escape") closeDialog(); }} />
         <div class="pl"><For each={list()}>{(c, i) => <button classList={{ on: i() === k() }} onMouseEnter={() => setK(i())} onClick={() => go(i())}><span>{c[0]}</span>{c[2] && <kbd>{c[2]}</kbd>}</button>}</For></div>
       </div>
@@ -88,30 +98,34 @@ const chartMenu = (): Item[] => PAIRS.map(([l, x, y]) => ({ label: l, icon: "atl
 const lineMenu = (): Item[] => [[1, "Slope 1 · E/ρ, light stiff tie"], [2, "Slope 2 · E^½/ρ, light stiff beam"], [3, "Slope 3 · E^⅓/ρ, light stiff panel"], [0.5, "Slope ½ · σy²/E, springs"], [-1, "Slope −1"]]
   .map(([n, l]) => ({ label: l as string, icon: "index", run: () => C.line(n as number) }));
 const hullMenu = (): Item[] => [["family", "Envelopes around families"], ["class", "Envelopes around classes"], ["none", "No envelopes"]].map(([k, l]) => ({ label: l, on: chart()?.hull === k, run: () => setChart(c => { c.hull = k; }) }));
+const goalMenu = (): Item[] => [{ label: "Explore (no goal)", on: !chart()?.goal, run: () => setGoal("") }, "-",
+  ...[...new Set(goals().map(g => g.group))].map(gr => ({ label: gr, sub: goals().filter(g => g.group === gr).map(g => ({ label: `${g.name} — ${g.index}`, on: chart()?.goal === g.id, run: () => { show("charts"); setGoal(g.id); } })) })),
+  "-", { label: "What is a design goal?", icon: "info", run: () => helpCard("goal") }];
 const chartsMenu = (): Item[] => P().charts.map(c => ({ label: c.name, on: c.id === chart()?.id, run: () => { setChartId(c.id); show("charts"); } }));
 const sel = () => chart()?.select;
 export const Ribbon = () => (
   <section class="ribbon" ref={fitRibbon}>
     <Show when={tab() === "home"}>
-      <G l="Start"><B big i="setup" l="Setup" title="The requirements: function, constraints, objective" run={() => show("setup")} /><B big i="atlas" l="Property Chart" run={() => show("charts")} dd={e => openMenu(e, chartsMenu())} /></G>
+      <G l="Start"><B big i="setup" l="Setup" title="The requirements: function, constraints, objective" run={() => show("setup")} /><B big i="goal" l="Design Goal" title="Pick what the part must do; the chart, line and limits follow" dd={e => openMenu(e, goalMenu())} /><B big i="atlas" l="Property Chart" run={() => show("charts")} dd={e => openMenu(e, chartsMenu())} /></G>
       <G l="Select"><B big i="filter" l="Add Limit" title="A minimum or maximum value" run={C.addLimit} /><B big i="index" l="Selection Line" run={() => C.line(chart() && (sel() as any)?.Line ? (sel() as any).Line.slope : 2)} dd={e => openMenu(e, lineMenu())} /><B big i="results" l="Results" run={() => show("results")} /></G>
       <G l="Materials"><S><B i="tree" l="Browse" run={() => show("browse")} /><B i="datasheet" l="Datasheet" run={C.sheet} /><B i="material" l="Add Material" run={C.addMaterial} /></S></G>
-      <G l="Find"><S><B i="search" l="Tell Me" run={palette} /><N i="find" l="Search Everything" id="A5" /><N i="units" l="Units" id="A4" /></S></G>
+      <G l="Find"><S><B i="search" l="Find a Material" title="Search by name, designation, synonym or use (Ctrl+K)" run={palette} /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} title="Switch between SI and imperial units" run={() => setUnits(imperial() ? "si" : "imperial")} /><B i="source" l="Sources" run={() => show("sources")} /></S></G>
       <G l="File"><S><B i="save" l="Save" run={() => C.save()} /><B i="print" l="Print" run={C.print} /><B i="export" l="Export Chart" run={() => C.exportChart("svg")} /></S></G>
     </Show>
     <Show when={tab() === "select"}>
+      <G l="Goal"><B big i="goal" l="Design Goal" dd={e => openMenu(e, goalMenu())} /></G>
       <G l="Stages"><B big i="filter" l="Limit" title="Minimum and maximum values, yes/no and ratings" run={C.addLimit} /><B big i="index" l="Line" title="A selection line of a slope: a performance index" run={() => C.line(2)} dd={e => openMenu(e, lineMenu())} />
         <B big i="box" l="Box" title="Drag a box on the chart" run={() => { show("charts"); setTool("box"); }} on={tool() === "box"} /><B big i="tree" l="Families" title="Leave families or classes out" run={() => show("stages")} /><S><N i="poly" l="Polygon" id="C8" /><B i="del" l="Clear Line or Box" run={C.clearSel} off={!sel()} /><B i="list" l="All Stages" run={() => show("stages")} /></S></G>
       <G l="Index"><N big i="builder" l="Index Builder" id="C6" /><S><N i="list" l="Index Library" id="C7" /><B i="setup" l="Design Problems" run={() => show("setup")} /></S></G>
       <G l="Results"><B big i="results" l="Results" run={() => show("results")} /><S><N i="compare" l="Compare" id="D2" /><N i="eco" l="Greener Substitutes" id="E3" /></S></G>
     </Show>
     <Show when={tab() === "chart"}>
-      <G l="Chart"><B big i="atlas" l="New Chart" run={() => C.newChart()} dd={e => openMenu(e, chartMenu())} /><S><B i="list" l="Open Chart" dd={e => openMenu(e, chartsMenu())} /><B i="del" l="Delete Chart" run={C.delChart} /><N i="bar" l="Bar Chart" id="B6" /></S></G>
+      <G l="Chart"><B big i="atlas" l="New Chart" run={() => C.newChart()} dd={e => openMenu(e, chartMenu())} /><S><B i="list" l="Open Chart" dd={e => openMenu(e, chartsMenu())} /><B i="del" l="Delete Chart" run={C.delChart} /><B i="bar" l="Bar Chart" on={chart()?.kind === "bar"} run={() => setChart(c => { c.kind = c.kind === "bar" ? "bubble" : "bar"; c.select = null; c.goal = ""; })} /></S></G>
       <G l="Axes"><S><B i="log" l="Log X" on={!!chart()?.logX} run={() => setChart(c => { c.logX = !c.logX; c.select = null; })} /><B i="log" l="Log Y" on={!!chart()?.logY} run={() => setChart(c => { c.logY = !c.logY; c.select = null; })} /><B i="swap" l="Swap Axes" run={() => setChart(c => { [c.x, c.y, c.logX, c.logY] = [c.y, c.x, c.logY, c.logX]; c.select = null; })} /></S>
         <S><N i="fx" l="Expression Axis" id="B8" /><B i="fit" l="Fit" run={C.fit} /></S></G>
       <G l="Tools"><B big i="pan" l="Pan" on={tool() === "pan"} run={() => setTool("pan")} /><B big i="index" l="Line" on={tool() === "line"} run={() => setTool("line")} dd={e => openMenu(e, lineMenu())} /><B big i="box" l="Box" on={tool() === "box"} run={() => setTool("box")} /></G>
       <G l="Show"><B big i="hull" l="Envelopes" dd={e => openMenu(e, hullMenu())} /><S><B i="tag" l="Labels" on={!!chart()?.labels} run={() => setChart(c => { c.labels = !c.labels; })} /><B i="index" l="Guide Lines" on={!!chart()?.guides.length} run={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })} /><N i="tag" l="Smart Labels" id="B9" /></S></G>
-      <G l="Share"><B big i="export" l="Export" run={() => C.exportChart("svg")} dd={e => openMenu(e, [{ label: "SVG vector", icon: "export", run: () => C.exportChart("svg") }, { label: "PNG picture", run: () => C.exportChart("png") }, { label: "PDF (Print › Save as PDF)", icon: "print", run: C.print }])} /><S><N i="copy" l="Copy Picture" id="B11" /><B i="print" l="Print" run={C.print} /></S></G>
+      <G l="Share"><B big i="export" l="Export" run={() => C.exportChart("svg")} dd={e => openMenu(e, [{ label: "SVG vector", icon: "export", run: () => C.exportChart("svg") }, { label: "PNG picture", run: () => C.exportChart("png") }, { label: "PDF (Print › Save as PDF)", icon: "print", run: C.print }])} /><S><B i="copy" l="Copy Picture" title="Paste into Word or PowerPoint" run={copyChart} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
     <Show when={tab() === "format"}>
       <G l="Envelopes"><S><For each={[["family", "Families"], ["class", "Classes"], ["none", "None"]]}>{([k, l]) => <B i="hull" l={l} on={chart()?.hull === k} run={() => setChart(c => { c.hull = k; })} />}</For></S></G>
@@ -120,8 +134,8 @@ export const Ribbon = () => (
     </Show>
     <Show when={tab() === "data"}>
       <G l="Materials"><B big i="tree" l="Browse" run={() => show("browse")} /><B big i="datasheet" l="Datasheet" run={C.sheet} /><B big i="material" l="Add Material" run={C.addMaterial} /></G>
-      <G l="Databases"><B big i="db" l="Data and Sources" run={() => show("data")} /><S><N i="import" l="Import Excel / CSV" id="A8" /><N i="export" l="Export Database" id="A8" /><N i="db" l="Open Database" id="A9" /></S></G>
-      <G l="Properties"><S><N i="fx" l="Derived Property" id="A6" /><N i="units" l="Units" id="A4" /><N i="image" l="Pictures" id="A10" /></S></G>
+      <G l="Databases"><B big i="db" l="Data" run={() => show("data")} /><B big i="source" l="Sources" run={() => show("sources")} /><S><N i="import" l="Import Excel / CSV" id="A8" /><N i="export" l="Export Database" id="A8" /><N i="db" l="Open Database" id="A9" /></S></G>
+      <G l="Properties"><S><N i="fx" l="Formula Property" id="A6" /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} run={() => setUnits(imperial() ? "si" : "imperial")} /><N i="image" l="Pictures" id="A10" /></S></G>
     </Show>
     <Show when={tab() === "report"}>
       <G l="Compare"><N big i="compare" l="Compare" id="D2" /><N big i="radar" l="Radar Chart" id="D3" /></G>
@@ -135,7 +149,7 @@ export const Ribbon = () => (
       <G l="Theme"><S><For each={[["auto", "Auto (Windows)"], ["light", "Light"], ["dark", "Dark"]]}>{([k, l]) => <B i="style" l={l} on={theme() === k} run={() => setTheme(k)} />}</For></S></G>
     </Show>
     <Show when={tab() === "help"}>
-      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="list" l="Roadmap" title="Everything Datum Atlas will do, and when" run={() => setBackstage("roadmap")} /><B big i="info" l="Glossary" title="Bubble, envelope, index and other terms" run={() => D.glossary()} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
+      <G l="Learn"><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="list" l="Roadmap" title="Everything Datum Atlas will do, and when" run={() => setBackstage("roadmap")} /><B big i="info" l="Glossary" title="Bubble, envelope, index and other terms" run={() => D.glossary()} /><B big i="help" l="What Is This Tool?" title="Every tool explained: click a ? beside a tool, or pick one here" dd={e => openMenu(e, Object.entries(HELP).map(([k, h]) => ({ label: h.t, run: () => helpCard(k) })))} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
       <G l="Datum Atlas on GitHub"><B big i="github" l="GitHub" title="The project and its code" run={() => call("open_url", { url: GH })} /><B big i="tag" l="Releases" title="Every version and its change log" run={() => call("open_url", { url: `${GH}/releases` })} /><B big i="bug" l="Report an Issue" run={() => call("open_url", { url: `${GH}/issues/new` })} /></G>
       <G l="Updates"><B big i="upd" l="Check for Updates" run={() => setBackstage("about")} /></G>
     </Show>

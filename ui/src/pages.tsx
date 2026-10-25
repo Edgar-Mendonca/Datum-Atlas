@@ -1,8 +1,10 @@
 // Pages of the sidebar besides Browse, the chart and the stages: Setup (the design problem), Data
 // (the databases and their sources), and the laid-out pages of features still to come.
-import { For, JSX, createResource } from "solid-js";
-import { P, act, db, show, loadOut, call, setNode, openSheet, setBackstage } from "./store";
-import { Icon } from "./ui";
+import { For, JSX, Show, createResource, createSignal } from "solid-js";
+import { P, act, db, show, loadOut, call, setNode, openSheet, setBackstage, goals, setGoal, chart, openDialog, propOf, unitOf, toShown } from "./store";
+import { Icon, Dialog } from "./ui";
+import { Help } from "./help";
+import { fmt } from "./api";
 import { soon, Chip } from "./roadmap";
 import { editMaterial, deleteMaterial } from "./material";
 import { addLimit } from "./stages";
@@ -34,6 +36,13 @@ export const SetupPage = () => {
           <div class="ctl"><textarea rows="7" placeholder={"Function: a beam loaded in bending\nConstraints: length and stiffness fixed; works at 150 °C\nObjective: minimum mass\nFree variable: the size of the cross-section"} value={P().notes} onChange={e => act({ Notes: { text: e.currentTarget.value } })} /></div></div>
       </section>
       <section class="osec">
+        <h3>Design goal <Help k="goal" /></h3>
+        <p class="muted">Pick what the part must do. The chart, the selection line and the suggested limits follow; you can change them afterwards.</p>
+        <div class="goallist"><For each={[...new Set(goals().map(g => g.group))]}>{gr => <div class="ggroup"><h4>{gr}</h4>
+          <For each={goals().filter(g => g.group === gr)}>{g => <button class="goal" classList={{ on: chart()?.goal === g.id }} onClick={() => setGoal(g.id).then(() => show("charts"))} title={g.why}>
+            <b>{g.name}</b><span class="idx">{g.index}</span><small>{g.function} · {g.objective}</small></button>}</For></div>}</For></div>
+      </section>
+      <section class="osec">
         <h3>Next steps</h3>
         <div class="steps">
           <button class="tile" onClick={() => show("charts")}><Icon n="atlas" size={26} /><b>1 · Property chart</b><span>See every material on two properties.</span></button>
@@ -54,7 +63,6 @@ export const SetupPage = () => {
 /** Data: the built-in database, your own materials and every source. */
 export const DataPage = () => {
   const mine = () => db().materials.filter(m => m.user);
-  const used = (id: string) => db().materials.filter(m => Object.values(m.props).some(v => v[v.length === 4 ? 2 : v.length - 1] === id)).length;
   return (
     <div class="page datapage">
       <h1>Data</h1>
@@ -71,12 +79,7 @@ export const DataPage = () => {
         <h2><Icon n="db" /> Built-in materials by family</h2>
         <div class="famrow"><For each={db().tree.filter(n => n.depth === 0)}>{n => <button class="btn sm" onClick={() => { setNode(n.path); show("browse"); }}>{n.name} · {n.count}</button>}</For></div>
       </section>
-      <section class="panel">
-        <h2><Icon n="report" /> Sources</h2>
-        <p class="muted">Where the values come from. Built-in values are marked “draft” until each one is checked against the table or page of its source.</p>
-        <table class="tbl sources"><thead><tr><th>Source</th><th>Kind</th><th>Licence</th><th class="r">Values</th></tr></thead><tbody><For each={db().sources}>{s => <tr>
-          <td><b>{s.title}</b><div class="muted">{[s.author, s.publisher, s.year].filter(Boolean).join(", ")}{s.note ? `. ${s.note}` : ""}</div></td><td>{s.kind}</td><td class="muted">{s.licence}</td><td class="r">{used(s.id)}</td></tr>}</For></tbody></table>
-      </section>
+      <p><button class="btn" onClick={() => show("sources")}><Icon n="source" /> Sources of the values</button></p>
     </div>
   );
 };
@@ -107,3 +110,45 @@ export const ReportPage = () => (
     <p><button class="btn pri" onClick={() => setBackstage("print")}>Print</button></p>
   </Later>
 );
+
+/** A goal explained: function, constraint, objective, free variable, the index and why. */
+export const goalCard = (id: string) => openDialog(() => {
+  const g = goals().find(x => x.id === id)!;
+  return (
+    <Dialog title={g.name} extra={<button class="btn" onClick={() => setGoal(g.id)}>Apply to the chart</button>}>
+      <div class="helpcard">
+        <p class="bigidx">{g.above || g.slope ? "Maximise" : "Minimise"} <b>{g.index}</b></p>
+        <table class="tbl mini"><tbody>
+          <tr><td>Function</td><td>{g.function}</td></tr><tr><td>Constraint</td><td>{g.constraint}</td></tr>
+          <tr><td>Objective</td><td>{g.objective}</td></tr><tr><td>Free variable</td><td>{g.free}</td></tr>
+          <tr><td>Chart</td><td>{propOf(g.y)?.name} against {propOf(g.x)?.name}, {g.slope ? `line of slope ${fmt(g.slope)}` : "horizontal line"}; {g.above ? "above" : "below"} passes</td></tr>
+          <Show when={g.limits.length}><tr><td>Suggested limits</td><td>{g.limits.map(([k, a, b]) => `${propOf(k)?.name}${a !== null ? ` ≥ ${fmt(toShown(k, a))}` : ""}${b !== null ? ` ≤ ${fmt(toShown(k, b))}` : ""} ${unitOf(k)}`).join("; ")}</td></tr></Show>
+        </tbody></table>
+        <h4>Why</h4><p>{g.why}</p>
+      </div>
+    </Dialog>
+  );
+});
+
+/** Sources: where every value comes from, and which materials cite each source. */
+export const SourcesPage = () => {
+  const [open, setOpen] = createSignal("");
+  const cites = (id: string) => db().materials.flatMap(m => Object.entries(m.props).filter(([, v]) => v[v.length === 4 ? 2 : v.length - 1] === id).map(([k]) => [m, k] as const));
+  const kinds: Record<string, string> = { handbook: "Handbook", government: "Government data", "open-dataset": "Open dataset", datasheet: "Datasheet", "textbook-typical": "Our compilation", estimate: "Estimate", derived: "Calculated", user: "Your source" };
+  const checked = () => db().materials.reduce((n, m) => n + (m.checked?.length ?? 0), 0);
+  return (
+    <div class="page sourcespage">
+      <h1>Sources <Help k="sources" /></h1>
+      <div class="rule"><b>Open sources only.</b> Every value names where it comes from: public government handbooks and data, open datasets, published datasheets, and typical textbook ranges written up as our own compilation. No proprietary database is used, copied or named.
+        <span class="muted"> Built-in values are drafts until checked against their source; {checked()} values are checked so far (✓ on the datasheets).</span></div>
+      <table class="tbl sources"><thead><tr><th>Source</th><th>Kind</th><th>Licence</th><th class="r">Values</th></tr></thead><tbody>
+        <For each={db().sources}>{s => { const n = () => cites(s.id).length; return <>
+          <tr class="link" classList={{ sel: open() === s.id }} onClick={() => setOpen(open() === s.id ? "" : s.id)}>
+            <td><b>{s.title}</b><div class="muted">{[...new Set([s.author, s.publisher, s.year].filter(Boolean))].join(", ")}{s.url ? ` · ${s.url}` : ""}</div><Show when={s.note}><div class="muted small">{s.note}</div></Show></td>
+            <td>{kinds[s.kind] ?? s.kind}</td><td class="muted">{s.licence}</td><td class="r">{n()} {open() === s.id ? "▴" : "▾"}</td></tr>
+          <Show when={open() === s.id}><tr><td colspan="4" class="cites"><For each={[...new Set(cites(s.id).map(x => x[0]))]}>{m => <span class="cite"><b class="link" onClick={() => openSheet(m.id)}>{m.name}</b>: {cites(s.id).filter(x => x[0] === m).map(x => propOf(x[1])?.name).join(", ")}</span>}</For></td></tr></Show>
+        </>; }}</For>
+      </tbody></table>
+    </div>
+  );
+};

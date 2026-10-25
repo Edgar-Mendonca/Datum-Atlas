@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod update;
 
-use datum_atlas_core::{chart, db::{self, Db}, doc::{Doc, Op}, select, templates, Database, Material, Project, Source, FORMAT, PROPS};
+use datum_atlas_core::{chart, db::{self, Db}, doc::{Doc, Op}, goals, select, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
@@ -27,6 +27,8 @@ struct Options {
     guides: bool,
     /// Picture export resolution.
     dpi: u32,
+    /// "si" or "imperial".
+    units: String,
     /// Printing and branding.
     paper: String,
     landscape: bool,
@@ -36,7 +38,7 @@ struct Options {
 
 impl Default for Options {
     fn default() -> Self {
-        Self { theme: "auto".into(), autosave: 5, beta: false, open_last: false, labels: false, guides: true, dpi: 300, paper: "A4".into(), landscape: true, company: String::new(), logo: String::new() }
+        Self { theme: "auto".into(), autosave: 5, beta: false, open_last: false, labels: false, guides: true, dpi: 300, units: "si".into(), paper: "A4".into(), landscape: true, company: String::new(), logo: String::new() }
     }
 }
 
@@ -92,6 +94,8 @@ fn state(st: State<St>) -> Value {
 #[tauri::command]
 fn apply(st: State<St>, op: Op) -> R<Value> {
     let mut a = st.0.lock().unwrap();
+    // A design goal needs the database to place its line.
+    let op = match op { Op::Goal { chart, goal } => goals::apply(&a.db, &a.doc.p, chart, &goal)?, o => o };
     a.doc.apply(op)?;
     a.rev += 1;
     Ok(out(&a))
@@ -110,9 +114,14 @@ fn templates() -> Vec<templates::Tpl> {
     templates::list()
 }
 
+#[tauri::command]
+fn goal_list() -> &'static [goals::Goal] {
+    goals::GOALS
+}
+
 /// A new project from a template, with the options for new charts.
-fn fresh(opts: &Options, template: Option<&str>) -> R<Project> {
-    let mut p = templates::build(template).ok_or("Unknown template.")?;
+fn fresh(db: &Db, opts: &Options, template: Option<&str>) -> R<Project> {
+    let mut p = templates::build(db, template).ok_or("Unknown template.")?;
     for c in &mut p.charts {
         c.labels = opts.labels;
         if !opts.guides { c.guides.clear(); }
@@ -123,7 +132,7 @@ fn fresh(opts: &Options, template: Option<&str>) -> R<Project> {
 #[tauri::command]
 fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
     let mut a = st.0.lock().unwrap();
-    a.doc = Doc::new(fresh(&a.opts, template.as_deref())?);
+    a.doc = Doc::new(fresh(&a.db, &a.opts, template.as_deref())?);
     a.rev += 1;
     Ok(out(&a))
 }
@@ -134,7 +143,7 @@ fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
 #[tauri::command]
 fn database(st: State<St>) -> Value {
     let a = st.0.lock().unwrap();
-    json!({ "materials": a.db.materials, "sources": a.db.sources, "userCount": a.db.user_count, "props": PROPS, "tree": db::tree(&a.db.materials), "rev": a.db_rev, "userPath": "" })
+    json!({ "materials": a.db.materials, "sources": a.db.sources, "userCount": a.db.user_count, "props": db::props_out(), "tree": db::tree(&a.db.materials), "rev": a.db_rev, "userPath": "" })
 }
 
 fn user_file(app: &AppHandle) -> Option<PathBuf> {
@@ -285,6 +294,14 @@ async fn pick_logo(app: AppHandle) -> R<Option<String>> {
     }
     let mime = match path.extension().and_then(|e| e.to_str()).unwrap_or("").to_lowercase().as_str() { "svg" => "image/svg+xml", "jpg" | "jpeg" => "image/jpeg", "gif" => "image/gif", _ => "image/png" };
     Ok(Some(format!("data:{mime};base64,{}", base64(&bytes))))
+}
+
+/// A chart picture (PNG data URL) to the Windows clipboard, for Word and PowerPoint.
+#[tauri::command]
+fn copy_png(app: AppHandle, data: String) -> R<()> {
+    let b64 = data.split_once(";base64,").map_or(data.as_str(), |x| x.1);
+    let img = tauri::image::Image::from_bytes(&base64_decode(b64)?).map_err(|e| format!("Could not read the picture: {e}"))?;
+    app.clipboard().write_image(&img).map_err(|e| format!("Could not copy the picture: {e}"))
 }
 
 /// Text to the Windows clipboard through Rust (WebView2 blocks the browser clipboard).
@@ -444,7 +461,7 @@ fn main() {
             let opts: Options = options_file(app.handle()).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
             let user = load_user(app.handle());
             let db = Db::new(db::builtin(), Some(&user));
-            let p = fresh(&opts, None).unwrap_or_default();
+            let p = fresh(&db, &opts, None).unwrap_or_default();
             app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1 })));
             Ok(())
         })
@@ -459,7 +476,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, pick_logo, copy_text,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, pick_logo, copy_text, copy_png, goal_list,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

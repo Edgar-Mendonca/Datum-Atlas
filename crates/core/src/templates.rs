@@ -1,5 +1,8 @@
-//! Starting points on the File page: a blank selection and classic design problems, each with
-//! its chart, index line and limits already set.
+//! Starting points on the File page: a blank selection and design problems. Each is a design goal
+//! (goals.rs) applied to a new selection, sometimes with a limit of its own.
+use crate::db::Db;
+use crate::doc::Doc;
+use crate::goals;
 use crate::model::*;
 use serde::Serialize;
 
@@ -13,46 +16,32 @@ pub struct Tpl {
     pub slope: Option<f64>,
 }
 
-const LIST: &[(&str, &str, &str)] = &[
-    ("blank", "Blank selection", "Young's modulus against density, every material, no stages yet."),
-    ("beam", "Light, stiff beam", "Index E^½/ρ: a line of slope 2 on the modulus–density chart."),
-    ("tie", "Light, strong tie", "Index σy/ρ: a line of slope 1 on the strength–density chart."),
-    ("panel", "Light, stiff panel", "Index E^⅓/ρ: a line of slope 3 on the modulus–density chart."),
-    ("spring", "Springs", "Index σy²/E: most elastic energy per volume, a line of slope ½."),
-    ("hot", "Hot, stiff and light", "Max service temperature at least 200 °C, then E^½/ρ."),
-    ("tough", "Damage tolerant", "Fracture toughness against yield strength: tough and strong."),
+/// (id, goal, name, description)
+const LIST: &[(&str, &str, &str, &str)] = &[
+    ("blank", "", "Blank selection", "Young's modulus against density, every material, no stages yet."),
+    ("beam", "beam-stiff", "Light, stiff beam", "Index E½/ρ: a line of slope 2 on the modulus–density chart."),
+    ("tie", "tie-strong", "Light, strong tie", "Index σy/ρ: a line of slope 1 on the strength–density chart."),
+    ("panel", "panel-stiff", "Light, stiff panel", "Index E⅓/ρ: a line of slope 3 on the modulus–density chart."),
+    ("spring", "spring", "Springs", "Index σy²/E: most elastic energy per volume, a line of slope ½."),
+    ("hot", "beam-stiff", "Hot, stiff and light", "Max service temperature at least 200 °C, then E½/ρ."),
+    ("tough", "leak-first", "Leak before break", "Index KIc²/σy for a pressure vessel, on toughness against strength."),
 ];
 
 pub fn list() -> Vec<Tpl> {
-    let slope = |id: &str| match id { "beam" | "hot" => Some(2.0), "tie" => Some(1.0), "panel" => Some(3.0), "spring" => Some(0.5), _ => None };
-    LIST.iter().map(|(id, name, desc)| Tpl { id, name, desc, slope: slope(id) }).collect()
-}
-
-fn chart(x: &str, y: &str, select: Option<ChartSel>) -> Chart {
-    Chart { x: x.into(), y: y.into(), guides: if x == "rho" && y == "E" { vec![1.0, 2.0, 3.0] } else { vec![] }, select, ..Default::default() }
-}
-fn line(slope: f64, x: f64, y: f64) -> Option<ChartSel> {
-    Some(ChartSel::Line { slope, x, y, above: true })
+    LIST.iter().map(|(id, g, name, desc)| Tpl { id, name, desc, slope: goals::get(g).map(|g| g.slope) }).collect()
 }
 
 /// A new project from a template ("blank" or None for the blank one).
-pub fn build(id: Option<&str>) -> Option<Project> {
+pub fn build(db: &Db, id: Option<&str>) -> Option<Project> {
     let id = id.unwrap_or("blank");
-    let name = LIST.iter().find(|t| t.0 == id)?.1;
+    let (_, goal, name, desc) = LIST.iter().find(|t| t.0 == id)?;
     let mut p = Project::new(if id == "blank" { "Selection1" } else { name });
-    let c = match id {
-        "beam" => chart("rho", "E", line(2.0, 1000.0, 10.0)),
-        "tie" => chart("rho", "sy", line(1.0, 1000.0, 100.0)),
-        "panel" => chart("rho", "E", line(3.0, 1000.0, 1.5)),
-        "spring" => chart("E", "sy", line(0.5, 10.0, 100.0)),
-        "hot" => { p.stages.limits.push(Limit { prop: "tmax".into(), min: Some(200.0), ..Default::default() }); chart("rho", "E", line(2.0, 1000.0, 10.0)) }
-        "tough" => chart("sy", "kic", None),
-        _ => chart("rho", "E", None),
-    };
-    p.add_chart(c);
-    p.notes = match id {
-        "blank" => String::new(),
-        _ => LIST.iter().find(|t| t.0 == id).map(|t| t.2.to_string()).unwrap_or_default(),
-    };
+    let cid = p.add_chart(Chart { guides: vec![1.0, 2.0, 3.0], ..Default::default() });
+    if id != "blank" { p.notes = desc.to_string(); }
+    let mut d = Doc::new(p);
+    if !goal.is_empty() { d.apply(goals::apply(db, &d.p, cid, goal).ok()?).ok()?; }
+    if id == "hot" { let mut st = d.p.stages.clone(); st.limits.push(Limit { prop: "tmax".into(), min: Some(200.0), ..Default::default() }); d.apply(crate::doc::Op::SetStages { stages: st }).ok()?; }
+    let mut p = d.p;
+    p.charts.iter_mut().for_each(|c| if c.x != "rho" || c.y != "E" { c.guides.clear(); });
     Some(p)
 }

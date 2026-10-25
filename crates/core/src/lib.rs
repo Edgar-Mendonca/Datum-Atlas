@@ -5,6 +5,7 @@ pub mod chart;
 pub mod db;
 pub mod doc;
 pub mod geometry;
+pub mod goals;
 pub mod model;
 pub mod select;
 pub mod templates;

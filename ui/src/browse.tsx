@@ -2,8 +2,9 @@
 // engine (selection.ts): sort by a heading, select cells, rows or columns, Ctrl+C to Excel.
 // Datasheet: every property of one material, grouped, with its range, unit and reference.
 import { For, Show, createMemo, createSignal } from "solid-js";
-import { Material, valText, mid, isRange, SEP, famColor, fmt } from "./api";
-import { db, node, setNode, query, setQuery, cur, setCur, openSheet, failed, out, propOf, srcOf, mat, call, toast, openMenu, show } from "./store";
+import { Material, mid, isRange, SEP, famColor, fmt } from "./api";
+import { Help } from "./help";
+import { vtext, unitOf, toShown, db, node, setNode, query, setQuery, cur, setCur, openSheet, failed, out, propOf, srcOf, mat, call, toast, openMenu, show } from "./store";
 import { createSel, aggregate } from "./selection";
 import { toTsv } from "./cells";
 import { Icon } from "./ui";
@@ -41,12 +42,12 @@ export const Browse = () => {
     const v = (m: Material) => k === "name" ? m.name : k === "family" ? m.family.slice(1).join(" ") : mid(m.props[k]);
     return list.sort((a, b) => { const x = v(a), y = v(b); if (typeof x === "number" && typeof y === "number") { if (isNaN(x)) return 1; if (isNaN(y)) return -1; return asc ? x - y : y - x; } return asc ? String(x).localeCompare(String(y)) : String(y).localeCompare(String(x)); });
   });
-  const text = (m: Material, k: string) => k === "name" ? m.name : k === "family" ? m.family.slice(1).join(" › ") : valText(m.props[k]);
+  const text = (m: Material, k: string) => k === "name" ? m.name : k === "family" ? m.family.slice(1).join(" › ") : vtext(k, m.props[k]);
   let body!: HTMLTableSectionElement;
   const sel = createSel(() => [rows().length, keys().length], (r) => { const el = body?.querySelectorAll(".brow")[r] as HTMLElement | undefined; el?.scrollIntoView({ block: "nearest" }); });
   const agg = () => aggregate(sel, (r, c) => { const m = rows()[r], k = keys()[c]; return m && c > 1 && isRange(m.props[k]) ? String(mid(m.props[k])) : ""; });
   const copy = () => {
-    const g = sel.last(), head = keys().slice(g.c0, g.c1 + 1).map(k => k === "name" ? "Material" : k === "family" ? "Class" : `${propOf(k)?.name} (${propOf(k)?.unit})`);
+    const g = sel.last(), head = keys().slice(g.c0, g.c1 + 1).map(k => k === "name" ? "Material" : k === "family" ? "Class" : `${propOf(k)?.name} (${unitOf(k)})`);
     const body = rows().slice(g.r0, g.r1 + 1).map(m => keys().slice(g.c0, g.c1 + 1).map(k => text(m, k)));
     call("copy_text", { text: toTsv([head, ...body]) }).then(() => toast(`Copied ${body.length} ${body.length === 1 ? "row" : "rows"}: paste into Excel.`, true));
   };
@@ -71,12 +72,12 @@ export const Browse = () => {
       <section class="btable">
         <div class="btools"><span class="find"><Icon n="search" /><input placeholder="Search name, designation (UNS, EN), synonym or use" value={query()} onInput={e => setQuery(e.currentTarget.value)} /></span>
           <span class="muted">{rows().length} of {db().materials.length} materials</span><span class="grow" />
-          <button class="btn sm" onClick={colMenu}><Icon n="cols" /> Columns ▾</button><button class="btn sm pri" onClick={() => editMaterial()}><Icon n="material" /> Add material</button></div>
+          <button class="btn sm" onClick={colMenu}><Icon n="cols" /> Columns ▾</button><button class="btn sm pri" onClick={() => editMaterial()}><Icon n="material" /> Add material</button><Help k="browse" /></div>
         <div class="bscroll" tabindex="0" onKeyDown={key}>
           <table class="bgrid"><thead><tr><For each={keys()}>{(k, j) => <th style={{ "min-width": `${W(k)}px` }} classList={{ r: j() > 1, on: sort()[0] === k, frz: j() === 0 }}
             onClick={e => { if (e.shiftKey || e.ctrlKey) sel.cols(j(), j(), e.shiftKey, e.ctrlKey); else setSort([k, sort()[0] === k ? !sort()[1] : true]); }}
             title={k === "name" || k === "family" ? "" : `${propOf(k)?.about ?? ""} Click to sort.`}>
-            {k === "name" ? "Material" : k === "family" ? "Class" : <>{propOf(k)?.name}<small>{propOf(k)?.unit}</small></>}{sort()[0] === k ? (sort()[1] ? " ▲" : " ▼") : ""}</th>}</For></tr></thead>
+            {k === "name" ? "Material" : k === "family" ? "Class" : <>{propOf(k)?.name}<small>{unitOf(k)}</small></>}{sort()[0] === k ? (sort()[1] ? " ▲" : " ▼") : ""}</th>}</For></tr></thead>
             <tbody ref={body}><For each={rows()}>{(m, i) => <tr class="brow" classList={{ cur: m.id === cur(), off: fail().has(m.id) }} onDblClick={() => openSheet(m.id)} onContextMenu={e => rowMenu(e, m)}>
               <For each={keys()}>{(k, j) => <td classList={{ r: j() > 1, in: sel.inRange(i(), j()), at: sel.cur().row === i() && sel.cur().col === j(), frz: j() === 0, nodata: j() > 1 && !m.props[k] }}
                 onMouseDown={e => { if (e.button) return; sel.pick(i(), j(), e.shiftKey, e.ctrlKey); setCur(m.id); const mv = (ev: MouseEvent) => { const td = (ev.target as HTMLElement).closest("td"); const tr = td?.parentElement; if (!td || !tr) return; sel.drag([...tr.parentElement!.children].indexOf(tr), [...tr.children].indexOf(td)); }; const up = () => { removeEventListener("mouseover", mv); removeEventListener("mouseup", up); }; addEventListener("mouseover", mv); addEventListener("mouseup", up); }}>
@@ -88,7 +89,7 @@ export const Browse = () => {
   );
 };
 
-const GROUPS = ["General", "Mechanical", "Thermal", "Electrical", "Optical", "Durability", "Processing", "Eco"];
+const GROUPS = ["General", "Mechanical", "Thermal", "Electrical", "Optical", "Durability", "Processing", "Eco", "Derived"];
 export const Datasheet = (p: { id?: string; print?: boolean }) => {
   const m = () => mat(p.id ?? cur()) ?? db().materials[0];
   /** Sources in order of first use, numbered for the superscripts. */
@@ -98,7 +99,7 @@ export const Datasheet = (p: { id?: string; print?: boolean }) => {
   return (
     <Show when={m()} fallback={<div class="page"><p class="muted">Choose a material in Browse or on a chart.</p></div>}>
       <div class="page sheetpage" classList={{ print: p.print }}>
-        <div class="shead"><i class="sw" style={{ background: famColor(famIndex(m())) }} /><div><h1>{m().name}</h1><div class="muted">{m().family.join(" › ")}</div></div><span class="grow" />
+        <div class="shead"><i class="sw" style={{ background: famColor(famIndex(m())) }} /><div><h1>{m().name} <Show when={!p.print}><Help k="datasheet" /></Show></h1><div class="muted">{m().family.join(" › ")}</div></div><span class="grow" />
           <Show when={!p.print}><span class="inline">
             <button class="btn sm" onClick={() => show("browse")}>Browse</button>
             {m().user ? <button class="btn sm" onClick={() => editMaterial(m())}>Edit</button> : <button class="btn sm" onClick={() => editMaterial(m(), true)}>Copy as my material</button>}</span></Show></div>
@@ -108,11 +109,11 @@ export const Datasheet = (p: { id?: string; print?: boolean }) => {
           <Show when={m().uses}><div><b>Typical uses</b><span>{m().uses}</span></div></Show>
           <Show when={m().notes}><div><b>Notes</b><span>{m().notes}</span></div></Show>
           <Show when={row() && out()!.results.stages.length}><div><b>Selection</b><span classList={{ ok: row()!.pass, late: !row()!.pass }}>{row()!.pass ? `Passes${row()!.rank ? `, rank ${row()!.rank}` : ""}` : `Fails: ${row()!.reasons.join("; ")}`}</span></div></Show>
-          <div><b>Status</b><span>{m().user ? "Your own material." : m().status === "checked" ? "Every value checked against its source." : "Draft: compiled from the sources below; not yet checked value by value."}</span></div>
+          <div><b>Status</b><span>{m().user ? "Your own material." : m().checked?.length ? `${m().checked.length} values checked against their source (✓); the others are drafts.` : "Draft: compiled from the sources below; not yet checked value by value."}</span></div>
         </div>
         <For each={GROUPS}>{g => { const ps = () => db().props.filter(x => x.group === g); const have = () => ps().filter(x => m().props[x.key]);
-          return <Show when={have().length || !p.print}><h2>{g}</h2><table class="tbl dsheet"><tbody><For each={p.print ? have() : ps()}>{x => { const v = m().props[x.key];
-            return <tr classList={{ nodata: !v }} title={x.about}><td>{x.name}{x.sym && <span class="sym"> {x.sym}</span>}</td><td class="r">{v ? valText(v) : "no data"}{v && v.length === 4 ? <span class="muted"> (typical {fmt(v[3] as number)})</span> : ""}</td><td class="muted">{v ? x.unit : ""}</td><td class="ref">{v ? <sup>{srcIdx(v as any[])}</sup> : ""}</td></tr>; }}</For></tbody></table></Show>; }}</For>
+          return <Show when={have().length || !p.print}><h2>{g}{g === "Derived" && !p.print ? <> <Help k="derived" /></> : ""}</h2><table class="tbl dsheet"><tbody><For each={p.print ? have() : ps()}>{x => { const v = m().props[x.key];
+            return <tr classList={{ nodata: !v }} title={x.about}><td>{x.name}{x.sym && <span class="sym"> {x.sym}</span>}</td><td class="r">{v ? vtext(x.key, v) : "no data"}{v && v.length === 4 ? <span class="muted"> (typical {fmt(toShown(x.key, v[3] as number))})</span> : ""}</td><td class="muted">{v ? unitOf(x.key) : ""}</td><td class="ref">{v ? <sup>{srcIdx(v as any[])}</sup> : ""}{m().checked?.includes(x.key) ? <span class="chk ok" title="Checked against the source">✓</span> : ""}</td></tr>; }}</For></tbody></table></Show>; }}</For>
         <h2>References</h2>
         <ol class="refs"><For each={refs()}>{id => { const s = srcOf(id); return <li><b>{s?.title ?? id}</b>{s ? <span class="muted">{[s.author, s.publisher, s.year].filter(Boolean).join(", ")}. {s.licence}{s.url ? ` · ${s.url}` : ""}{s.note ? `. ${s.note}` : ""}</span> : null}</li>; }}</For></ol>
       </div>

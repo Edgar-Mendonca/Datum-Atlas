@@ -4,7 +4,8 @@
 import { For, Show, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Material, Source, Val, Out } from "./api";
-import { db, call, setOut, toast, openDialog, closeDialog, openSheet } from "./store";
+import { db, call, setOut, toast, openDialog, closeDialog, openSheet, toShown, toStored, unitOf } from "./store";
+import { Help } from "./help";
 import { Dialog } from "./ui";
 
 const FAMILIES = ["Metals", "Polymers", "Elastomers", "Ceramics and glasses", "Composites", "Foams", "Natural materials"];
@@ -26,12 +27,12 @@ export const editMaterial = (base?: Material, copy = false) => openDialog(() => 
     des: base ? Object.entries(base.des).map(([k, v]) => `${k} ${v}`).join(", ") : "", syn: base?.syn.join(", ") ?? "", uses: base?.uses ?? "", notes: base?.notes ?? "",
     srcTitle: "", srcYear: "", srcKind: "datasheet", recyclable: base?.props.recyclable ? String(base.props.recyclable[0]) : "",
   });
-  const [rows, setRows] = createStore<Record<string, Row>>(Object.fromEntries(props.filter(p => p.kind === "range").map(p => {
+  const [rows, setRows] = createStore<Record<string, Row>>(Object.fromEntries(props.filter(p => p.kind === "range" && p.group !== "Derived").map(p => {
     const v = base?.props[p.key];
-    return [p.key, v && typeof v[0] === "number" ? { lo: String(v[0]), hi: String(v[1]), src: String(v[2]) } : { lo: "", hi: "", src: OWN }];
+    return [p.key, v && typeof v[0] === "number" ? { lo: String(+toShown(p.key, v[0]).toPrecision(6)), hi: String(+toShown(p.key, v[1] as number).toPrecision(6)), src: String(v[2]) } : { lo: "", hi: "", src: OWN }];
   })));
   const [group, setGroup] = createSignal("General");
-  const groups = [...new Set(props.filter(p => p.kind === "range").map(p => p.group))];
+  const groups = [...new Set(props.filter(p => p.kind === "range" && p.group !== "Derived").map(p => p.group))];
   const sources = () => db().sources;
   const filled = () => Object.values(rows).filter(r => r.lo.trim() || r.hi.trim()).length;
   const save = async () => {
@@ -39,10 +40,10 @@ export const editMaterial = (base?: Material, copy = false) => openDialog(() => 
     const usesOwn = Object.values(rows).some(r => (r.lo.trim() || r.hi.trim()) && r.src === OWN) || f.recyclable !== "";
     if (usesOwn && !f.srcTitle.trim()) { toast("Say where the values come from: a datasheet, a test report, a book or your own measurement."); return false; }
     const vals: Record<string, Val> = {};
-    for (const p of props.filter(p => p.kind === "range")) {
+    for (const p of props.filter(p => p.kind === "range" && p.group !== "Derived")) {
       const r = rows[p.key], lo = r.lo.trim(), hi = r.hi.trim() || lo;
       if (!lo && !hi) continue;
-      const a = +lo.replace(",", "."), b = +hi.replace(",", ".");
+      const a = toStored(p.key, +lo.replace(",", ".")), b = toStored(p.key, +hi.replace(",", "."));
       if (!isFinite(a) || !isFinite(b)) { toast(`${p.name}: type numbers.`); setGroup(p.group); return false; }
       vals[p.key] = [Math.min(a, b), Math.max(a, b), r.src === OWN ? ownId : r.src];
     }
@@ -62,7 +63,7 @@ export const editMaterial = (base?: Material, copy = false) => openDialog(() => 
     <Dialog title={mine ? `Edit ${base!.name}` : "Add a material"} wide okText="Save material" ok={save}>
       <div class="addmat">
         <aside class="howto">
-          <h4>What you need</h4>
+          <h4>What you need <Help k="addmaterial" /></h4>
           <ol>
             <li><b>A name</b> and the <b>family</b> it belongs to (the class is optional, e.g. “Aluminium alloys › Wrought”).</li>
             <li><b>Density</b>: every chart and most performance indices use it.</li>
@@ -92,7 +93,7 @@ export const editMaterial = (base?: Material, copy = false) => openDialog(() => 
               <td>{p.name}{p.key === "rho" && <b class="req"> *</b>}</td>
               <td><input inputmode="decimal" value={rows[p.key].lo} onInput={e => setRows(p.key, "lo", e.currentTarget.value)} /></td>
               <td><input inputmode="decimal" value={rows[p.key].hi} onInput={e => setRows(p.key, "hi", e.currentTarget.value)} /></td>
-              <td class="muted">{p.unit}</td>
+              <td class="muted">{unitOf(p.key)}</td>
               <td><select value={rows[p.key].src} onChange={e => setRows(p.key, "src", e.currentTarget.value)}><option value={OWN}>The source above</option><For each={sources()}>{s => <option value={s.id}>{s.title.slice(0, 60)}</option>}</For></select></td></tr>}</For>
           </tbody></table>
           <Show when={group() === "Eco"}><div class="form"><label>Recyclable</label><select value={f.recyclable} onChange={e => setF("recyclable", e.currentTarget.value)}><option value="">Not known</option><option value="true">Yes</option><option value="false">No</option></select></div></Show>

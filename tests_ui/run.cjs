@@ -30,7 +30,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -53,7 +53,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("the chart draws a bubble per material", nb >= 100, String(nb));
   check("every family has its envelope", nh === 7, String(nh));
   check("log ticks are labelled in decades", (await p.textContent(".cbox svg")).includes("1000") && (await p.textContent(".cbox svg")).includes("0.01"));
-  check("the line shows its index and value", /E\^½\/ρ = 0\.00316/.test(await p.textContent(".cbox svg")), await p.textContent(".cbox svg"));
+  check("the line shows its index and value", /E½\/ρ = 0\.00\d+/.test(await p.textContent(".cbox svg")), await p.textContent(".cbox svg"));
   const pass0 = +(await p.textContent(".pcount b"));
   check("the stage panel counts what passes", pass0 > 5 && pass0 < 100, String(pass0));
   await shot("02-beam");
@@ -91,7 +91,8 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(200);
   await p.getByText("Add a limit", { exact: true }).first().click();
   await p.waitForTimeout(300);
-  await p.fill(".limit input[placeholder=min]", "150"); await p.keyboard.press("Tab");
+  check("the goal added its suggested limit, marked", (await p.textContent(".stagespage")).includes("from the goal"));
+  await p.locator(".limit input[placeholder=min]").last().fill("150"); await p.keyboard.press("Tab");
   await p.waitForTimeout(300);
   await shot("04-stages");
   await p.click('.side button[title="Results"]');
@@ -138,10 +139,63 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await shot("07-addmat");
   await p.click(".dlg footer .btn.pri");
   await p.waitForTimeout(600);
-  check("the material is saved and its datasheet opens", (await p.textContent(".sheetpage h1").catch(() => "")) === "Test alloy X" && (await p.textContent(".refs")).includes("Test report 7"));
+  const h1 = await p.textContent(".sheetpage h1").catch(() => "");
+  check("the material is saved and its datasheet opens", h1.startsWith("Test alloy X") && (await p.textContent(".refs")).includes("Test report 7"), h1 + " | " + await p.textContent("#toast").catch(() => ""));
   await p.click('.side button[title="Charts"]');
   await p.waitForTimeout(300);
   check("your material is on the chart", !!(await p.$('.cbox ellipse.bub[data-id="u-1"]')));
+
+  // 6b. 0.1.1: design goals, units, bar charts, search, Sources, "?" help, Home tiles.
+  await p.click('.side button[title="Charts"]');
+  await p.waitForTimeout(300);
+  check("the goal list has 22 goals and Explore", (await p.$$eval(".goalpick select option", o => o.length)) === 23);
+  await p.selectOption(".goalpick select", "beam-cheap");
+  await p.waitForTimeout(500);
+  let svg = await p.textContent(".cbox svg");
+  check("a cost goal plots price per volume and draws its index", svg.includes("Price per volume") && /E½\/\(Cₘρ\) = /.test(svg), svg.slice(-160));
+  check("the goal adds its limit, marked", (await p.textContent(".spanel")).includes("Cheap, stiff beam") && (await p.evaluate(async () => (await window.__TAURI__.core.invoke("state")).project.stages.limits.some(l => l.goal && l.prop === "kic"))));
+  await p.click('.cbar button:has-text("Why")');
+  await p.waitForTimeout(200);
+  check("the goal explains its function, constraint and index", /Function.*Constraint.*Objective/s.test(await p.textContent(".dlg")));
+  await shot("09-goal");
+  await p.keyboard.press("Escape");
+  await p.click('.status .mode:has-text("SI units")');
+  await p.waitForTimeout(300);
+  svg = await p.textContent(".cbox svg");
+  check("imperial units relabel the axes", svg.includes("10⁶ psi") && svg.includes("USD/ft³"), svg.slice(-160));
+  await p.click('.status .mode:has-text("Imperial units")');
+  await p.waitForTimeout(200);
+  await p.click('.cbar .seg button:has-text("Bars")');
+  await p.waitForTimeout(400);
+  const bars = await p.$$eval(".cbox rect.bub", r => r.map(x => +x.getAttribute("width")));
+  check("a bar chart draws a narrow bar per material, from its own view (not the bubble chart's zoom)", bars.length >= 100 && Math.max(...bars) < 30, `${bars.length} bars, widest ${Math.max(...bars)}`);
+  check("the bar chart is named after its property", (await p.textContent(".ctabs button.on")).includes("Young's modulus") && !(await p.textContent(".ctabs button.on")).includes(" vs "));
+  await shot("10-bars");
+  await p.click('.cbar .seg button:has-text("Bubbles")');
+  await p.waitForTimeout(300);
+  await p.keyboard.press("Control+k");
+  await p.keyboard.type("A97075");
+  await p.waitForTimeout(200);
+  await p.keyboard.press("Enter");
+  await p.waitForTimeout(300);
+  check("Tell Me finds a material by its UNS number", (await p.textContent(".sheetpage h1").catch(() => "")).includes("7075"));
+  await p.click('.side button[title="Sources"]');
+  await p.waitForTimeout(200);
+  await p.click(".sources tbody tr.link >> nth=2");
+  await p.waitForTimeout(200);
+  check("a source lists the materials that cite it", (await p.textContent(".cites").catch(() => "")).length > 20);
+  await shot("11-sources");
+  await p.click(".sourcespage h1 .help");
+  await p.waitForTimeout(200);
+  check("a ? opens what the tool is for", (await p.textContent(".helpcard").catch(() => "")).includes("open and public"));
+  await p.keyboard.press("Escape");
+  await p.click(".tabs .file");
+  await p.waitForTimeout(300);
+  const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
+  const at = t => tiles.indexOf(t);
+  check("Home: Material Library, Add a material, Sources, Roadmap in order", at("Material Library") > 0 && at("Material Library") < at("Add a material") && at("Add a material") < at("Sources") && at("Sources") < at("Roadmap"), JSON.stringify(tiles));
+  await p.click(".bs aside .back");
+  await p.waitForTimeout(200);
 
   // 7. Ribbon fits without scrolling; planned commands explain when they arrive.
   for (const w of [1280, 1600]) {

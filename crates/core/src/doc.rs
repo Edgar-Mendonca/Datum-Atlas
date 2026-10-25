@@ -17,6 +17,8 @@ pub enum Op {
     SetStages { stages: Stages },
     Name { name: String },
     Notes { text: String },
+    /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
+    Goal { chart: u32, goal: String },
     /// Stores window settings under a key.
     Ui { key: String, value: serde_json::Value },
     Batch(Vec<Op>),
@@ -130,6 +132,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             p.name = name;
         }
         Op::Notes { text } => p.notes = text,
+        Op::Goal { .. } => return Err("A goal needs the database; the shell applies it.".into()),
         Op::Ui { key, value } => {
             if !p.ui.is_object() {
                 p.ui = serde_json::json!({});
