@@ -1,0 +1,9 @@
+Datum Atlas
+Copyright (c) 2026 Edgar Mendonca. MIT licence.
+
+The window bundles SolidJS (MIT, https://www.solidjs.com) and the IBM Plex fonts
+(SIL Open Font Licence 1.1).
+
+The built-in materials data (data/*.json) is our own compilation of public values. Every value
+names its source in data/sources.json; those sources keep their own terms. No proprietary
+materials database was used.

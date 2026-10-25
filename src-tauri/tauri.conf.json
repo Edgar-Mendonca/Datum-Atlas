@@ -1,0 +1,69 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Datum Atlas",
+  "identifier": "com.edgarmendonca.datumatlas",
+  "build": {
+    "frontendDist": "../ui/dist",
+    "beforeBuildCommand": "npm run build:ui",
+    "beforeDevCommand": "npm run build:ui"
+  },
+  "app": {
+    "withGlobalTauri": true,
+    "windows": [
+      {
+        "label": "main",
+        "title": "Datum Atlas",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 960,
+        "minHeight": 600,
+        "center": true,
+        "maximized": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src ipc: http://ipc.localhost"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "publisher": "Edgar Mendonca",
+    "copyright": "\u00a9 2026 Edgar Mendonca",
+    "category": "Education",
+    "shortDescription": "Materials selection and property charts",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "fileAssociations": [
+      {
+        "ext": [
+          "datlas"
+        ],
+        "name": "Datum Atlas project",
+        "description": "Datum Atlas selection project",
+        "role": "Editor"
+      },
+      {
+        "ext": [
+          "datdb"
+        ],
+        "name": "Datum Atlas database",
+        "description": "Datum Atlas materials database",
+        "role": "Editor"
+      }
+    ],
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser",
+        "installerIcon": "icons/icon.ico",
+        "displayLanguageSelector": false
+      }
+    }
+  }
+}

@@ -1,0 +1,125 @@
+// Selection stages (limits, the chart selections, families left out), the stage panel beside the
+// chart, and the Results page: what passes, ranked by the index, and why the others fail.
+import { For, Show, createSignal } from "solid-js";
+import { Limit, Stages, Material, fmt, valText, SEP, famColor } from "./api";
+import { act, out, P, db, cur, setCur, openSheet, show, setChartId, mat, propOf, srcOf } from "./store";
+import { Icon, Check } from "./ui";
+
+const setStages = (f: (s: Stages) => void) => { const s = structuredClone(P().stages); f(s); return act({ SetStages: { stages: s } }); };
+const num = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
+const lineOf = (c: { select: any }) => c.select?.Line ?? null;
+
+/** One limit: property, then min/max with the unit, or yes/no, or the lowest rating. */
+const LimitRow = (p: { l: Limit; k: number }) => {
+  const pr = () => propOf(p.l.prop);
+  const put = (patch: Partial<Limit>) => setStages(s => { s.limits[p.k] = { ...s.limits[p.k], ...patch }; });
+  return (
+    <div class="limit">
+      <select value={p.l.prop} onChange={e => put({ prop: e.currentTarget.value, min: null, max: null, flag: null, rating: null })}>
+        <For each={db().props.filter(x => db().materials.some(m => m.props[x.key]))}>{x => <option value={x.key}>{x.name}</option>}</For></select>
+      <Show when={pr()?.kind === "range"}>
+        <span class="inline"><input type="number" placeholder="min" value={p.l.min ?? ""} onChange={e => put({ min: num(e.currentTarget.value) })} /><span class="muted">to</span>
+          <input type="number" placeholder="max" value={p.l.max ?? ""} onChange={e => put({ max: num(e.currentTarget.value) })} /><span class="muted unit">{pr()!.unit}</span></span>
+      </Show>
+      <Show when={pr()?.kind === "flag"}><select value={p.l.flag === null ? "" : String(p.l.flag)} onChange={e => put({ flag: e.currentTarget.value === "" ? null : e.currentTarget.value === "true" })}><option value="">Either</option><option value="true">Must be yes</option><option value="false">Must be no</option></select></Show>
+      <Show when={pr()?.kind === "rating"}><select value={p.l.rating ?? ""} onChange={e => put({ rating: e.currentTarget.value || null })}><option value="">Any</option><For each={["Poor", "Acceptable", "Good", "Excellent"]}>{r => <option value={r}>{r} or better</option>}</For></select></Show>
+      <button class="x" title="Remove this limit" onClick={() => setStages(s => { s.limits.splice(p.k, 1); })}>×</button>
+    </div>
+  );
+};
+
+export const addLimit = (prop = "tmax") => { setStages(s => { s.limits.push({ prop, min: null, max: null, flag: null, rating: null }); }); show("stages"); };
+
+/** Select › Stages: every stage of the selection in one page. */
+export const StagesPage = () => {
+  const tops = () => db().tree.filter(n => n.depth <= 1);
+  const out_ = (path: string) => P().stages.exclude.some(e => path === e || path.startsWith(e + SEP));
+  const toggle = (path: string) => setStages(s => { const on = s.exclude.includes(path); s.exclude = on ? s.exclude.filter(e => e !== path) : [...s.exclude.filter(e => !e.startsWith(path + SEP)), path]; });
+  const r = () => out()!.results;
+  return (
+    <div class="page stagespage">
+      <h1>Selection stages</h1>
+      <p class="muted">A material passes when it passes every stage. {r().pass} of {r().total} materials pass now. Change a stage and the charts and the results follow.</p>
+      <section class="panel">
+        <h2><Icon n="filter" /> Limits <small class="muted">{P().stages.limits.length ? `${r().stages.find(s => s.kind === "limit")?.pass ?? 0} pass` : "none yet"}</small></h2>
+        <p class="muted">The values the part needs: minimum and maximum values, yes/no properties and ratings.</p>
+        <For each={P().stages.limits}>{(l, k) => <LimitRow l={l} k={k()} />}</For>
+        <p class="inline"><button class="btn sm pri" onClick={() => addLimit()}>Add a limit</button>
+          <span class="muted">A range passes on</span><select value={P().stages.rule} onChange={e => { const v = e.currentTarget.value; setStages(s => { s.rule = v; }); }}><option value="mean">its typical (mean) value</option><option value="all">its whole range</option></select>
+          <span class="muted">Materials without the value</span><select value={P().stages.missing} onChange={e => { const v = e.currentTarget.value; setStages(s => { s.missing = v; }); }}><option value="fail">fail</option><option value="flag">pass, marked “no data”</option></select></p>
+      </section>
+      <section class="panel">
+        <h2><Icon n="index" /> Chart selections</h2>
+        <p class="muted">A selection line or box on a chart. Draw it on the chart with the Line or Box tool.</p>
+        <For each={P().charts} fallback={<p class="muted">No charts.</p>}>{c => <div class="limit">
+          <b>{c.name}</b><span class="muted">{lineOf(c) ? `line of slope ${fmt(lineOf(c).slope)}, ${lineOf(c).above ? "above" : "below"} passes` : c.select ? "box" : "no selection"}</span>
+          <Show when={c.select}><span class="muted small">{r().stages.find(s => s.chart === c.id)?.pass} pass</span></Show>
+          <button class="btn sm" onClick={() => { setChartId(c.id); show("charts"); }}>Open the chart</button></div>}</For>
+      </section>
+      <section class="panel">
+        <h2><Icon n="tree" /> Families and classes</h2>
+        <p class="muted">Untick what cannot be used, for example because of how the part is made.</p>
+        <div class="treestage"><For each={tops()}>{n => <label class="chk" classList={{ sub: n.depth > 0 }}><input type="checkbox" checked={!out_(n.path)} onChange={() => toggle(n.path)} />{n.name} <small class="muted">{n.count}</small></label>}</For></div>
+      </section>
+      <p><button class="btn pri" onClick={() => show("results")}>See the results</button></p>
+    </div>
+  );
+};
+
+/** The material picked on the chart, as a small datasheet. */
+const MaterialCard = (p: { m: Material }) => {
+  const row = () => out()!.results.rows.find(r => r.id === p.m.id);
+  const keys = ["rho", "price", "E", "sy", "ts", "kic", "tmax", "lam", "alpha", "co2"];
+  return (
+    <div class="mcard">
+      <h3>{p.m.name}</h3><div class="muted">{p.m.family.join(" › ")}</div>
+      <Show when={row() && out()!.results.stages.length}><div class="pill" classList={{ ok: row()!.pass, err: !row()!.pass }}>{row()!.pass ? `Passes${row()!.rank ? ` · rank ${row()!.rank}` : ""}` : "Fails"}</div>
+        <Show when={!row()!.pass}><ul class="why"><For each={row()!.reasons}>{x => <li>{x}</li>}</For></ul></Show></Show>
+      <table class="tbl mini"><tbody><For each={keys.filter(k => p.m.props[k])}>{k => <tr><td>{propOf(k)?.name}</td><td class="r">{valText(p.m.props[k])}</td><td class="muted">{propOf(k)?.unit}</td></tr>}</For></tbody></table>
+      <p class="muted small">{p.m.uses}</p>
+      <button class="btn sm pri" onClick={() => openSheet(p.m.id)}>Full datasheet</button> <button class="btn sm" onClick={() => setCur("")}>Close</button>
+    </div>
+  );
+};
+
+/** Beside the chart: the picked material, the pass count, each stage, and the top of the ranking. */
+export const StagePanel = () => {
+  const r = () => out()!.results;
+  return (
+    <aside class="spanel">
+      <Show when={cur() && mat(cur())}><MaterialCard m={mat(cur())!} /></Show>
+      <div class="pcount"><b>{r().pass}</b><span>of {r().total} materials pass</span></div>
+      <For each={r().stages} fallback={<p class="muted">No stages yet. Draw a selection line on the chart (Line tool), add a limit, or leave families out.</p>}>{s =>
+        <button class="scard" onClick={() => (s.kind === "chart" ? (setChartId(s.chart), show("charts")) : show("stages"))}><Icon n={s.kind === "limit" ? "filter" : s.kind === "chart" ? "index" : "tree"} /><span>{s.name}</span><b>{s.pass}</b></button>}</For>
+      <p class="inline"><button class="btn sm" onClick={() => addLimit()}>Add a limit</button><button class="btn sm" onClick={() => show("stages")}>All stages</button></p>
+      <Show when={r().stages.length}>
+        <h4>Best {r().indexName ? <>by <span class="idx">{r().indexName}</span></> : "materials"}</h4>
+        <table class="tbl mini rank"><tbody><For each={r().rows.filter(x => x.pass).slice(0, 12)}>{x => <tr class="link" classList={{ sel: x.id === cur() }} onClick={() => setCur(x.id)} onDblClick={() => openSheet(x.id)}>
+          <td class="muted">{x.rank}</td><td><i class="dot" style={{ background: famColor(Math.max(0, ["Metals", "Polymers", "Elastomers", "Ceramics and glasses", "Composites", "Foams", "Natural materials"].indexOf(x.family))) }} />{x.name}</td><td class="r">{x.ratio !== null ? fmt(x.ratio) : ""}</td></tr>}</For></tbody></table>
+        <button class="btn sm" onClick={() => show("results")}>All results</button>
+      </Show>
+    </aside>
+  );
+};
+
+/** Select › Results: the ranked shortlist and the reasons for every failure. */
+export const ResultsPage = () => {
+  const [all, setAll] = createSignal(false);
+  const r = () => out()!.results;
+  const rows = () => r().rows.filter(x => all() || x.pass);
+  return (
+    <div class="page resultspage">
+      <h1>Results</h1>
+      <p class="muted">{r().stages.length ? `${r().pass} of ${r().total} materials pass ${r().stages.length} ${r().stages.length === 1 ? "stage" : "stages"}.` : "No stages yet: every material passes."}
+        {r().indexName ? ` Ranked by the performance index ${r().indexName} (higher is better); “× best” compares each with the best one.` : " Draw a selection line on a chart to rank by its index."}</p>
+      <div class="ptools"><Check label="Show the materials that fail, with the reasons" value={all()} set={setAll} /><span class="grow" /><button class="btn sm" onClick={() => show("stages")}>Edit the stages</button></div>
+      <table class="tbl results"><thead><tr><th>Rank</th><th>Material</th><th>Family</th><Show when={r().indexName}><th class="r"><span class="idx">{r().indexName}</span></th><th class="r">× best</th></Show><th>Result</th></tr></thead>
+        <tbody><For each={rows()}>{x => <tr class="link" classList={{ fail: !x.pass, sel: x.id === cur() }} onClick={() => setCur(x.id)} onDblClick={() => openSheet(x.id)}>
+          <td class="muted">{x.rank ?? ""}</td><td><b>{x.name}</b></td><td class="muted">{x.family}</td>
+          <Show when={r().indexName}><td class="r">{fmt(x.index)}</td><td class="r">{x.ratio !== null ? fmt(x.ratio) : ""}</td></Show>
+          <td>{x.pass ? <span class="ok">Passes{x.reasons.length ? ` (${x.reasons.join("; ")})` : ""}</span> : <span class="late">Fails: {x.reasons.join("; ")}</span>}</td></tr>}</For></tbody></table>
+      <Show when={!rows().length}><p class="muted">Nothing passes. Relax a limit, move the selection line, or bring a family back.</p></Show>
+      <p class="muted small">Values are generic ranges; check the datasheet and its references before you decide. {srcOf("atlas-typ") ? "Built-in values are drafts until checked value by value." : ""}</p>
+    </div>
+  );
+};

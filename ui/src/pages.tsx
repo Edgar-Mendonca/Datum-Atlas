@@ -1,0 +1,109 @@
+// Pages of the sidebar besides Browse, the chart and the stages: Setup (the design problem), Data
+// (the databases and their sources), and the laid-out pages of features still to come.
+import { For, JSX, createResource } from "solid-js";
+import { P, act, db, show, loadOut, call, setNode, openSheet, setBackstage } from "./store";
+import { Icon } from "./ui";
+import { soon, Chip } from "./roadmap";
+import { editMaterial, deleteMaterial } from "./material";
+import { addLimit } from "./stages";
+
+type Tpl = { id: string; name: string; desc: string; slope: number | null };
+
+/** A tiny property chart for template tiles: three family bubbles and, when there is one, the index line. */
+export const MiniChart = (p: { slope: number | null }) => (
+  <svg viewBox="0 0 100 60" class="mini">
+    <path d="M8 4v50h88" fill="none" stroke="#6C4AB6" stroke-width="2" />
+    <ellipse cx="34" cy="38" rx="14" ry="7" transform="rotate(-30 34 38)" fill="#0072B2" fill-opacity=".5" />
+    <ellipse cx="58" cy="24" rx="15" ry="7" transform="rotate(-30 58 24)" fill="#E69F00" fill-opacity=".5" />
+    <ellipse cx="72" cy="40" rx="10" ry="6" transform="rotate(-30 72 40)" fill="#009E73" fill-opacity=".5" />
+    {p.slope !== null && <path d={`M14 ${50 - 0} L92 ${Math.max(4, 50 - 78 * 0.22 * p.slope)}`} stroke="#6C4AB6" stroke-width="1.8" stroke-dasharray="3 3" />}
+    <path d="M86 6l4 4-4 4-4-4z" fill="#F2B233" />
+  </svg>
+);
+
+export const SetupPage = () => {
+  const [tpls] = createResource(() => call<Tpl[]>("templates"));
+  return (
+    <div class="page setuppage"><div class="options">
+      <h1>Setup</h1>
+      <p class="muted">What the part must do. Selecting a material by the method takes four steps: write down the requirements, plot the materials on property charts, select with limits and index lines, then rank and check the best candidates.</p>
+      <section class="osec">
+        <h3>The selection</h3>
+        <div class="opt"><div><b>Name</b><small>Shown in the title bar and printed headers.</small></div><div class="ctl"><input value={P().name} onChange={e => act({ Name: { name: e.currentTarget.value } })} /></div></div>
+        <div class="opt"><div><b>Requirements</b><small>Function (what it does), constraints (what it must meet), objective (what to minimise or maximise), free variables (what you may change).</small></div>
+          <div class="ctl"><textarea rows="7" placeholder={"Function: a beam loaded in bending\nConstraints: length and stiffness fixed; works at 150 °C\nObjective: minimum mass\nFree variable: the size of the cross-section"} value={P().notes} onChange={e => act({ Notes: { text: e.currentTarget.value } })} /></div></div>
+      </section>
+      <section class="osec">
+        <h3>Next steps</h3>
+        <div class="steps">
+          <button class="tile" onClick={() => show("charts")}><Icon n="atlas" size={26} /><b>1 · Property chart</b><span>See every material on two properties.</span></button>
+          <button class="tile" onClick={() => addLimit()}><Icon n="filter" size={26} /><b>2 · Limits</b><span>Values the part needs, such as max service temperature.</span></button>
+          <button class="tile" onClick={() => show("charts")}><Icon n="index" size={26} /><b>3 · Index line</b><span>Draw a line of slope 1, 2 or 3 to select by a performance index.</span></button>
+          <button class="tile" onClick={() => show("results")}><Icon n="results" size={26} /><b>4 · Results</b><span>The ranked shortlist, and why the rest fail.</span></button>
+        </div>
+      </section>
+      <section class="osec">
+        <h3>Start from a design problem</h3>
+        <p class="muted">A new selection with its chart, index line and limits set (your current one stays open until you save or discard it).</p>
+        <div class="tiles"><For each={tpls() ?? []}>{t => <button class="tile" onClick={() => loadOut("new_project", { template: t.id })}><div class="pic"><MiniChart slope={t.slope} /></div><b>{t.name}</b><span>{t.desc}</span></button>}</For></div>
+      </section>
+    </div></div>
+  );
+};
+
+/** Data: the built-in database, your own materials and every source. */
+export const DataPage = () => {
+  const mine = () => db().materials.filter(m => m.user);
+  const used = (id: string) => db().materials.filter(m => Object.values(m.props).some(v => v[v.length === 4 ? 2 : v.length - 1] === id)).length;
+  return (
+    <div class="page datapage">
+      <h1>Data</h1>
+      <p class="muted">Datum Atlas ships with {db().materials.length - db().userCount} generic materials from every family. Every value is compiled from public sources and points to its reference; no proprietary database is used. Add your own materials beside them.</p>
+      <section class="panel">
+        <h2><Icon n="material" /> Your materials <small class="muted">{mine().length}</small></h2>
+        <p class="muted">Saved on this computer in “My materials.datdb”, with a source for each value. They appear in Browse, the datasheets, every chart and the selection.</p>
+        <table class="tbl"><tbody><For each={mine()} fallback={<tr><td class="muted">None yet. Add a material of your own, or copy a built-in one and change its values.</td></tr>}>{m =>
+          <tr><td><b class="link" onClick={() => openSheet(m.id)}>{m.name}</b></td><td class="muted">{m.family.join(" › ")}</td><td class="muted">{Object.keys(m.props).length} properties</td>
+            <td class="r"><button class="btn sm" onClick={() => editMaterial(m)}>Edit</button> <button class="btn sm" onClick={() => deleteMaterial(m)}>Delete</button></td></tr>}</For></tbody></table>
+        <p class="inline"><button class="btn pri" onClick={() => editMaterial()}><Icon n="material" /> Add a material</button><button class="btn" onClick={() => soon("A8")}>Import from Excel or CSV</button><Chip id="A8" /></p>
+      </section>
+      <section class="panel">
+        <h2><Icon n="db" /> Built-in materials by family</h2>
+        <div class="famrow"><For each={db().tree.filter(n => n.depth === 0)}>{n => <button class="btn sm" onClick={() => { setNode(n.path); show("browse"); }}>{n.name} · {n.count}</button>}</For></div>
+      </section>
+      <section class="panel">
+        <h2><Icon n="report" /> Sources</h2>
+        <p class="muted">Where the values come from. Built-in values are marked “draft” until each one is checked against the table or page of its source.</p>
+        <table class="tbl sources"><thead><tr><th>Source</th><th>Kind</th><th>Licence</th><th class="r">Values</th></tr></thead><tbody><For each={db().sources}>{s => <tr>
+          <td><b>{s.title}</b><div class="muted">{[s.author, s.publisher, s.year].filter(Boolean).join(", ")}{s.note ? `. ${s.note}` : ""}</div></td><td>{s.kind}</td><td class="muted">{s.licence}</td><td class="r">{used(s.id)}</td></tr>}</For></tbody></table>
+      </section>
+    </div>
+  );
+};
+
+/** A page whose feature comes later: what it will do, when, and what to use now. */
+export const Later = (p: { icon: string; title: string; ids: string[]; children: JSX.Element }) => (
+  <div class="page emptypage"><div class="emptybox"><Icon n={p.icon} size={42} /><h1>{p.title}</h1>{p.children}
+    <div class="later"><For each={p.ids}>{id => <button class="btn" onClick={() => soon(id)}><Chip id={id} /> {id}</button>}</For></div></div></div>
+);
+export const ComparePage = () => (
+  <Later icon="compare" title="Compare" ids={["D2", "D3"]}>
+    <p>Put two to six candidates side by side: every property in one table with the differences highlighted, and a radar chart of their normalised properties.</p>
+    <p class="muted">Until then, open the datasheets of your candidates from Results (double-click a row).</p>
+    <p><button class="btn pri" onClick={() => show("results")}>Results</button></p>
+  </Later>
+);
+export const IndexPage = () => (
+  <Later icon="index" title="Index builder" ids={["C6", "C7"]}>
+    <p>Pick the function (tie, beam, panel, column, shaft, spring, pressure vessel…), what to minimise (mass, cost, CO₂) and the constraints; the builder derives the performance index, explains it with the equations, makes the chart and draws the line.</p>
+    <p class="muted">Now: start from a design problem in Setup (light stiff beam, strong tie, panel, springs), or draw a line of slope 1, 2 or 3 on any chart.</p>
+    <p><button class="btn pri" onClick={() => show("setup")}>Design problems</button></p>
+  </Later>
+);
+export const ReportPage = () => (
+  <Later icon="report" title="Report" ids={["D4"]}>
+    <p>One click gives a selection report: the requirements, the stages, the charts, the ranked shortlist and the datasheets.</p>
+    <p class="muted">Now: print the chart, the results and each datasheet from File › Print, or save them as PDF.</p>
+    <p><button class="btn pri" onClick={() => setBackstage("print")}>Print</button></p>
+  </Later>
+);

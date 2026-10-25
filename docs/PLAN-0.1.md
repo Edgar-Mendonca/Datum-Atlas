@@ -1,6 +1,6 @@
 # Datum Atlas 0.1: plan and questions
 
-Status: **waiting for the user's answers** (§9). No feature code yet. Build 0.1.0 after the answers.
+Status: **answered (§10); building 0.1.0.** §10 overrides the earlier sections where they differ.
 
 <img src="brand/datum-atlas-icon.svg" width="96" align="right" alt="Draft Datum Atlas icon">
 
@@ -242,3 +242,24 @@ My own:
 14. **Temperatures** shown in °C by default (K and °F available)? Prices in USD/kg with the year, or another currency first?
 15. **Logo:** keep the draft as is, or adjust (e.g. thicker index line, a third tint bubble)?
 16. **Release:** release 0.1.0 straight after building and checking, as Plan and Plot did?
+
+---
+
+## 10. Answers (session 2) and what changes
+
+| Q | Answer | Effect |
+| --- | --- | --- |
+| 1 | Keep **Datum Atlas**. | — |
+| 2 | Both engineers and students. | Engineering data and designations, with Getting Started, the Glossary and explanations everywhere. |
+| 3 | Start with **100 materials**. Users must be able to **add their own materials**, with a window that explains how and which details are needed. | 0.1.0 ships ~100 materials and an **Add Material** window (name, family, ranges, unit shown per property, a source for every value); user materials live in a user database (`My materials.datdb` in the app's data folder) and appear in Browse, the Datasheet and every chart. Full import with mapping stays in 0.3.x. |
+| 4 | (Nothing extra named.) | Starter set as in the brief; CO₂ footprint, embodied energy and recyclability included now. |
+| 5 | Eco audit and process selection: **do them** ("simple things"). | Both move before 1.0 as planned modules (0.4, 0.5) and are laid out in the UI from 0.1.0 (dimmed, with their cards). |
+| 6 | An earlier repo ("material atlas") exists but should not be used for now. | Not read. |
+| 7–8 | References and sources as proposed. | Document-level references marked "draft" in 0.1.0; MIL-HDBK, NIST, USGS, FPL Wood Handbook, open datasets, datasheets and our compilation of typical ranges. |
+| 9–14, 16 | As proposed. | Print in 0.1.0; whole UI laid out with planned commands dimmed; brief's tabs incl. Home; Okabe-Ito family colours with own hulls for elastomers and foams; classic look first; °C and USD/kg with the year; release 0.1.0 after checks. |
+| 15 | A better logo is welcome; keep it **violet/purple**. | New logo in the violet accent (same family rules: tile, 11 px strokes, one tint, one amber diamond). |
+| — | Follow the established selection tool's workflow ("start with the basics: how the property charts are done, selection and so on"). | **0.1.0 also gets basic selection:** a limit stage (min/max per property, missing values fail with a reason), a chart stage (draggable index line of slope 1/2/3 or typed, or a box), a tree stage (families on/off), failed materials greyed on the chart, and a Results list ranked by the index with reasons. We follow the workflow only; never another product's data, names, wording or artwork (brief §1). |
+| — | Keep each app's memory in its own repo; never mix. | Atlas notes live only in this repo. |
+
+### 0.1.0 scope (final)
+Shell, updater, File page (Home, Options, Updates, Print), Violet design and new logo; ribbon (Home, Select, Chart, Data, Report, View, Help) and sidebar with every planned command laid out; ~100 referenced materials; Browse; Datasheet; property chart (log–log bubbles, smoothed family hulls, hover, click, zoom, pan, fit, slope guides, family legend); selection (limit, chart, tree stages) with Results; Add Material window and the user database; `.datlas` projects (charts, stages, notes); Getting Started and Glossary; print of the chart, datasheet and results.
