@@ -125,10 +125,12 @@ pub fn search<'a>(mats: &'a [Material], q: &str) -> Vec<&'a Material> {
 }
 
 /// Everything wrong with a database: unknown properties, values without a known source, low > high,
-/// non-positive values on log properties, ratings not in the scale, duplicate ids or designations.
+/// non-positive values on log properties, ratings not in the scale, duplicate ids or designations,
+/// and values marked checked that have no value or cite only our own compilation or an estimate.
 pub fn check(db: &Database, extra_sources: &[Source]) -> Vec<String> {
     let mut errs = vec![];
     let srcs: HashSet<&str> = db.sources.iter().chain(extra_sources).map(|s| s.id.as_str()).collect();
+    let general: HashSet<&str> = db.sources.iter().filter(|s| matches!(s.kind.as_str(), "textbook-typical" | "estimate")).map(|s| s.id.as_str()).collect();
     let (mut ids, mut des) = (HashSet::new(), HashSet::new());
     for s in &db.sources {
         if s.title.trim().is_empty() { errs.push(format!("source {}: no title", s.id)); }
@@ -140,6 +142,13 @@ pub fn check(db: &Database, extra_sources: &[Source]) -> Vec<String> {
         if !FAMILIES.contains(&m.family.first().map(String::as_str).unwrap_or("")) { errs.push(at(format!("unknown family {:?}", m.family))); }
         for (sys, d) in &m.des {
             if !des.insert(format!("{sys} {d}")) { errs.push(at(format!("duplicate designation {sys} {d}"))); }
+        }
+        for k in &m.checked {
+            match m.props.get(k) {
+                None => errs.push(at(format!("{k}: marked checked but has no value"))),
+                Some(v) if general.contains(v.src()) => errs.push(at(format!("{k}: marked checked but cites {:?}, not a specific source", v.src()))),
+                _ => {}
+            }
         }
         for (k, v) in &m.props {
             let Some(p) = prop(k) else { errs.push(at(format!("unknown property {k}"))); continue };

@@ -1,6 +1,6 @@
 # Datum Atlas 0.1.1: plan and menu
 
-Status: **waiting for the user's choices** (§6). Written after the user's review of 0.1.0 (3 screenshots, 2026-10-25). Nothing is built until the user picks.
+Status: **answered and built** (§7); released as 0.1.1 on 2026-10-25. Written after the user's review of 0.1.0 (3 screenshots, 2026-10-25).
 
 This file follows the family pattern: feedback → diagnosis → proposal → menu of what can come next → size → questions.
 
@@ -156,3 +156,12 @@ Pick, move or combine freely. IDs match Help › Roadmap. "New" means not in the
 4. **Picking a goal on an open selection:** change the open chart (proposed) or add a new chart for it?
 5. **Data checking (A12):** start now, one family per release (metals first), or keep it for 0.3?
 6. **Students:** is the teaching mode (G4, worked examples) worth bringing forward to 0.2?
+
+## 7. Answers (2026-10-25) and what was built
+
+1. **Contents:** build §3 as proposed. Built: the goal list with derived per-volume axes, Home tiles and the Sources page, SI/imperial, search in Tell Me, bar charts, Copy Picture, label fixes.
+2. **Goals:** your 16 plus the 6 extras. The screenshot showed 14 goals, so 8 were added to reach **22**: column, stiff shaft, cheap stiff panel, low-carbon strong tie, tough and light tie, insulation, heat sink and thermal shock.
+3. **Limits:** yes, a goal sets the line **and** suggests limits. They are marked `goal: true` (“from the goal” in Stages); a new goal or Explore replaces them and never touches your limits.
+4. **Open selection:** as proposed, the goal changes the open chart.
+5. **Data checking:** started now, metals first. 51 values in 15 metals are checked against published datasheets (producers and suppliers), each citing its datasheet with a link and shown with ✓. Ranges were widened where a datasheet was outside them. The check used datasheet values as quoted by web search, because the build machine cannot open web pages; another pass that opens each document is planned.
+6. **Teaching mode:** not needed. Instead, a small **?** beside the tools opens a card saying what the tool is for and how to use it. This should be done in all Datum apps.

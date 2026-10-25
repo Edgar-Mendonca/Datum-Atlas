@@ -1,5 +1,35 @@
 # Changelog
 
+## 0.1.1 — 2026-10-25
+
+Design goals that set up the chart, the line and the limits in one pick; SI or imperial units; bar charts; a Sources page; ? help beside the tools; and the first values checked against published datasheets.
+
+**Design goals**
+- A Goal list above the chart with 22 goals, grouped: minimum mass (stiff or strong tie, beam and panel; column; stiff shaft), minimum cost and minimum carbon (tie, beam, panel), elastic design (spring, elastic hinge), damage tolerance (yield before fracture, leak before break, tough and light), and thermal (precision parts, insulation, heat sinks, thermal shock).
+- A goal sets the axes, draws the selection line of the right slope through the best materials (the top fifth pass), adds the limits it needs, and ranks the results by its index. Its limits are marked “from the goal” in Stages; change or remove them freely. Your own limits are never touched. “Explore” removes the goal's line and limits.
+- “Why E½/ρ?” explains each goal: the function, the constraint, the objective, the free variable, and how the index follows.
+- Setup lists the goals too, and Tell Me (Ctrl+K) finds them.
+
+**Values and units**
+- Derived properties, calculated from each material's own values: price, CO₂ and energy per volume, specific stiffness and strength, thermal diffusivity and thermal shock resistance. They work as chart axes and in limits.
+- SI or imperial units everywhere: chart axes, tables, datasheets and limits (Options, or the status bar). Values are stored in SI, so switching loses nothing.
+- Index names are written as they are printed: E½/ρ, E⅓/ρ, σy⅔/ρ.
+
+**Charts**
+- Bar charts: one property for every material, a bar from its low to its high value, grouped by family and sorted.
+- Copy the chart as a picture, ready to paste into a report.
+- Family labels move apart when they would overlap; the index value sits where the line is clear.
+- The chart toolbar is in two rows so it fits on smaller screens.
+
+**Data and sources**
+- Home: Material Library, Add a material, Sources and Roadmap tiles.
+- A Sources page: every source, its kind and licence, and a click shows which materials and values cite it. Open and public sources only.
+- 51 values in 15 metals are now checked against published datasheets from producers and suppliers (aluminium 2024, 5083, 6061, 7075 and A356; steels 1045 and 4340; 17-4PH; ductile iron; copper, brass and copper-nickel; titanium grades 2 and 5; nickel alloy 718). Each checked value cites its datasheet, with a link, and shows ✓ on the datasheet. Where a datasheet was outside our range the range was widened (4340 elongation, A356 strength and elongation, brass density and conductivity, copper-nickel yield strength, 5083 conductivity, 17-4PH tensile strength). The other values remain drafts.
+
+**Help**
+- A small ? beside the tools (goal, chart tools, slope, envelopes, bars, stages, limits, results, browse, datasheet, sources, units and more): a click says what the tool is for and how to use it. Help › What Is This Tool? lists them all.
+- Tell Me also finds materials by name, UNS or EN number and opens their datasheet.
+
 ## 0.1.0 — 2026-10-25
 
 The first Datum Atlas: about 100 referenced materials, property charts with family envelopes, and selection with limits and index lines.

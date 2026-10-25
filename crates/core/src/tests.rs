@@ -31,10 +31,21 @@ fn checks_catch_bad_values() {
     m.props.insert("ts".into(), Val::Range(1.0, 2.0, "nowhere".into()));
     m.props.insert("rho".into(), Val::Range(0.0, 2.0, "atlas-typ".into()));
     m.props.insert("bogus".into(), Val::Flag(true, "atlas-typ".into()));
+    m.checked = vec!["kic".into(), "price".into(), "cv".into()];
     d.materials.push(d.materials[1].clone());
     let errs = db::check(&d, &[]).join("\n");
-    for want in ["low 300 > high 200", "source \"nowhere\" not found", "must be above zero", "unknown property bogus", "duplicate id", "duplicate designation"] {
+    for want in ["low 300 > high 200", "kic: marked checked but cites \"atlas-typ\"", "price: marked checked but cites", "cv: marked checked but has no value", "source \"nowhere\" not found", "must be above zero", "unknown property bogus", "duplicate id", "duplicate designation"] {
         assert!(errs.contains(want), "missing {want:?} in\n{errs}");
+    }
+}
+
+#[test]
+fn checked_values_cite_datasheets() {
+    let d = db::builtin();
+    let n: usize = d.materials.iter().map(|m| m.checked.len()).sum();
+    assert!(n >= 50, "only {n} checked values");
+    for m in d.materials.iter().filter(|m| !m.checked.is_empty()) {
+        for k in &m.checked { assert!(d.sources.iter().any(|s| s.id == m.props[k].src() && s.kind == "datasheet" && s.url.starts_with("https://")), "{} {k}", m.id); }
     }
 }
 

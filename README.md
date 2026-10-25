@@ -22,26 +22,33 @@
 
 </div>
 
-<img src="docs/images/chart.png" alt="Datum Atlas: Young's modulus against density with family envelopes and a selection line of slope 2" width="100%">
+<img src="docs/images/chart.png" alt="Datum Atlas: the design goal Light, stiff beam on Young's modulus against density, with its line E½/ρ and the materials ranked by it" width="100%">
 
 ## What it does
 
 Datum Atlas helps engineers, designers and students pick a material and show why it is the right one:
 
-1. **Write down the requirements**: what the part does, what it must meet, what to minimise.
+1. **Pick a design goal** (light stiff beam, cheap strong tie, spring, heat sink…) or write down the requirements: what the part does, what it must meet, what to minimise.
 2. **See every material on a property chart**: two properties on log axes; each material is a bubble spanning its ranges, each family has its envelope.
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a box, or whole families left out.
 4. **Rank and check**: the materials that pass, ranked by the index, and the reason every other one fails.
 
-## Features (0.1.0)
+## Features (0.1.1)
 
 - **About 100 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from public sources (U.S. government handbooks, NIST, USGS, the Wood Handbook, open datasets and typical textbook ranges). No proprietary database is used.
+- **22 design goals** in a list beside the chart, grouped as minimum mass, minimum cost, minimum carbon, elastic design, damage tolerance and thermal. A goal sets the axes, draws the selection line of the right slope through the best materials, adds the limits it needs (marked, so you can change them) and ranks the results by its index. “Why?” explains the function, constraint, objective and free variable behind it.
+- **Derived properties**: price, CO₂ and energy per volume, specific stiffness and strength, thermal diffusivity and thermal shock resistance, calculated from each material's own values.
+- **SI or imperial units** everywhere: axes, tables, datasheets and limits. Values are stored in SI, so switching loses nothing.
+- **Bar charts** of one property for every material, grouped by family.
+- **Sources page**: every source, what kind it is, its licence, and which materials and values cite it. Metals are being checked against published datasheets value by value (51 values in 15 metals so far, marked ✓).
+- **? help** beside the tools: a click says what the tool is for and how to use it.
+- **Tell Me** (Ctrl+K) finds commands, design goals and materials (by name, UNS or EN number).
 - **Your own materials**: the Add Material window explains what is needed (a name, the family, density, at least one more property, low and high values in the unit shown, and where the values come from). They appear in every view.
 - **Property charts** of any two properties, log or linear; family envelopes; hover for ranges, click for the datasheet; zoom, pan, guide lines of slope 1, 2 and 3.
 - **Selection**: limit, chart (line or box) and family stages; results ranked by the index with “× best”; failures explained.
 - **Browse** with a family tree and an Excel-like table (sort, select, copy to Excel), and **datasheets** with grouped properties and numbered references.
 - Design problems to start from: light stiff beam, strong tie, stiff panel, springs, hot and light, damage tolerant.
-- Print or save as PDF (charts, datasheets, results); export charts as SVG or PNG.
+- Print or save as PDF (charts, datasheets, results); export charts as SVG or PNG, or copy the chart as a picture.
 - Light, dark and auto themes; the in-app updater; recovery of unsaved work.
 
 <table><tr>
@@ -50,11 +57,13 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 </tr><tr>
 <td><img src="docs/images/datasheet.png" alt="A datasheet with references"></td>
 <td><img src="docs/images/add-material.png" alt="Add a material of your own"></td>
+</tr><tr>
+<td colspan="2"><img src="docs/images/sources.png" alt="Sources: every source with the materials and values that cite it"></td>
 </tr></table>
 
 ## Coming next
 
-Units (SI and imperial), search everywhere and several charts per project (0.1.1); the index builder, expression axes and derived properties (0.2); compare, radar charts, the selection report and 250 materials (0.3); your own databases with Excel import (0.3.1); eco audit (0.4); process selection (0.5). See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+Several selection lines and charts, results to Excel and more values checked against datasheets (0.1.2); the index builder, expression axes and derived properties (0.2); compare, radar charts, the selection report and 250 materials (0.3); your own databases with Excel import (0.3.1); eco audit (0.4); process selection (0.5). See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Install
 
@@ -75,7 +84,7 @@ The engine (`crates/core`) holds the materials data, units, chart geometry and s
 
 ## Data
 
-Values are in `data/*.json`, one file per family, with their sources in `data/sources.json`. Each value is `[low, high, source]`. Built-in values are marked “draft” until each one is checked against the exact table or page of its source; corrections with a reference are welcome as issues or pull requests.
+Values are in `data/*.json`, one file per family, with their sources in `data/sources.json`. Each value is `[low, high, source]`. Built-in values are “draft” until each one is checked against a published source; checked values list the property in the material's `checked` list and cite that datasheet, and the tests refuse a checked value that cites only our own compilation; corrections with a reference are welcome as issues or pull requests.
 
 ## Licence
 

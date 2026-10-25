@@ -15,6 +15,7 @@ User preferences:
 - The family look with the **Violet** accent (FAMILY §3): MS Office ribbon, Cairn-style sidebar, IBM Plex, square controls, light/dark/auto themes.
 - Keep code compact and match the surrounding style. Engine logic (units, ranges, geometry, hulls, selection, indices) belongs in `crates/core` (pure Rust, unit-tested), not in the UI. The window only maps engine geometry to the screen.
 - The UI is SolidJS + Vite in `ui/src/*.tsx` (built to `ui/dist`). State lives in `ui/src/store.ts`.
+- Every tool gets a small **?** beside it that opens a card saying what it is for and how to use it (`ui/src/help.tsx`, one `HELP` table). No separate teaching mode. The user wants this in all Datum apps.
 - **Data:** every value is compiled by us from public sources, with a reference in `data/sources.json`. Never copy Granta/CES, MatWeb or any other proprietary database. Missing values are gaps, never zero.
 - In user-facing text (README, app), Atlas stands on its own: never name other products or use their trademarks, data or wording.
 - Big asks get a `docs/PLAN-x.y.md` with questions first; build after the answers. Report in plain language: what changed, what was checked, what is not done.

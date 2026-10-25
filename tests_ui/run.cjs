@@ -179,6 +179,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.keyboard.press("Enter");
   await p.waitForTimeout(300);
   check("Tell Me finds a material by its UNS number", (await p.textContent(".sheetpage h1").catch(() => "")).includes("7075"));
+  check("checked values carry a ✓ and cite the datasheet", (await p.locator(".sheetpage .chk.ok").count()) === 3 && (await p.textContent(".sheetpage")).includes("7075 Aluminum Alloy Properties"));
   await p.click('.side button[title="Sources"]');
   await p.waitForTimeout(200);
   await p.click(".sources tbody tr.link >> nth=2");
