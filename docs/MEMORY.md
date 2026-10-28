@@ -77,7 +77,7 @@ flowchart LR
 | `crates/core/src/hardening.rs` | FAMILY §11 tests: failed edits change nothing (incl. a failing `Batch` and goal), random projects and random edits never panic and keep their invariants (finite geometry, counts add up, every failure has a reason), random user databases, damaged `.datlas`/`.datdb` files (cut, garbled, deep nesting), a damaged `.datdb` is an error never empty, atomic save, speed gate (1,000 materials × 20 charts: ~200 ms release, ~1.2 s debug). |
 | `crates/core/src/tests.rs` | Data checks, bad-data detection, unit round trips, bubbles in log space, hulls contain their bubbles (6 axis pairs × family/class), missing values, index lines for slopes 1/2/3 above/below, limits (missing, flag, whole range, flags), combined stages, edits/undo/round trip/templates, user materials, tree and search; derived ranges; every goal (line, ranking by its hand-computed index, limits, Explore); index names; bar charts; checked values cite linked datasheets. |
 | `crates/core/examples/bridge.rs` | The engine over stdin/stdout JSON lines for the UI tests. |
-| `data/*.json`, `data/sources.json` | The built-in database (252 materials, 25 sources: 9 general + 16 datasheets), `status: draft`; 15 metals have `checked` lists (51 values); durability ratings on every material. |
+| `data/*.json`, `data/sources.json` | The built-in database (252 materials, 25 sources: 9 general + 16 datasheets), `status: draft`; 20 materials have `checked` lists (73 values); durability ratings on every material. |
 | `src-tauri/src/main.rs` | Commands in the diagram; options (theme, autosave, beta, openLast, labels, guides, dpi, units, paper, landscape, company, logo); user database file; recovery; recent files; `open_url` only for this repo. |
 | `src-tauri/src/update.rs` | Datum Plan's updater with `REPO = Edgar-Mendonca/Datum-Atlas`. |
 | `ui/index.html` | Icon sprite (Plan/Plot icons recoloured violet + atlas, bar, box, compare, datasheet, db, eco, eye, hull, index, material, pan, poly, process, radar, swap, tree, units). |
@@ -360,6 +360,19 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - help topics `import` and `databases`.
 - The bridge serves the same commands with fixtures `tests_ui/import.csv` and `team.datdb`.
 - 35 engine tests and all UI checks pass; cargo deny ok.
+
+### 2026-10-28: Session 11, continued (0.2.0 stage F: more values checked)
+- 22 more values checked (73 in all) against producers' and suppliers' own datasheets and NIST:
+  - 316 (Rolled Alloys); 430 (Combined Metals, ATI);
+  - aluminium 1100 (NIST "Properties of Wrought Aluminum Alloys", Alloys International);
+  - zinc die-casting alloy 3 (Xometry);
+  - alloy 625 (ATI, voestalpine);
+  - PC and PA66 density (Ensinger); PEEK density (Sterling Plastics).
+  - The script asserts each datasheet figure lies in our range before marking it.
+- Widened: 1100 λ to 231 (NIST), 1100 tensile to 89, 625 tensile to 827.
+- Still draft (no primary source found by search): 1020, 1080, 304, grey iron, AZ91, CoCr F75 (only additive-manufacturing data found), lead, tin, tungsten; most polymers.
+- Source titles made generic where they carried brand names ("Nickel alloy 718", "Steel 1.6582", "Zinc die-casting alloy 3"); the links stay as published.
+- The checked-value test accepts datasheet, government and handbook sources with a link (≥ 70 values).
 
 ---
 

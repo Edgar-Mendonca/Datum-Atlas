@@ -45,9 +45,9 @@ fn checks_catch_bad_values() {
 fn checked_values_cite_datasheets() {
     let d = db::builtin();
     let n: usize = d.materials.iter().map(|m| m.checked.len()).sum();
-    assert!(n >= 50, "only {n} checked values");
+    assert!(n >= 70, "only {n} checked values");
     for m in d.materials.iter().filter(|m| !m.checked.is_empty()) {
-        for k in &m.checked { assert!(d.sources.iter().any(|s| s.id == m.props[k].src() && s.kind == "datasheet" && s.url.starts_with("https://")), "{} {k}", m.id); }
+        for k in &m.checked { assert!(d.sources.iter().any(|s| s.id == m.props[k].src() && ["datasheet", "government", "handbook"].contains(&s.kind.as_str()) && s.url.starts_with("https://")), "{} {k}", m.id); }
     }
 }
 
