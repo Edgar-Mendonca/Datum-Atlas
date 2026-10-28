@@ -18,10 +18,13 @@ export interface Prop { key: string; name: string; sym: string; group: string; u
 export interface Node { path: string; name: string; depth: number; count: number }
 export interface Db { materials: Material[]; sources: Source[]; userCount: number; props: Prop[]; tree: Node[]; rev: number; /** What happened to your materials file at start (damaged and kept aside, values left out). */ userNote?: string | null }
 
-export type ChartSel = { Line: { slope: number; x: number; y: number; above: boolean } } | { Box: { x0: number; x1: number; y0: number; y1: number } };
-export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; select: ChartSel | null; goal: string; kind: string }
+export type Line = { slope: number; x: number; y: number; above: boolean };
+export type ChartSel = { Line: Line } | { Box: { x0: number; x1: number; y0: number; y1: number } } | { Poly: { pts: [number, number][] } };
+/** A chart: two properties and its selections (lines, boxes, shapes); a material passes when it passes all. */
+export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; sels: ChartSel[]; goal: string; kind: string }
+export interface Weight { prop: string; w: number; high: boolean }
 export interface Limit { prop: string; min: number | null; max: number | null; flag: boolean | null; rating: string | null; goal: boolean }
-export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number }
+export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number; rankLine: number; ranking: string; weights: Weight[] }
 export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any }
 
 export interface Bubble { id: string; name: string; fam: number; class: string; c: [number, number]; r: [number, number]; x: [number, number]; y: [number, number] }
@@ -29,11 +32,12 @@ export interface Hull { name: string; fam: number; pts: [number, number][]; at: 
 export interface Axis { key: string; name: string; sym: string; unit: string; log: boolean; lim: [number, number] }
 export interface ChartOut { id: number; x: Axis; y: Axis; families: string[]; bubbles: Bubble[]; hulls: Hull[]; missing: [string, string][]; bands: { name: string; fam: number; from: number; to: number }[] }
 export interface Row { id: string; name: string; family: string; pass: boolean; reasons: string[]; index: number | null; ratio: number | null; rank: number | null }
-export interface Results { total: number; pass: number; stages: { kind: string; name: string; chart: number; pass: number }[]; rows: Row[]; indexName: string; rankChart: number; lines: { chart: number; name: string; value: number }[] }
+export interface Results { total: number; pass: number; stages: { kind: string; name: string; chart: number; pass: number }[]; rows: Row[]; indexName: string; rankChart: number; rankLine: number; lines: { chart: number; k: number; name: string; value: number }[] }
 export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; dbRev: number }
 export interface Goal {
   id: string; group: string; name: string; index: string; x: string; y: string; slope: number; above: boolean;
   function: string; constraint: string; objective: string; free: string; why: string; limits: [string, number | null, number | null][];
+  also: { x: string; y: string; slope: number; above: boolean; index: string; name: string } | null;
 }
 export interface Options { theme: string; autosave: number; beta: boolean; openLast: boolean; labels: boolean; guides: boolean; dpi: number; units: string; paper: string; landscape: boolean; company: string; logo: string }
 
@@ -61,3 +65,8 @@ export const famColor = (k: number) => FAMILY_COLORS[k % FAMILY_COLORS.length];
 export const dayDate = (d: number) => { const x = new Date(1970, 0, 1); x.setDate(x.getDate() + Math.floor(d)); return x; };
 export const dateDay = (x: Date) => Math.round((Date.UTC(x.getFullYear(), x.getMonth(), x.getDate()) - Date.UTC(1970, 0, 1)) / 864e5);
 export const iso = (d: number) => { const x = dayDate(d); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, "0")}-${String(x.getDate()).padStart(2, "0")}`; };
+export const lineOf = (s: ChartSel | null | undefined) => (s && "Line" in s ? s.Line : null);
+export const boxOf = (s: ChartSel | null | undefined) => (s && "Box" in s ? s.Box : null);
+export const polyOf = (s: ChartSel | null | undefined) => (s && "Poly" in s ? s.Poly : null);
+/** A chart's goal without the "/2" that marks a two-constraint goal's second chart. */
+export const goalId = (c: Chart) => c.goal.replace(/\/2$/, "");

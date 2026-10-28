@@ -122,6 +122,7 @@ export const goalCard = (id: string) => openDialog(() => {
           <tr><td>Function</td><td>{g.function}</td></tr><tr><td>Constraint</td><td>{g.constraint}</td></tr>
           <tr><td>Objective</td><td>{g.objective}</td></tr><tr><td>Free variable</td><td>{g.free}</td></tr>
           <tr><td>Chart</td><td>{propOf(g.y)?.name} against {propOf(g.x)?.name}, {g.slope ? `line of slope ${fmt(g.slope)}` : "horizontal line"}; {g.above ? "above" : "below"} passes</td></tr>
+          <Show when={g.also}>{a => <tr><td>Second chart</td><td>{propOf(a().y)?.name} against {propOf(a().x)?.name}, line of slope {fmt(a().slope)} for {a().index}; the goal adds this chart, and the shortlist passes both</td></tr>}</Show>
           <Show when={g.limits.length}><tr><td>Suggested limits</td><td>{g.limits.map(([k, a, b]) => `${propOf(k)?.name}${a !== null ? ` ≥ ${fmt(toShown(k, a))}` : ""}${b !== null ? ` ≤ ${fmt(toShown(k, b))}` : ""} ${unitOf(k)}`).join("; ")}</td></tr></Show>
         </tbody></table>
         <h4>Why</h4><p>{g.why}</p>

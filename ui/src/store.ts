@@ -1,7 +1,7 @@
 // Window state: the open project (with its charts laid out and its results), the database, the view
 // shown, the material in the datasheet, the open chart, menus, dialogs and toasts.
 import { createSignal, batch, JSX } from "solid-js";
-import { invoke, Out, Options, Db, Material, Chart, ChartOut, Goal, Val, fmt } from "./api";
+import { invoke, Out, Options, Db, Material, Chart, ChartOut, ChartSel, Goal, Val, fmt } from "./api";
 
 export const [out, setOutRaw] = createSignal<Out | null>(null);
 export const [tick, setTick] = createSignal(0);
@@ -80,6 +80,12 @@ export const loadOut = async (cmd: string, args?: object) => {
 };
 /** Applies a design goal to the open chart ("" to explore). */
 export const setGoal = (goal: string): Promise<boolean> => { const c = chart(); if (!c) { toast("Open a chart first."); return Promise.resolve(false); } return act({ Goal: { chart: c.id, goal } }); };
+/** The selection being edited on each chart (its index in `sels`): moved by the keys, edited in the toolbar. */
+export const [active, setActive] = createSignal<Record<number, number>>({});
+export const activeOf = (c: Chart) => Math.min(active()[c.id] ?? 0, Math.max(0, c.sels.length - 1));
+export const setActiveOf = (id: number, k: number) => setActive(a => ({ ...a, [id]: k }));
+/** Replaces a chart's selections. */
+export const setSels = (c: Chart, sels: ChartSel[]) => act({ Select: { chart: c.id, sels } });
 /** Changes the open chart's settings. */
 export const setChart = (f: (c: Chart) => void) => { const c = chart(); if (!c) return toast("Open a chart first."); const n = structuredClone(c); f(n); return act({ SetChart: { chart: n } }); };
 

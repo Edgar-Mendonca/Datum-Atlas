@@ -68,7 +68,7 @@ flowchart LR
 | `crates/core/src/model.rs` | `Val` (untagged arrays), `Material` (with `checked`), `Source`, `Database`, `PROPS` (34 properties + 7 derived: key, name, symbol, group, unit, log default), `FAMILIES`, `RATINGS`; `.datlas` `Project` format 1 (charts, stages, notes, ui), `Chart` (with `goal`, `kind` bubble/bar), `ChartSel` (Line/Box), `Stages`, `Limit` (with `goal`), `chart_name`. |
 | `crates/core/src/units.rs` | Imperial factors per stored unit, `to`/`from` (exact inverses), `fmt` (3 significant figures), `range`. |
 | `crates/core/src/db.rs` | `builtin()` from the embedded files, `Db` (built-in + user + derived), `derive`, `tree`, `search`, `check` (incl. checked values), `check_user`, `props_out`. |
-| `crates/core/src/goals.rs` | `Goal` (group, name, index, axes, slope, above, function, constraint, objective, free variable, why, limits), `GOALS` (22), `get`, `apply`. |
+| `crates/core/src/goals.rs` | `Goal` (group, name, index, axes, slope, above, function, constraint, objective, free variable, why, limits, `also` for a second chart), `GOALS` (25), `get`, `place`, `apply`. |
 | `crates/core/src/geometry.rs` | `t`/`span`/`mean` in axis space, `ellipse`, `convex`, rounded `hull`, `inside`, `clusters`. |
 | `crates/core/src/chart.rs` | `build(db, chart)` → `ChartOut` (axes with limits, bubbles, hulls with members and labels, missing with reasons; for bar charts `bands` per family, sorted). |
 | `crates/core/src/select.rs` | `run(db, project)` → `Results` (stage counts, rows with reasons, index, rank, × best, `lines` with index name and value; `index_name` writes E½/ρ, σy⅔/ρ). |
@@ -269,6 +269,22 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - CI jobs `deny` and `platforms` (Windows, macOS);
   - `SECURITY.md`, `CONTRIBUTING.md` (with the open-sources-only data rule).
 - All checks pass (25 engine tests, UI tests).
+
+### 2026-10-28: Session 11, continued (0.2.0 stage B: selection)
+- **Engine:**
+  - `Chart.sels` is a list of selections (`Line`, `Box`, new `Poly`); a material passes a chart when it passes all of them, so facing lines make a band. Old files' `select` moves into `sels` and is never written.
+  - `Stages.rank_line`, `ranking` ("line" or "weighted") and `weights` (property, weight, higher better). Weighted scores scale each property so the best passing material scores 1 (a ratio for log properties, min–max for linear ones), then average by weight.
+  - `Op::Select { sels }`, `Op::PassThrough` (line through a typed index value, via `select::y_for`), `geometry::in_polygon`.
+  - Three two-constraint goals (25 in all): stiff and strong beam, stiff and strong panel, stiff and damage-tolerant tie. Each adds its second chart, marked `<id>/2`; a new goal removes the old second chart.
+- **Window:**
+  - every selection drawn, with its own handle and index label;
+  - Shape tool (click corners; Enter or double-click closes; Esc cancels);
+  - + Line, Pass through…, and selection chips (edit, remove, "rank by it", "ranks");
+  - arrow keys and Delete on the focused chart;
+  - a Ranking section in Stages (line or weighted);
+  - ? help topics `sels` and `ranking`;
+  - the second chart in the goal's Why card; printed captions for every line.
+- 30 engine tests; 9 new UI checks, all passing.
 
 ---
 

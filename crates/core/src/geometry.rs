@@ -88,6 +88,16 @@ pub fn inside(poly: &[[f64; 2]], p: [f64; 2], tol: f64) -> bool {
     })
 }
 
+/// Is `p` inside the polygon `poly` (any shape, either winding)? Even-odd rule.
+pub fn in_polygon(poly: &[[f64; 2]], p: [f64; 2]) -> bool {
+    let mut inside = false;
+    for i in 0..poly.len() {
+        let (a, b) = (poly[i], poly[(i + poly.len() - 1) % poly.len()]);
+        if (a[1] > p[1]) != (b[1] > p[1]) && p[0] < (b[0] - a[0]) * (p[1] - a[1]) / (b[1] - a[1]) + a[0] { inside = !inside }
+    }
+    inside
+}
+
 /// Radius of an axis-aligned ellipse in direction (dx, dy).
 fn reach(r: [f64; 2], dx: f64, dy: f64) -> f64 {
     let d = (dx * dx + dy * dy).sqrt();

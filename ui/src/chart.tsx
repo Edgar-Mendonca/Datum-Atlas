@@ -2,8 +2,8 @@
 // axes); this file only maps them to the screen, draws the axes and ticks, and handles zoom, pan,
 // hover, clicks and dragging the selection line or box. `ChartSvg` also draws printed charts.
 import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
-import { Chart, ChartOut, ChartSel, Bubble, famColor, fmt, range } from "./api";
-import { act, out, failed, cur, setCur, openSheet, openMenu, chartOut, setChart, toast, db, chart, call, opts, conv, unitOf, toShown, goals, setGoal } from "./store";
+import { Chart, ChartOut, ChartSel, Bubble, Line, famColor, fmt, range, lineOf, boxOf, polyOf, goalId } from "./api";
+import { act, out, failed, cur, setCur, openSheet, openMenu, chartOut, setChart, toast, db, chart, call, opts, conv, unitOf, toShown, goals, setGoal, activeOf, setActiveOf, setSels, P } from "./store";
 import { Icon } from "./ui";
 import { Help } from "./help";
 import { render } from "solid-js/web";
@@ -50,11 +50,9 @@ const nudge = (ls: { x: number; y: number; w: number }[]) => {
   }
   return done.sort((a, b) => a.i - b.i).map(l => l.y);
 };
-const lineOf = (s: ChartSel | null | undefined) => (s && "Line" in s ? s.Line : null);
-const boxOf = (s: ChartSel | null | undefined) => (s && "Box" in s ? s.Box : null);
-
-/** The chart as SVG at w × h pixels for the window `win`. */
-export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: Win; sel?: ChartSel | null; print?: boolean; hover?: string; legend?: boolean }) => {
+/** The chart as SVG at w × h pixels for the window `win`. `sels` previews selections being dragged,
+ *  `draft` a shape being drawn (axis space), `act` the selection being edited. */
+export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: Win; sels?: ChartSel[]; draft?: [number, number][]; act?: number; print?: boolean; hover?: string; legend?: boolean }) => {
   const W = () => Math.max(10, p.w - M.l - M.r), H = () => Math.max(10, p.h - M.t - M.b - (p.legend ? LEG : 0));
   const X = (u: number) => M.l + ((u - p.win[0]) / (p.win[1] - p.win[0])) * W();
   const Y = (v: number) => M.t + (1 - (v - p.win[2]) / (p.win[3] - p.win[2])) * H();
@@ -62,24 +60,29 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
   const tx = () => (bar() ? { major: [], minor: [] } : ticksFor(p.win[0], p.win[1], p.o.x.log, p.o.x.key)), ty = () => ticksFor(p.win[2], p.win[3], p.o.y.log, p.o.y.key);
   const hullLabels = () => { const hs = p.o.hulls.filter(h => h.label), ys = nudge(hs.map(h => ({ x: X(h.at[0]), y: Y(h.at[1]) - 4, w: h.name.length * 6.8 }))); return hs.map((h, i) => ({ h, y: ys[i] })); };
   const fail = () => failed();
-  const sel = () => (p.sel === undefined ? p.c.select : p.sel);
+  const sels = () => p.sels ?? p.c.sels;
   const ax = (v: number, log: boolean) => (log ? Math.log10(v) : v);
   const clip = `clip${p.c.id}${p.print ? "p" : "s"}`;
-  const lineVal = () => out()?.results.lines.find(l => l.chart === p.c.id);
-  /** The selection line across the window, and the side that passes. */
-  const line = () => {
-    const l = lineOf(sel()); if (!l) return null;
-    const [u, v] = [ax(l.x, p.o.x.log), ax(l.y, p.o.y.log)], at = (x: number) => v + l.slope * (x - u);
-    const [a, b] = [p.win[0], p.win[1]], edge = l.above ? p.win[3] : p.win[2];
-    // Where to write the index: the first point from 70 % along the line that is inside the plot.
-    const inside = (t: number) => { const x = a + (b - a) * t, y = Y(at(x)); return y > M.t + 16 && y < M.t + H() - 8 ? [X(x), y] : null; };
-    // …and not on a family label.
-    const w = ((lineVal()?.name.length ?? 6) + 9) * 7, labs = hullLabels().map(({ h, y }) => ({ x: X(h.at[0]), y, w: h.name.length * 6.8 }));
-    const free = (q: number[] | null) => q && !labs.some(l => q[0] + 8 < l.x + l.w / 2 + 4 && q[0] + 8 + w > l.x - l.w / 2 - 4 && Math.abs(q[1] - 10 - l.y) < 16);
-    const cand = [0.7, 0.6, 0.8, 0.5, 0.9, 0.4, 0.3, 0.2, 0.85, 0.15].map(inside);
-    const lab = cand.find(free) ?? cand.find(Boolean) ?? [X(u), Y(v)];
-    return { d: `M${X(a)} ${Y(at(a))}L${X(b)} ${Y(at(b))}`, zone: `M${X(a)} ${Y(at(a))}L${X(b)} ${Y(at(b))}L${X(b)} ${Y(edge)}L${X(a)} ${Y(edge)}Z`, hx: X(u), hy: Y(v), lx: lab[0], ly: lab[1] };
+  const lineVal = (k: number) => out()?.results.lines.find(l => l.chart === p.c.id && l.k === k);
+  /** Each selection line across the window, the side that passes, and where its index is written. */
+  const lines = () => {
+    const taken = hullLabels().map(({ h, y }) => ({ x: X(h.at[0]), y, w: h.name.length * 6.8 }));
+    return sels().flatMap((s, k) => {
+      const l = lineOf(s); if (!l) return [];
+      const [u, v] = [ax(l.x, p.o.x.log), ax(l.y, p.o.y.log)], at = (x: number) => v + l.slope * (x - u);
+      const [a, b] = [p.win[0], p.win[1]], edge = l.above ? p.win[3] : p.win[2];
+      // Where to write the index: a point along the line inside the plot, not on a family label or another line's label.
+      const inside = (t: number) => { const x = a + (b - a) * t, y = Y(at(x)); return y > M.t + 16 && y < M.t + H() - 8 ? [X(x), y] : null; };
+      const w = ((lineVal(k)?.name.length ?? 6) + 9) * 7;
+      const free = (q: number[] | null) => q && !taken.some(l => q[0] + 8 < l.x + l.w / 2 + 4 && q[0] + 8 + w > l.x - l.w / 2 - 4 && Math.abs(q[1] - 10 - l.y) < 16);
+      const cand = [0.7, 0.6, 0.8, 0.5, 0.9, 0.4, 0.3, 0.2, 0.85, 0.15].map(inside);
+      const lab = cand.find(free) ?? cand.find(Boolean) ?? [X(u), Y(v)];
+      taken.push({ x: lab[0] + 8 + w / 2, y: lab[1] - 10, w });
+      return [{ k, l, d: `M${X(a)} ${Y(at(a))}L${X(b)} ${Y(at(b))}`, zone: `M${X(a)} ${Y(at(a))}L${X(b)} ${Y(at(b))}L${X(b)} ${Y(edge)}L${X(a)} ${Y(edge)}Z`, hx: X(u), hy: Y(v), lx: lab[0], ly: lab[1] }];
+    });
   };
+  const pts = (q: [number, number][]) => q.map(([x, y]) => `${X(ax(x, p.o.x.log)).toFixed(1)} ${Y(ax(y, p.o.y.log)).toFixed(1)}`).join("L");
+  const on = (k: number) => !p.print && p.act === k && sels().length > 1;
   const guide = (n: number) => { const cu = (p.win[0] + p.win[1]) / 2, cv = (p.win[2] + p.win[3]) / 2, at = (x: number) => cv + n * (x - cu); return { d: `M${X(p.win[0])} ${Y(at(p.win[0]))}L${X(p.win[1])} ${Y(at(p.win[1]))}`, n }; };
   const bubbles = () => [...p.o.bubbles].sort((a, b) => b.r[0] * b.r[1] - a.r[0] * a.r[1]);
   return (
@@ -93,7 +96,7 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
       </g>
       <g clip-path={`url(#${clip})`}>
         <For each={p.o.hulls}>{h => <path class="hull" d={`M${h.pts.map(q => `${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("L")}Z`} fill={famColor(h.fam)} fill-opacity=".13" stroke={famColor(h.fam)} stroke-opacity=".55" stroke-width="1.2" />}</For>
-        <Show when={line()}>{l => <path d={l().zone} fill="#6C4AB6" fill-opacity=".06" />}</Show>
+        <For each={lines()}>{l => <path d={l.zone} fill="#6C4AB6" fill-opacity=".06" />}</For>
         <For each={bar() ? [] : p.c.guides}>{n => { const g = () => guide(n); return <path d={g().d} stroke="#5B6878" stroke-width="1" stroke-dasharray="5 4" fill="none" />; }}</For>
         <For each={bubbles()}>{b => {
           const off = () => fail().has(b.id), on = () => b.id === cur() || b.id === p.hover;
@@ -104,13 +107,18 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
         }}</For>
         <For each={hullLabels()}>{({ h, y }) => <text x={X(h.at[0])} y={y} text-anchor="middle" font-size="12" font-weight="600" fill={famColor(h.fam)} stroke="#fff" stroke-width="3" paint-order="stroke" pointer-events="none">{h.name}</text>}</For>
         <Show when={p.c.labels}><For each={p.o.bubbles}>{b => <text x={X(b.c[0]) + 4} y={Y(b.c[1]) - 4} font-size="9.5" fill="#3B4859" pointer-events="none">{b.name.split(/[,(]/)[0]}</text>}</For></Show>
-        <Show when={boxOf(sel())}>{bx => <rect class="selbox" x={Math.min(X(ax(bx().x0, p.o.x.log)), X(ax(bx().x1, p.o.x.log)))} y={Math.min(Y(ax(bx().y0, p.o.y.log)), Y(ax(bx().y1, p.o.y.log)))}
-          width={Math.abs(X(ax(bx().x1, p.o.x.log)) - X(ax(bx().x0, p.o.x.log)))} height={Math.abs(Y(ax(bx().y1, p.o.y.log)) - Y(ax(bx().y0, p.o.y.log)))} fill="#6C4AB6" fill-opacity=".07" stroke="#6C4AB6" stroke-width="1.6" stroke-dasharray="6 3" />}</Show>
-        <Show when={line()}>{l => <>
-          <path class="sell" d={l().d} stroke="transparent" stroke-width="12" fill="none" />
-          <path d={l().d} stroke="#6C4AB6" stroke-width="2.2" fill="none" pointer-events="none" />
-          <Show when={!p.print}><circle class="selh" cx={l().hx} cy={l().hy} r="6.5" fill="#fff" stroke="#6C4AB6" stroke-width="2.2" /></Show>
-        </>}</Show>
+        <For each={sels()}>{(s, k) => <>
+          <Show when={boxOf(s)}>{bx => <rect class="selbox" data-k={k()} x={Math.min(X(ax(bx().x0, p.o.x.log)), X(ax(bx().x1, p.o.x.log)))} y={Math.min(Y(ax(bx().y0, p.o.y.log)), Y(ax(bx().y1, p.o.y.log)))}
+            width={Math.abs(X(ax(bx().x1, p.o.x.log)) - X(ax(bx().x0, p.o.x.log)))} height={Math.abs(Y(ax(bx().y1, p.o.y.log)) - Y(ax(bx().y0, p.o.y.log)))} fill="#6C4AB6" fill-opacity=".07" stroke="#6C4AB6" stroke-width={on(k()) ? 2.6 : 1.6} stroke-dasharray="6 3" />}</Show>
+          <Show when={polyOf(s)}>{q => <path class="selpoly" data-k={k()} d={`M${pts(q().pts)}Z`} fill="#6C4AB6" fill-opacity=".07" stroke="#6C4AB6" stroke-width={on(k()) ? 2.6 : 1.6} stroke-dasharray="6 3" />}</Show>
+        </>}</For>
+        <For each={lines()}>{l => <>
+          <path class="sell" data-k={l.k} d={l.d} stroke="transparent" stroke-width="12" fill="none" />
+          <path d={l.d} stroke="#6C4AB6" stroke-width={on(l.k) ? 3.4 : 2.2} fill="none" pointer-events="none" />
+          <Show when={!p.print}><circle class="selh" data-k={l.k} cx={l.hx} cy={l.hy} r="6.5" fill={on(l.k) ? "#6C4AB6" : "#fff"} stroke="#6C4AB6" stroke-width="2.2" /></Show>
+        </>}</For>
+        <Show when={p.draft?.length}><path d={`M${p.draft!.map(([u, v]) => `${X(u)} ${Y(v)}`).join("L")}`} fill="none" stroke="#6C4AB6" stroke-width="1.6" stroke-dasharray="4 3" />
+          <For each={p.draft}>{([u, v], i) => <circle cx={X(u)} cy={Y(v)} r={i() === 0 ? 5 : 3} fill={i() === 0 ? "#fff" : "#6C4AB6"} stroke="#6C4AB6" stroke-width="1.6" />}</For></Show>
       </g>
       <rect x={M.l} y={M.t} width={W()} height={H()} fill="none" stroke="#333" stroke-width="1" />
       <g stroke="#333" stroke-width="1">
@@ -130,7 +138,7 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
         return <Show when={y > M.t && y < M.t + H()}><text x={Math.min(x, M.l + W()) - 4} y={y - 5} text-anchor="end" font-size="10" fill="#5B6878">slope {fmt(n)}</text></Show>; }}</For>
       <Show when={p.legend}><g font-size="11" fill="#222"><For each={p.o.families.filter(f => !p.c.hidden.includes(f))}>{(f, i) => <g transform={`translate(${M.l + i() * Math.min(150, W() / 7)} ${p.h - 8})`}>
         <rect y="-9" width="11" height="11" fill={famColor(p.o.families.indexOf(f))} fill-opacity=".7" /><text x="15">{f}</text></g>}</For></g></Show>
-      <Show when={line() && lineVal()}>{_ => { const l = line()!; return <text x={Math.min(Math.max(l.lx + 8, M.l + 6), M.l + W() - 170)} y={l.ly - 10} font-size="11.5" font-weight="600" fill="#5A3C9C" stroke="#fff" stroke-width="3" paint-order="stroke">{lineVal()!.name} = {fmt(lineVal()!.value)}</text>; }}</Show>
+      <For each={lines()}>{l => <Show when={lineVal(l.k)}>{v => <text x={Math.min(Math.max(l.lx + 8, M.l + 6), M.l + W() - 170)} y={l.ly - 10} font-size="11.5" font-weight="600" fill="#5A3C9C" stroke="#fff" stroke-width="3" paint-order="stroke">{v().name} = {fmt(v().value)}</text>}</Show>}</For>
     </svg>
   );
 };
@@ -148,11 +156,29 @@ export const Legend = (p: { c: Chart; o: ChartOut }) => (
 /** Zoom windows per chart, kept while you move between views; reset when the axes change. */
 const wins = new Map<number, { key: string; w: Win }>();
 const keyOf = (c: Chart) => `${c.kind}|${c.x}|${c.y}|${c.logX}|${c.logY}`;
-export const [tool, setTool] = createSignal<"pan" | "line" | "box">("pan");
+export const [tool, setTool] = createSignal<"pan" | "line" | "box" | "poly">("pan");
 export const [slope, setSlope] = createSignal(1);
 let fitNow: (() => void) | null = null, zoomBy: ((f: number) => void) | null = null;
 export const fitChart = () => fitNow?.();
 export const zoomChart = (f: number) => zoomBy?.(f);
+/** A new selection line on a chart, through (x, y) in stored units; it becomes the one being edited. */
+export const addLine = (c: Chart, l: Line) => { setActiveOf(c.id, c.sels.length); return setSels(c, [...c.sels, { Line: l }]); };
+/** Removes selection k (or all). */
+export const removeSel = (c: Chart, k?: number) => setSels(c, k === undefined ? [] : c.sels.filter((_, i) => i !== k));
+/** The line being edited on a chart, if the active selection is a line. */
+export const activeLine = (c: Chart) => lineOf(c.sels[activeOf(c)]);
+/** A line through the middle of the chart's view, for "Add line" and the ribbon. */
+const middle = (c: Chart, n: number): Line => { const w = wins.get(c.id)?.w, o = chartOut(c.id), lim = w ?? (o ? [o.x.lim[0], o.x.lim[1], o.y.lim[0], o.y.lim[1]] : [3, 4, 0, 2]);
+  const v = (u: number, log: boolean) => (log ? 10 ** u : u); return { slope: n, x: v((lim[0] + lim[1]) / 2, c.logX), y: v((lim[2] + lim[3]) / 2, c.logY), above: true }; };
+export const newLine = (c: Chart, n = activeLine(c)?.slope ?? slope()) => addLine(c, middle(c, n));
+/** Moves the active line so its index has the value typed (stored units). */
+export const passThrough = (c: Chart) => {
+  const k = activeOf(c), l = lineOf(c.sels[k]); if (!l) return toast("Pick a selection line first.");
+  const name = out()?.results.lines.find(x => x.chart === c.id && x.k === k)?.name ?? "the index";
+  const t = prompt(`Value of ${name} the line should pass through (in the stored units: kg/m³, GPa, MPa…):`); if (t === null) return;
+  const value = +t.replace(",", "."); if (!isFinite(value)) return toast("Type a number.");
+  act({ PassThrough: { chart: c.id, k, value } });
+};
 
 export const ChartView = (p: { c: Chart }) => {
   let box!: HTMLDivElement;
@@ -163,7 +189,8 @@ export const ChartView = (p: { c: Chart }) => {
   const [bump, setBump] = createSignal(0);
   const win = (): Win => { bump(); const w = wins.get(p.c.id); return w && w.key === keyOf(p.c) ? w.w : lim(); };
   const setWin = (w: Win) => { wins.set(p.c.id, { key: keyOf(p.c), w }); setBump(b => b + 1); };
-  const [drag, setDrag] = createSignal<ChartSel | null | undefined>(undefined);
+  const [drag, setDrag] = createSignal<ChartSel[] | undefined>(undefined);
+  const [draft, setDraft] = createSignal<[number, number][]>([]);
   const [tip, setTip] = createSignal<{ x: number; y: number; b: Bubble } | null>(null);
   onMount(() => {
     const ro = new ResizeObserver(() => setSize([box.clientWidth, box.clientHeight])); ro.observe(box); onCleanup(() => ro.disconnect());
@@ -175,6 +202,7 @@ export const ChartView = (p: { c: Chart }) => {
   /** Mouse → axis space. */
   const at = (e: MouseEvent): [number, number] => { const r = box.getBoundingClientRect(), w = win(); return [w[0] + ((e.clientX - r.left - M.l) / W()) * (w[1] - w[0]), w[2] + (1 - (e.clientY - r.top - M.t) / H()) * (w[3] - w[2])]; };
   const val = (u: number, log: boolean) => (log ? 10 ** u : u);
+  const store = (q: [number, number]): [number, number] => [val(q[0], o()!.x.log), val(q[1], o()!.y.log)];
   const hit = (e: MouseEvent) => {
     const [u, v] = at(e), w = win(), px = W() / (w[1] - w[0]), py = H() / (w[3] - w[2]);
     let best: Bubble | null = null, area = Infinity;
@@ -190,50 +218,80 @@ export const ChartView = (p: { c: Chart }) => {
     const f = e.deltaY < 0 ? 1.18 : 1 / 1.18, [u, v] = at(e), w = win();
     setWin([u - (u - w[0]) / f, u + (w[1] - u) / f, v - (v - w[2]) / f, v + (w[3] - v) / f]);
   };
+  /** Closes the shape being drawn and adds it as a selection. */
+  const closeDraft = () => { const d = draft(); setDraft([]); if (d.length >= 3) { setActiveOf(p.c.id, p.c.sels.length); setSels(p.c, [...p.c.sels, { Poly: { pts: d.map(store) } }]); } else if (d.length) toast("A shape needs at least three corners."); };
   const down = (e: MouseEvent) => {
     if (e.button !== 0 || !o()) return;
-    const t = e.target as Element, c = p.c, x = o()!;
+    box.focus();
+    const t = e.target as Element, c = p.c, x = o()!, k = +(t.getAttribute("data-k") ?? -1);
     const start = at(e), w0 = win(), [sx, sy] = [e.clientX, e.clientY];
     let moved = false, mv: (m: MouseEvent) => void, up: (m: MouseEvent) => void;
-    const l = lineOf(c.select);
-    if (c.kind === "bar") {
-      mv = m => { const dx = m.clientX - sx, dy = m.clientY - sy; if (!moved && Math.hypot(dx, dy) < 3) return; moved = true; const ku = (w0[1] - w0[0]) / W(), kv = (w0[3] - w0[2]) / H(); setWin([w0[0] - dx * ku, w0[1] - dx * ku, w0[2] + dy * kv, w0[3] + dy * kv]); };
-      up = m => { if (!moved) { const b = hit(m); setCur(b ? b.id : ""); } };
-    } else if ((t.classList.contains("selh") || t.classList.contains("sell")) && l) {
-      // Move the selection line: it keeps its slope and passes through the mouse.
-      mv = m => { moved = true; const [u, v] = at(m); setDrag({ Line: { ...l, x: val(u, x.x.log), y: val(v, x.y.log) } }); };
-      up = m => { const d = drag(); setDrag(undefined); if (moved && d) act({ Select: { chart: c.id, select: d } }); else { const b = hit(m); setCur(b ? b.id : ""); } };
+    const pan = (m: MouseEvent) => { const dx = m.clientX - sx, dy = m.clientY - sy; if (!moved && Math.hypot(dx, dy) < 3) return; moved = true; const ku = (w0[1] - w0[0]) / W(), kv = (w0[3] - w0[2]) / H(); setWin([w0[0] - dx * ku, w0[1] - dx * ku, w0[2] + dy * kv, w0[3] + dy * kv]); };
+    const pick = (m: MouseEvent) => { const b = hit(m); setCur(b ? b.id : ""); };
+    if (c.kind === "bar") { mv = pan; up = m => { if (!moved) pick(m); }; }
+    else if (k >= 0 && (t.classList.contains("selh") || t.classList.contains("sell")) && lineOf(c.sels[k])) {
+      // Move a selection line: it keeps its slope and passes through the mouse.
+      const l = lineOf(c.sels[k])!;
+      setActiveOf(c.id, k);
+      mv = m => { moved = true; const [u, v] = at(m); setDrag(c.sels.map((s, i) => (i === k ? { Line: { ...l, x: val(u, x.x.log), y: val(v, x.y.log) } } : s))); };
+      up = m => { const d = drag(); setDrag(undefined); if (moved && d) setSels(c, d); else pick(m); };
     } else if (tool() === "box") {
-      mv = m => { moved = true; const [u, v] = at(m); setDrag({ Box: { x0: val(start[0], x.x.log), x1: val(u, x.x.log), y0: val(start[1], x.y.log), y1: val(v, x.y.log) } }); };
-      up = () => { const d = drag(); setDrag(undefined); if (moved && d) act({ Select: { chart: c.id, select: d } }); };
+      // One box per chart: a new one replaces the old.
+      const others = c.sels.filter(s => !boxOf(s));
+      mv = m => { moved = true; const [u, v] = at(m); setDrag([...others, { Box: { x0: val(start[0], x.x.log), x1: val(u, x.x.log), y0: val(start[1], x.y.log), y1: val(v, x.y.log) } }]); };
+      up = () => { const d = drag(); setDrag(undefined); if (moved && d) { setActiveOf(c.id, d.length - 1); setSels(c, d); } };
+    } else if (tool() === "poly") {
+      mv = () => {};
+      up = m => {
+        const q = at(m), d = draft(), w = win(), near = d.length >= 3 && Math.hypot((q[0] - d[0][0]) / (w[1] - w[0]) * W(), (q[1] - d[0][1]) / (w[3] - w[2]) * H()) < 9;
+        if (near) closeDraft(); else setDraft([...d, q]);
+      };
     } else {
-      // Pan; a click without moving picks a bubble, or places the line with the line tool.
-      mv = m => { const dx = m.clientX - sx, dy = m.clientY - sy; if (!moved && Math.hypot(dx, dy) < 3) return; moved = true; const ku = (w0[1] - w0[0]) / W(), kv = (w0[3] - w0[2]) / H(); setWin([w0[0] - dx * ku, w0[1] - dx * ku, w0[2] + dy * kv, w0[3] + dy * kv]); };
+      // Pan; a click without moving picks a bubble, or places the active line with the line tool.
+      mv = pan;
       up = m => {
         if (moved) return;
-        if (tool() === "line") { const [u, v] = at(m); act({ Select: { chart: c.id, select: { Line: { slope: l?.slope ?? slope(), x: val(u, x.x.log), y: val(v, x.y.log), above: l?.above ?? true } } } }); return; }
-        const b = hit(m); setCur(b ? b.id : "");
+        if (tool() === "line") {
+          const [u, v] = at(m), ak = activeOf(c), l = lineOf(c.sels[ak]);
+          const nl = { slope: l?.slope ?? slope(), x: val(u, x.x.log), y: val(v, x.y.log), above: l?.above ?? true };
+          if (l) setSels(c, c.sels.map((s, i) => (i === ak ? { Line: nl } : s))); else addLine(c, nl);
+          return;
+        }
+        pick(m);
       };
     }
     const end = (m: MouseEvent) => { removeEventListener("mousemove", mv); removeEventListener("mouseup", end); up(m); };
     addEventListener("mousemove", mv); addEventListener("mouseup", end);
   };
+  /** Arrow keys move the active line (Shift: ten times further); Delete removes the active selection. */
+  const keys = (e: KeyboardEvent) => {
+    const c = p.c, k = activeOf(c), l = lineOf(c.sels[k]), x = o();
+    if (e.key === "Escape" && draft().length) { setDraft([]); return e.preventDefault(); }
+    if (e.key === "Enter" && draft().length) { closeDraft(); return e.preventDefault(); }
+    if ((e.key === "Delete" || e.key === "Backspace") && c.sels.length) { e.preventDefault(); return removeSel(c, k); }
+    if (!l || !x || !["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight"].includes(e.key)) return;
+    e.preventDefault();
+    const w = win(), f = e.shiftKey ? 0.1 : 0.01, dy = (e.key === "ArrowUp" ? 1 : e.key === "ArrowDown" ? -1 : 0) * f * (w[3] - w[2]), dx = (e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0) * f * (w[1] - w[0]);
+    const ax = (v: number, log: boolean) => (log ? Math.log10(v) : v);
+    setSels(c, c.sels.map((s, i) => (i === k ? { Line: { ...l, x: val(ax(l.x, x.x.log) + dx, x.x.log), y: val(ax(l.y, x.y.log) + dy, x.y.log) } } : s)));
+  };
   const move = (e: MouseEvent) => { if (e.buttons) return setTip(null); const b = hit(e); setTip(b ? { x: e.clientX, y: e.clientY, b } : null); };
   const menu = (e: MouseEvent) => {
-    const b = hit(e);
+    const b = hit(e), c = p.c;
     openMenu(e, [
       ...(b ? [{ label: `Datasheet: ${b.name}`, icon: "datasheet", run: () => openSheet(b.id) }, "-" as const] : []),
       { label: "Fit", icon: "fit", run: fitChart }, { label: "Zoom In", icon: "zin", run: () => zoomChart(1.4) }, { label: "Zoom Out", icon: "zout", run: () => zoomChart(1 / 1.4) }, "-",
-      { label: "Selection Line Here", icon: "index", run: () => { const [u, v] = at(e), x = o()!; act({ Select: { chart: p.c.id, select: { Line: { slope: lineOf(p.c.select)?.slope ?? slope(), x: val(u, x.x.log), y: val(v, x.y.log), above: true } } } }); } },
-      { label: "Remove Selection", icon: "del", off: !p.c.select, run: () => act({ Select: { chart: p.c.id, select: null } }) },
-      { label: "Labels", on: p.c.labels, run: () => setChart(c => { c.labels = !c.labels; }) },
+      { label: "New Selection Line Here", icon: "index", run: () => { const [u, v] = at(e), x = o()!; addLine(c, { slope: activeLine(c)?.slope ?? slope(), x: val(u, x.x.log), y: val(v, x.y.log), above: true }); } },
+      { label: "Remove This Selection", icon: "del", off: !c.sels.length, run: () => removeSel(c, activeOf(c)) },
+      { label: "Remove All Selections", off: !c.sels.length, run: () => removeSel(c) },
+      { label: "Labels", on: c.labels, run: () => setChart(c => { c.labels = !c.labels; }) },
     ]);
   };
   const fails = () => out()?.results.rows.find(r => r.id === tip()?.b.id);
   return (
-    <div class="cbox" ref={box} classList={{ tline: tool() === "line", tbox: tool() === "box" }} onWheel={wheel} onMouseDown={down} onMouseMove={move} onMouseLeave={() => setTip(null)}
-      onDblClick={e => { const b = hit(e); if (b) openSheet(b.id); }} onContextMenu={menu}>
-      <Show when={o()} fallback={<div class="gwait">Laying out the chart…</div>}>{x => <ChartSvg c={p.c} o={x()} w={size()[0]} h={size()[1]} win={win()} sel={drag()} hover={tip()?.b.id} />}</Show>
+    <div class="cbox" tabindex="0" ref={box} classList={{ tline: tool() === "line", tbox: tool() === "box" || tool() === "poly" }} onWheel={wheel} onMouseDown={down} onMouseMove={move} onMouseLeave={() => setTip(null)} onKeyDown={keys}
+      onDblClick={e => { if (tool() === "poly") return closeDraft(); const b = hit(e); if (b) openSheet(b.id); }} onContextMenu={menu}>
+      <Show when={o()} fallback={<div class="gwait">Laying out the chart…</div>}>{x => <ChartSvg c={p.c} o={x()} w={size()[0]} h={size()[1]} win={win()} sels={drag()} draft={draft()} act={activeOf(p.c)} hover={tip()?.b.id} />}</Show>
       <Show when={tip()}>{t => { const x = o()!; return (
         <div class="gtip" style={{ left: `${t().x + 14}px`, top: `${t().y + 12}px` }}>
           <b>{t().b.name}</b><span class="muted">{db().materials.find(m => m.id === t().b.id)?.family.join(" › ")}</span>
@@ -242,32 +300,32 @@ export const ChartView = (p: { c: Chart }) => {
           <Show when={fails() && out()!.results.stages.length}><span classList={{ ok: fails()!.pass, late: !fails()!.pass }}>{fails()!.pass ? `Passes${fails()!.rank ? ` · rank ${fails()!.rank}` : ""}` : `Fails: ${fails()!.reasons[0]}`}</span></Show>
           <span class="muted small">Click to select · double-click for the datasheet</span>
         </div>); }}</Show>
+      <Show when={tool() === "poly"}><div class="gwait hint">{draft().length ? "Click to add corners; click the first corner, double-click or press Enter to close; Esc cancels." : "Click to place the first corner of the shape."}</div></Show>
     </div>
   );
 };
 
-/** The chart's toolbar: axes, scales, tools, the line's slope and side, envelopes, labels, fit. */
-/** An axis: the property and its log switch. Changing it removes the goal and the selection. */
+/** An axis: the property and its log switch. Changing it removes the goal and the selections. */
 const AxisPick = (p: { c: Chart; k: "x" | "y" }) => {
   const props = () => db().props.filter(q => q.kind === "range" && db().materials.some(m => m.props[q.key]));
   return <span class="axpick"><b>{p.k.toUpperCase()}</b>
-    <select value={p.c[p.k]} onChange={e => { const v = e.currentTarget.value, lg = db().props.find(x => x.key === v)?.log ?? true; setChart(c => { c[p.k] = v; if (p.k === "x") c.logX = lg; else c.logY = lg; c.select = null; c.goal = ""; }); }}>
+    <select value={p.c[p.k]} onChange={e => { const v = e.currentTarget.value, lg = db().props.find(x => x.key === v)?.log ?? true; setChart(c => { c[p.k] = v; if (p.k === "x") c.logX = lg; else c.logY = lg; c.sels = []; c.goal = ""; }); }}>
       <For each={props()}>{x => <option value={x.key}>{x.name}</option>}</For></select>
-    <button class="rb fb" classList={{ on: p.k === "x" ? p.c.logX : p.c.logY }} title="Logarithmic axis" onClick={() => setChart(c => { if (p.k === "x") c.logX = !c.logX; else c.logY = !c.logY; c.select = null; })}>log</button></span>;
+    <button class="rb fb" classList={{ on: p.k === "x" ? p.c.logX : p.c.logY }} title="Logarithmic axis" onClick={() => setChart(c => { if (p.k === "x") c.logX = !c.logX; else c.logY = !c.logY; c.sels = []; })}>log</button></span>;
 };
 
 /** The first toolbar row: the design goal, bubbles or bars, and what the chart shows. */
 export const ChartBar = (p: { c: Chart }) => {
   const groups = () => [...new Set(goals().map(g => g.group))];
-  const goal = () => goals().find(g => g.id === p.c.goal);
+  const goal = () => goals().find(g => g.id === goalId(p.c));
   return (
     <div class="cbar">
-      <span class="goalpick"><b>Goal</b><select value={p.c.goal} onChange={e => setGoal(e.currentTarget.value)}><option value="">Explore (no goal)</option>
+      <span class="goalpick"><b>Goal</b><select value={goalId(p.c)} onChange={e => setGoal(e.currentTarget.value)}><option value="">Explore (no goal)</option>
         <For each={groups()}>{gr => <optgroup label={gr}><For each={goals().filter(g => g.group === gr)}>{g => <option value={g.id}>{g.name} — {g.above || g.slope ? "maximise" : "minimise"} {g.index.replace(/ \(.*\)/, "")}</option>}</For></optgroup>}</For></select><Help k="goal" /></span>
       <Show when={goal()}><button class="btn sm" title={goal()!.why} onClick={() => import("./pages").then(m => m.goalCard(goal()!.id))}>Why {goal()!.index}?</button></Show>
       <span class="sep" />
       <div class="seg"><button classList={{ on: p.c.kind !== "bar" }} title="Two properties, a bubble per material" onClick={() => setChart(c => { c.kind = "bubble"; })}>Bubbles</button>
-        <button classList={{ on: p.c.kind === "bar" }} title="One property, a bar per material" onClick={() => setChart(c => { c.kind = "bar"; c.select = null; c.goal = ""; c.logY = db().props.find(x => x.key === c.y)?.log ?? true; })}>Bars</button></div><Help k={p.c.kind === "bar" ? "bar" : "chart"} />
+        <button classList={{ on: p.c.kind === "bar" }} title="One property, a bar per material" onClick={() => setChart(c => { c.kind = "bar"; c.sels = []; c.goal = ""; c.logY = db().props.find(x => x.key === c.y)?.log ?? true; })}>Bars</button></div><Help k={p.c.kind === "bar" ? "bar" : "chart"} />
       <span class="grow" />
       <Show when={p.c.kind !== "bar"}><select title="Envelopes" value={p.c.hull} onChange={e => { const v = e.currentTarget.value; setChart(c => { c.hull = v; }); }}><option value="family">Envelopes: families</option><option value="class">Envelopes: classes</option><option value="none">No envelopes</option></select><Help k="envelopes" /></Show>
       <button class="rb fb" classList={{ on: p.c.labels }} title="Material labels" onClick={() => setChart(c => { c.labels = !c.labels; })}><Icon n="tag" /></button>
@@ -277,23 +335,39 @@ export const ChartBar = (p: { c: Chart }) => {
   );
 };
 
-/** The second toolbar row: the axes, the tools, and the selection line's slope and side. */
+/** What a selection is, in a few words: "E½/ρ above", "box", "shape". */
+const selName = (c: Chart, s: ChartSel, k: number) => { const l = lineOf(s); if (!l) return boxOf(s) ? "Box" : "Shape";
+  return `${out()?.results.lines.find(x => x.chart === c.id && x.k === k)?.name ?? `slope ${fmt(l.slope)}`} ${l.above ? "above" : "below"}`; };
+
+/** The second toolbar row: the axes, the tools, and the selections with the active line's slope and side. */
 export const ChartTools = (p: { c: Chart }) => {
-  const l = () => lineOf(p.c.select);
-  const setLine = (patch: Partial<{ slope: number; above: boolean }>) => { const x = l(); if (x) act({ Select: { chart: p.c.id, select: { Line: { ...x, ...patch } } } }); };
+  const l = () => activeLine(p.c);
+  const setLine = (patch: Partial<Line>) => { const k = activeOf(p.c), x = l(); if (x) setSels(p.c, p.c.sels.map((s, i) => (i === k ? { Line: { ...x, ...patch } } : s))); };
   return (
     <div class="cbar">
-      <AxisPick c={p.c} k="y" /><Show when={p.c.kind !== "bar"}><button class="rb fb" title="Swap the axes" onClick={() => setChart(c => { [c.x, c.y, c.logX, c.logY] = [c.y, c.x, c.logY, c.logX]; c.select = null; c.goal = ""; })}>⇅</button><AxisPick c={p.c} k="x" />
+      <AxisPick c={p.c} k="y" /><Show when={p.c.kind !== "bar"}><button class="rb fb" title="Swap the axes" onClick={() => setChart(c => { [c.x, c.y, c.logX, c.logY] = [c.y, c.x, c.logY, c.logX]; c.sels = []; c.goal = ""; })}>⇅</button><AxisPick c={p.c} k="x" />
       <span class="sep" />
-      <div class="seg tools"><For each={[["pan", "Pan", "Drag to move, wheel to zoom, click a bubble"], ["line", "Line", "Click to place a selection line"], ["box", "Box", "Drag a selection box"]] as const}>{([k, n, t]) =>
+      <div class="seg tools"><For each={[["pan", "Pan", "Drag to move, wheel to zoom, click a bubble"], ["line", "Line", "Click to place the active selection line"], ["box", "Box", "Drag a selection box"], ["poly", "Shape", "Click the corners of a shape; the materials inside pass"]] as const}>{([k, n, t]) =>
         <button classList={{ on: tool() === k }} title={t} onClick={() => setTool(k)}>{n}</button>}</For></div><Help k="tools" />
-      <label class="inline" title="Slope of the selection line: 1 for E/ρ, 2 for E½/ρ, 3 for E⅓/ρ">slope <input type="number" step="0.5" style={{ width: "54px" }} value={l()?.slope ?? slope()}
+      <label class="inline" title="Slope of the active selection line: 1 for E/ρ, 2 for E½/ρ, 3 for E⅓/ρ">slope <input type="number" step="0.5" style={{ width: "54px" }} value={l()?.slope ?? slope()}
         onChange={e => { const v = +e.currentTarget.value; if (!isFinite(v)) return toast("Type a number for the slope."); setSlope(v); setLine({ slope: v }); }} /></label><Help k="slope" />
-      <Show when={l()}><div class="seg"><button classList={{ on: l()!.above }} onClick={() => setLine({ above: true })}>Above passes</button><button classList={{ on: !l()!.above }} onClick={() => setLine({ above: false })}>Below</button></div></Show>
-      <Show when={p.c.select}><button class="btn sm" onClick={() => act({ Select: { chart: p.c.id, select: null } })}>Clear</button></Show>
+      <Show when={l()}><div class="seg"><button classList={{ on: l()!.above }} onClick={() => setLine({ above: true })}>Above passes</button><button classList={{ on: !l()!.above }} onClick={() => setLine({ above: false })}>Below</button></div>
+        <button class="btn sm" title="Place the line where its index has a value you type" onClick={() => passThrough(p.c)}>Pass through…</button></Show>
+      <button class="btn sm" title="Add another selection line (a band: two lines facing each other)" onClick={() => newLine(p.c)}>+ Line</button>
       </Show>
     </div>
   );
+};
+
+/** The chart's selections as chips: click one to edit it, ✕ removes it; the ranking line is marked. */
+export const SelChips = (p: { c: Chart }) => {
+  const ranks = (k: number) => { const r = out()?.results; return !!r && r.rankChart === p.c.id && r.rankLine === k && P().stages.ranking !== "weighted"; };
+  const rankBy = (k: number) => act({ SetStages: { stages: { ...P().stages, rankChart: p.c.id, rankLine: k, ranking: "line" } } });
+  return <Show when={p.c.sels.length}><div class="selchips"><b>Selections</b>
+    <For each={p.c.sels}>{(s, k) => <span class="chip" classList={{ on: activeOf(p.c) === k() }} onClick={() => setActiveOf(p.c.id, k())}>{k() + 1} · {selName(p.c, s, k())}
+      <Show when={lineOf(s)}>{ranks(k()) ? <em title="The results are ranked by this line's index">ranks</em> : <button class="lnk" title="Rank the results by this line's index" onClick={e => { e.stopPropagation(); rankBy(k()); }}>rank by it</button>}</Show>
+      <button class="x" title="Remove" onClick={e => { e.stopPropagation(); removeSel(p.c, k()); }}>✕</button></span>}</For>
+    <button class="btn sm" onClick={() => removeSel(p.c)}>Clear all</button><Help k="sels" /></div></Show>;
 };
 /** The chart as a standalone SVG file (white, with its family legend), at w × h pixels (96 per inch). */
 export const chartSvgText = (id: number, w = 900, h = 640) => {

@@ -148,7 +148,56 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   // 6b. 0.1.1: design goals, units, bar charts, search, Sources, "?" help, Home tiles.
   await p.click('.side button[title="Charts"]');
   await p.waitForTimeout(300);
-  check("the goal list has 22 goals and Explore", (await p.$$eval(".goalpick select option", o => o.length)) === 23);
+  check("the goal list has 25 goals and Explore", (await p.$$eval(".goalpick select option", o => o.length)) === 26);
+  const state = () => p.evaluate(async () => await window.__TAURI__.core.invoke("state"));
+
+  // Selections: two-chart goals, several lines and bands, keys, shapes, pass-through, weighted ranking.
+  await p.selectOption(".goalpick select", "beam-stiff-strong");
+  await p.waitForTimeout(500);
+  let s0 = await state();
+  check("a two-constraint goal adds its second chart with its own line", s0.project.charts.length === 2 && s0.project.charts[1].goal === "beam-stiff-strong/2" && s0.project.charts[1].sels.length === 1 && (await p.textContent(".ctabs")).includes("Strength of the light beam"));
+  await p.click('.cbar button:has-text("+ Line")');
+  await p.waitForTimeout(400);
+  check("+ Line adds a second line, drawn with its own handle and index", (await p.$$eval(".cbox circle.selh", e => e.length)) === 2 && (await p.$$eval(".selchips .chip", e => e.length)) === 2);
+  const before = (await state()).results.stages.find(x => x.kind === "chart").pass;
+  await p.click('.cbar .seg button:has-text("Below")');
+  await p.waitForTimeout(400);
+  s0 = await state();
+  check("two facing lines keep a band (fewer pass)", s0.project.charts[0].sels[1].Line.above === false && s0.results.stages.find(x => x.kind === "chart").pass <= before);
+  check("the chips mark the line that ranks", (await p.textContent(".selchips")).includes("ranks") && (await p.textContent(".selchips")).includes("rank by it"));
+  const y0 = s0.project.charts[0].sels[1].Line.y;
+  await p.focus(".cbox");
+  await p.keyboard.press("ArrowUp");
+  await p.waitForTimeout(300);
+  check("the arrow keys move the active line", (await state()).project.charts[0].sels[1].Line.y > y0);
+  p.once("dialog", d => d.accept("0.004"));
+  await p.click('.cbar button:has-text("Pass through")');
+  await p.waitForTimeout(400);
+  const lv = (await state()).results.lines.find(l => l.chart === s0.project.charts[0].id && l.k === 1);
+  check("Pass through… places the line at the index value typed", lv && Math.abs(lv.value - 0.004) < 1e-9, JSON.stringify(lv));
+  await p.focus(".cbox");
+  await p.keyboard.press("Delete");
+  await p.waitForTimeout(300);
+  check("Delete removes the active selection", (await state()).project.charts[0].sels.length === 1);
+  await p.click('.cbar .tools button:has-text("Shape")');
+  const cb = await p.$eval(".cbox", e => { const r = e.getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; });
+  for (const [fx, fy] of [[0.55, 0.15], [0.95, 0.15], [0.95, 0.6]]) { await p.mouse.click(cb.x + cb.w * fx, cb.y + cb.h * fy); await p.waitForTimeout(80); }
+  await p.keyboard.press("Enter");
+  await p.waitForTimeout(400);
+  s0 = await state();
+  check("the Shape tool adds a polygon; materials outside fail with a reason", s0.project.charts[0].sels.some(x => x.Poly && x.Poly.pts.length === 3) && (await p.$$eval(".cbox path.selpoly", e => e.length)) === 1
+    && s0.results.rows.some(r => !r.pass && r.reasons.some(x => x.includes("outside the shape"))));
+  await shot("12-selections");
+  await p.click('.cbar .tools button:has-text("Pan")');
+  await p.click('.side button[title="Stages"]');
+  await p.waitForTimeout(200);
+  await p.getByText("By weighted properties").click();
+  await p.waitForTimeout(400);
+  check("weighted ranking ranks by the weighted properties", (await state()).results.indexName.startsWith("Weighted: 50 % Density (low), 50 % Price (low)") && (await p.textContent(".stagespage")).includes("lower is better"));
+  await p.getByText("By the index of a selection line").click();
+  await p.waitForTimeout(300);
+  await p.click('.side button[title="Charts"]');
+  await p.waitForTimeout(300);
   await p.selectOption(".goalpick select", "beam-cheap");
   await p.waitForTimeout(500);
   let svg = await p.textContent(".cbox svg");

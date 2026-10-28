@@ -42,15 +42,15 @@ fn random_project(r: &mut Rng) -> Project {
     let keys: Vec<&str> = PROPS.iter().map(|p| p.key).collect();
     let mut p = Project::new("R");
     for _ in 0..1 + r.below(4) {
-        let select = match r.below(3) {
-            0 => None,
-            1 => Some(ChartSel::Line { slope: r.num(), x: r.num(), y: r.num(), above: r.below(2) == 0 }),
-            _ => Some(ChartSel::Box { x0: r.num(), x1: r.num(), y0: r.num(), y1: r.num() }),
-        };
+        let sels = (0..r.below(4)).map(|_| match r.below(3) {
+            0 => ChartSel::Line { slope: r.num(), x: r.num(), y: r.num(), above: r.below(2) == 0 },
+            1 => ChartSel::Box { x0: r.num(), x1: r.num(), y0: r.num(), y1: r.num() },
+            _ => ChartSel::Poly { pts: (0..r.below(7)).map(|_| [r.num(), r.num()]).collect() },
+        }).collect();
         let c = Chart {
             x: r.pick(&keys).to_string(), y: r.pick(&keys).to_string(), log_x: r.below(2) == 0, log_y: r.below(2) == 0,
             hull: r.pick(&["family", "class", "none", "?"]).to_string(), kind: r.pick(&["bubble", "bar", "pie"]).to_string(),
-            hidden: if r.below(4) == 0 { vec!["Metals".into()] } else { vec![] }, guides: vec![1.0, r.num()], select, ..Default::default()
+            hidden: if r.below(4) == 0 { vec!["Metals".into()] } else { vec![] }, guides: vec![1.0, r.num()], sels, ..Default::default()
         };
         p.add_chart(c);
     }
@@ -63,6 +63,9 @@ fn random_project(r: &mut Rng) -> Project {
     p.stages.rule = r.pick(&["mean", "all", "?"]).to_string();
     p.stages.missing = r.pick(&["fail", "flag", "?"]).to_string();
     p.stages.rank_chart = r.below(6) as u32;
+    p.stages.rank_line = r.below(4) as usize;
+    p.stages.ranking = r.pick(&["line", "weighted", "?"]).to_string();
+    p.stages.weights = (0..r.below(4)).map(|_| Weight { prop: r.pick(&keys).to_string(), w: r.num().abs().min(10.0), high: r.below(2) == 0 }).collect();
     p.normalize();
     p
 }
@@ -78,9 +81,10 @@ fn a_failed_edit_changes_nothing() {
     let bad = vec![
         Op::DelChart { id: 999 },
         Op::SetChart { chart: Box::new(Chart { id: 999, ..Default::default() }) },
-        Op::Select { chart: 999, select: None },
-        Op::Select { chart: id, select: Some(ChartSel::Line { slope: f64::NAN, x: 1.0, y: 1.0, above: true }) },
-        Op::Select { chart: id, select: Some(ChartSel::Line { slope: 1.0, x: f64::INFINITY, y: 1.0, above: true }) },
+        Op::Select { chart: 999, sels: vec![] },
+        Op::Select { chart: id, sels: vec![ChartSel::Line { slope: f64::NAN, x: 1.0, y: 1.0, above: true }] },
+        Op::Select { chart: id, sels: vec![ChartSel::Line { slope: 1.0, x: f64::INFINITY, y: 1.0, above: true }] },
+        Op::Select { chart: id, sels: vec![ChartSel::Poly { pts: vec![[1.0, 1.0], [2.0, 2.0]] }] },
         Op::SetStages { stages: bad_limits },
         Op::Name { name: "   ".into() },
         Op::Goal { chart: id, goal: "beam-stiff".into() },
@@ -131,7 +135,7 @@ fn random_edits_never_break_the_project() {
                 0 => Op::AddChart { chart: Box::new(q.charts[0].clone()) },
                 1 => Op::DelChart { id },
                 2 => Op::SetChart { chart: Box::new(Chart { id, ..q.charts[0].clone() }) },
-                3 => Op::Select { chart: id, select: q.charts[0].select.clone() },
+                3 => Op::Select { chart: id, sels: q.charts[0].sels.clone() },
                 4 => Op::SetStages { stages: q.stages },
                 5 => Op::Name { name: r.pick(&["A", "", "  ", "\u{0}"]).to_string() },
                 6 => goals::apply(&d, &doc.p, id, r.pick(goals::GOALS).id).unwrap_or(Op::Batch(vec![])),
@@ -258,7 +262,7 @@ fn a_large_selection_stays_fast() {
     let pairs = [("rho", "E"), ("rho", "sy"), ("sy", "kic"), ("alpha", "lam"), ("price", "co2")];
     for i in 0..20 {
         let (x, y) = pairs[i % pairs.len()];
-        p.add_chart(Chart { x: x.into(), y: y.into(), select: Some(ChartSel::Line { slope: 1.0 + (i % 3) as f64, x: 1000.0, y: 10.0, above: true }), ..Default::default() });
+        p.add_chart(Chart { x: x.into(), y: y.into(), sels: vec![ChartSel::Line { slope: 1.0 + (i % 3) as f64, x: 1000.0, y: 10.0, above: true }], ..Default::default() });
     }
     p.stages.limits.push(Limit { prop: "tmax".into(), min: Some(100.0), ..Default::default() });
     let run = || { for c in &p.charts { let _ = chart::build(&d, c); } let _ = select::run(&d, &p); };

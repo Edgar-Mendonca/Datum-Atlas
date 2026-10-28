@@ -12,8 +12,10 @@ pub enum Op {
     /// Replaces a chart's settings (axes, scales, hulls, selection…), keeping its id.
     SetChart { chart: Box<Chart> },
     DelChart { id: u32 },
-    /// Moves the chart's selection line, sets a box, or removes it (None).
-    Select { chart: u32, select: Option<ChartSel> },
+    /// Replaces the chart's selections (lines, boxes, polygons); an empty list removes them.
+    Select { chart: u32, sels: Vec<ChartSel> },
+    /// Moves line `k` of a chart (keeping its slope) so its index has the value typed.
+    PassThrough { chart: u32, k: usize, value: f64 },
     SetStages { stages: Stages },
     Name { name: String },
     Notes { text: String },
@@ -106,15 +108,22 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 return Err("Nothing to delete.".into());
             }
         }
-        Op::Select { chart, select } => {
-            if let Some(ChartSel::Line { slope, x, y, .. }) = &select {
-                if !(slope.is_finite() && x.is_finite() && y.is_finite()) {
-                    return Err("Type a number for the slope.".into());
-                }
+        Op::Select { chart, sels } => {
+            if !sels.iter().all(ChartSel::valid) {
+                return Err("Type a number for the slope; a polygon needs at least three corners.".into());
             }
-            p.charts.iter_mut().find(|c| c.id == chart).ok_or("That chart no longer exists.")?.select = select;
+            p.charts.iter_mut().find(|c| c.id == chart).ok_or("That chart no longer exists.")?.sels = sels;
+        }
+        Op::PassThrough { chart, k, value } => {
+            let c = p.charts.iter_mut().find(|c| c.id == chart).ok_or("That chart no longer exists.")?;
+            let probe = c.clone();
+            let Some(ChartSel::Line { slope, x, y, .. }) = c.sels.get_mut(k) else { return Err("That selection line no longer exists.".into()) };
+            *y = crate::select::y_for(&probe, *slope, value, *x).ok_or("That value cannot be on this chart; type a number above zero.")?;
         }
         Op::SetStages { stages } => {
+            if stages.weights.iter().any(|w| !(w.w.is_finite() && w.w >= 0.0)) {
+                return Err("A weight must be a number of zero or more.".into());
+            }
             for l in &stages.limits {
                 if let (Some(a), Some(b)) = (l.min, l.max) {
                     if a > b {

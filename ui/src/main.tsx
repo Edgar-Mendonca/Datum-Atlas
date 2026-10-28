@@ -14,7 +14,7 @@ import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, ope
 import { C } from "./cmds";
 import { TitleBar, Ribbon, palette } from "./ribbon";
 import { Backstage, update, checkUpdate } from "./backstage";
-import { ChartView, ChartBar, ChartTools, Legend } from "./chart";
+import { ChartView, ChartBar, ChartTools, SelChips, Legend } from "./chart";
 import { Browse, Datasheet } from "./browse";
 import { StagePanel, StagesPage, ResultsPage } from "./stages";
 import { SetupPage, DataPage, SourcesPage, ComparePage, IndexPage, ReportPage } from "./pages";
@@ -36,6 +36,7 @@ const ChartsPage = () => (
           <button class="add" title="New chart" onClick={() => C.newChart()}>＋</button></div>
         <ChartBar c={c()} />
         <ChartTools c={c()} />
+        <SelChips c={c()} />
         <Show when={out()!.charts.find(o => o.id === c().id)}>{o => <Legend c={c()} o={o()} />}</Show>
         <div class="board"><For each={[c().id]}>{() => <ChartView c={c()} />}</For></div>
       </div>

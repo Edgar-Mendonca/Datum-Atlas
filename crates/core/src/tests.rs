@@ -126,7 +126,7 @@ fn missing_and_non_positive_values_are_left_out_never_zero() {
 
 fn project(sel: Option<ChartSel>) -> Project {
     let mut p = Project::new("t");
-    p.add_chart(Chart { select: sel, ..Default::default() });
+    p.add_chart(Chart { sels: sel.into_iter().collect(), ..Default::default() });
     p
 }
 
@@ -208,7 +208,7 @@ fn stages_combine_and_count() {
 fn project_edits_undo_and_round_trip() {
     let mut doc = Doc::new(crate::templates::build(&db(), Some("beam")).unwrap());
     let id = doc.p.charts[0].id;
-    doc.apply(Op::Select { chart: id, select: Some(ChartSel::Line { slope: 2.0, x: 1000.0, y: 20.0, above: true }) }).unwrap();
+    doc.apply(Op::Select { chart: id, sels: vec![ChartSel::Line { slope: 2.0, x: 1000.0, y: 20.0, above: true }] }).unwrap();
     doc.apply(Op::SetStages { stages: Stages { limits: vec![Limit { prop: "tmax".into(), min: Some(100.0), ..Default::default() }], ..Default::default() } }).unwrap();
     assert!(doc.apply(Op::SetStages { stages: Stages { limits: vec![Limit { prop: "E".into(), min: Some(5.0), max: Some(1.0), ..Default::default() }], ..Default::default() } }).is_err());
     let mut c = doc.p.charts[0].clone();
@@ -273,7 +273,7 @@ fn derived_properties_span_every_combination() {
 #[test]
 fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
     let d = db();
-    assert_eq!(crate::goals::GOALS.len(), 22);
+    assert_eq!(crate::goals::GOALS.len(), 25);
     let mut p = crate::templates::build(&d, Some("blank")).unwrap();
     p.stages.limits.push(Limit { prop: "price".into(), max: Some(50.0), ..Default::default() });
     let cid = p.charts[0].id;
@@ -282,6 +282,12 @@ fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
         doc.apply(crate::goals::apply(&d, &doc.p, cid, g.id).unwrap()).unwrap();
         let c = &doc.p.charts[0];
         assert_eq!((c.x.as_str(), c.y.as_str(), c.goal.as_str()), (g.x, g.y, g.id));
+        // A second constraint adds its chart with its own line; the shortlist passes both.
+        assert_eq!(doc.p.charts.len(), 1 + g.also.is_some() as usize, "{}", g.id);
+        if let Some(a) = &g.also {
+            let c2 = &doc.p.charts[1];
+            assert_eq!((c2.x.as_str(), c2.y.as_str(), c2.goal.clone(), c2.sels.len()), (a.x, a.y, format!("{}/2", g.id), 1));
+        }
         let r = run(&d, &doc.p);
         assert!(r.pass > 0, "{}: nothing passes", g.id);
         // Your own limit stays; the goal's are added and marked.
@@ -296,12 +302,18 @@ fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
             assert!(if g.above { a >= b * (1.0 - 1e-9) } else { a <= b * (1.0 + 1e-9) }, "{}: {} then {}", g.id, w[0].name, w[1].name);
         }
     }
+    // Re-applying a two-chart goal keeps one second chart; another goal removes it.
+    let mut doc = Doc::new(p.clone());
+    for id in ["beam-stiff-strong", "beam-stiff-strong", "tie-stiff-tough"] { doc.apply(crate::goals::apply(&d, &doc.p, cid, id).unwrap()).unwrap(); }
+    assert_eq!(doc.p.charts.iter().map(|c| c.goal.as_str()).collect::<Vec<_>>(), ["tie-stiff-tough", "tie-stiff-tough/2"]);
+    doc.apply(crate::goals::apply(&d, &doc.p, cid, "spring").unwrap()).unwrap();
+    assert_eq!(doc.p.charts.len(), 1);
     // Explore removes the line and the goal's limits.
     let mut doc = Doc::new(p.clone());
     doc.apply(crate::goals::apply(&d, &doc.p, cid, "spring").unwrap()).unwrap();
     doc.apply(crate::goals::apply(&d, &doc.p, cid, "").unwrap()).unwrap();
-    assert!(doc.p.charts[0].select.is_none() && doc.p.charts[0].goal.is_empty() && doc.p.stages.limits.iter().all(|l| !l.goal));
-    let r = run(&d, &{ let mut q = p.clone(); q.charts[0].x = "cv".into(); q.charts[0].select = Some(ChartSel::Line { slope: 2.0, x: 1e4, y: 10.0, above: true }); q });
+    assert!(doc.p.charts[0].sels.is_empty() && doc.p.charts[0].goal.is_empty() && doc.p.stages.limits.iter().all(|l| !l.goal));
+    let r = run(&d, &{ let mut q = p.clone(); q.charts[0].x = "cv".into(); q.charts[0].sels = vec![ChartSel::Line { slope: 2.0, x: 1e4, y: 10.0, above: true }]; q });
     assert_eq!(r.index_name, "E½/(Cₘρ)");
 }
 
@@ -333,4 +345,79 @@ fn site_json_is_current() {
         assert!(["Next", "Soon", "Later", "Goal"].contains(&r["when"].as_str().unwrap()), "site.json: when");
     }
     assert!(ver(road[0]["v"].as_str().unwrap()) > ver(env!("CARGO_PKG_VERSION")), "site.json: the roadmap still starts at a released version; update it with the release");
+}
+
+#[test]
+fn bands_polygons_and_old_files() {
+    let d = db();
+    let mut p = Project::new("T");
+    let line = |y: f64, above: bool| ChartSel::Line { slope: 1.0, x: 1000.0, y, above };
+    p.add_chart(Chart { sels: vec![line(10.0, true), line(100.0, false)], ..Default::default() });
+    let r = run(&d, &p);
+    let e_rho = |id: &str| { let m = d.get(id).unwrap(); let g = |k: &str| { let (a, b) = m.props[k].range().unwrap(); (a * b).sqrt() }; g("E") / g("rho") };
+    // A band: E/ρ between 0.01 and 0.1 (GPa per kg/m³) passes, both sides fail with a reason.
+    for x in &r.rows {
+        let Ok(v) = std::panic::catch_unwind(|| e_rho(&x.id)) else { continue };
+        assert_eq!(x.pass, (0.01..=0.1).contains(&v), "{} at {v}", x.name);
+        if !x.pass { assert!(x.reasons[0].contains("selection line")) }
+    }
+    assert_eq!(r.lines.len(), 2);
+    assert_eq!((r.lines[1].k, r.rank_line), (1, 0));
+    // A triangle on log axes: inside passes, outside fails with "outside the shape".
+    let mut q = Project::new("T");
+    q.add_chart(Chart { sels: vec![ChartSel::Poly { pts: vec![[1000.0, 10.0], [10000.0, 10.0], [10000.0, 1000.0]] }], ..Default::default() });
+    let r = run(&d, &q);
+    let steel = r.rows.iter().find(|x| x.id == "steel-1045").unwrap();
+    assert!(steel.pass, "{:?}", steel.reasons);
+    let foam = r.rows.iter().find(|x| x.family == "Foams").unwrap();
+    assert!(!foam.pass && foam.reasons[0].contains("outside the shape"));
+    // A file from 0.1.x holds one "select": it opens with that selection in the list.
+    let old = r#"{"format":1,"name":"Old","charts":[{"id":1,"x":"rho","y":"E","select":{"Line":{"slope":2,"x":1000,"y":20,"above":true}}}],"nextId":2}"#;
+    let p = Project::from_json(old).unwrap();
+    assert_eq!(p.charts[0].sels.len(), 1);
+    assert!(!serde_json::to_string(&p).unwrap().contains("\"select\""), "the old field is never written");
+}
+
+#[test]
+fn weighted_ranking() {
+    let d = db();
+    let mut p = Project::new("T");
+    p.add_chart(Chart::default());
+    p.stages.limits.push(Limit { prop: "sy".into(), min: Some(200.0), ..Default::default() });
+    // All weight on low density: the ranking is by density, lightest first, "× best" = ρ_best/ρ.
+    p.stages.ranking = "weighted".into();
+    p.stages.weights = vec![Weight { prop: "rho".into(), w: 1.0, high: false }];
+    let r = run(&d, &p);
+    assert!(r.index_name.starts_with("Weighted: 100 % Density (low)"), "{}", r.index_name);
+    let rho = |id: &str| { let (a, b) = d.get(id).unwrap().props["rho"].range().unwrap(); (a * b).sqrt() };
+    let pass: Vec<_> = r.rows.iter().filter(|x| x.pass).collect();
+    for w in pass.windows(2) { assert!(rho(&w[0].id) <= rho(&w[1].id) * (1.0 + 1e-9), "{} then {}", w[0].name, w[1].name) }
+    assert_eq!(pass[0].ratio, Some(1.0));
+    let k = pass.len() - 1;
+    assert!((pass[k].ratio.unwrap() - rho(&pass[0].id) / rho(&pass[k].id)).abs() < 1e-9);
+    // Two properties: half price, half strength. Scores stay within 0–1 and the best scores 1.
+    p.stages.weights = vec![Weight { prop: "price".into(), w: 1.0, high: false }, Weight { prop: "sy".into(), w: 1.0, high: true }];
+    let r = run(&d, &p);
+    assert!(r.rows.iter().filter_map(|x| x.index).all(|v| (0.0..=1.0).contains(&v)));
+    assert_eq!(r.rows[0].ratio, Some(1.0));
+    assert_eq!(r.rank_chart, 0);
+}
+
+#[test]
+fn a_line_passes_through_the_index_value_typed() {
+    let d = db();
+    for (lx, ly, slope) in [(true, true, 2.0), (true, true, 1.0), (true, true, -1.0), (true, true, 0.0), (false, false, 2.0), (true, false, 1.0)] {
+        let mut p = Project::new("T");
+        let id = p.add_chart(Chart { log_x: lx, log_y: ly, sels: vec![ChartSel::Line { slope, x: 3000.0, y: 50.0, above: true }], ..Default::default() });
+        let mut doc = Doc::new(p);
+        let target = 0.004;
+        match doc.apply(Op::PassThrough { chart: id, k: 0, value: target }) {
+            Ok(()) => { let r = run(&d, &doc.p); assert!((r.lines[0].value - target).abs() <= 1e-9 * target.max(1.0), "{lx} {ly} {slope}: {}", r.lines[0].value) }
+            Err(e) => assert!(lx != ly, "{lx} {ly} {slope}: {e}"),
+        }
+    }
+    let mut doc = Doc::new(Project::new("T"));
+    let id = doc.p.add_chart(Chart { sels: vec![ChartSel::Line { slope: 2.0, x: 3000.0, y: 50.0, above: true }], ..Default::default() });
+    assert!(doc.apply(Op::PassThrough { chart: id, k: 0, value: -1.0 }).is_err());
+    assert!(doc.apply(Op::PassThrough { chart: id, k: 3, value: 1.0 }).is_err());
 }

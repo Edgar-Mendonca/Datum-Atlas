@@ -29,6 +29,20 @@ pub struct Goal {
     pub why: &'static str,
     /// Suggested limits: (property, min, max).
     pub limits: &'static [(&'static str, Option<f64>, Option<f64>)],
+    /// A second constraint needs a second chart: its axes, line and index. The goal adds that
+    /// chart (marked with the goal's id and "/2") and the shortlist is what passes both.
+    pub also: Option<Also>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Also {
+    pub x: &'static str,
+    pub y: &'static str,
+    pub slope: f64,
+    pub above: bool,
+    pub index: &'static str,
+    pub name: &'static str,
 }
 
 const TOUGH: &[(&str, Option<f64>, Option<f64>)] = &[("kic", Some(1.0), None)];
@@ -37,7 +51,14 @@ const STRONG: &[(&str, Option<f64>, Option<f64>)] = &[("kic", Some(15.0), None)]
 #[allow(clippy::too_many_arguments)]
 const fn g(id: &'static str, group: &'static str, name: &'static str, index: &'static str, x: &'static str, y: &'static str, slope: f64, above: bool,
     function: &'static str, constraint: &'static str, objective: &'static str, free: &'static str, why: &'static str, limits: &'static [(&'static str, Option<f64>, Option<f64>)]) -> Goal {
-    Goal { id, group, name, index, x, y, slope, above, function, constraint, objective, free, why, limits }
+    Goal { id, group, name, index, x, y, slope, above, function, constraint, objective, free, why, limits, also: None }
+}
+
+/// A goal with a second constraint on a second chart.
+#[allow(clippy::too_many_arguments)]
+const fn g2(id: &'static str, name: &'static str, index: &'static str, x: &'static str, y: &'static str, slope: f64, also: Also,
+    function: &'static str, constraint: &'static str, why: &'static str, limits: &'static [(&'static str, Option<f64>, Option<f64>)]) -> Goal {
+    Goal { id, group: "Two constraints", name, index, x, y, slope, above: true, function, constraint, objective: "Minimum mass", free: "Size of the section", why, limits, also: Some(also) }
 }
 
 pub const GOALS: &[Goal] = &[
@@ -85,45 +106,76 @@ pub const GOALS: &[Goal] = &[
       "Heat flow through a fixed shape is proportional to λ. The best heat sinks have the highest conductivity: a horizontal line, and the materials above it pass.", &[("tmax", Some(100.0), None)]),
     g("shock", "Thermal", "Resists thermal shock", "σts/(Eα)", "rho", "shock", 0.0, true, "Part heated or quenched quickly", "Must not crack on a sudden temperature change", "Largest temperature jump", "The material",
       "A sudden change ΔT in a constrained surface gives a stress EαΔT; it cracks when that reaches the strength. The largest safe jump is σts/(Eα), the thermal shock resistance: a horizontal line, and the materials above it pass.", &[]),
+    g2("beam-stiff-strong", "Light beam, stiff and strong", "E½/ρ and σy⅔/ρ", "rho", "E", 2.0,
+      Also { x: "rho", y: "sy", slope: 1.5, above: true, index: "σy⅔/ρ", name: "Strength of the light beam" },
+      "Beam in bending", "Bending stiffness and load fixed, no yielding",
+      "Each constraint gives its own index: stiffness gives E½/ρ, strength gives σy⅔/ρ. The beam must meet both, so it must pass both lines: the stiffness line on the modulus–density chart and the strength line on the strength–density chart.", TOUGH),
+    g2("panel-stiff-strong", "Light panel, stiff and strong", "E⅓/ρ and σy½/ρ", "rho", "E", 3.0,
+      Also { x: "rho", y: "sy", slope: 2.0, above: true, index: "σy½/ρ", name: "Strength of the light panel" },
+      "Panel (plate) in bending", "Stiffness and load fixed, no yielding",
+      "Stiffness gives E⅓/ρ and strength gives σy½/ρ. The panel must meet both, so it must pass both lines, one on each chart.", TOUGH),
+    g2("tie-stiff-tough", "Light tie, stiff and damage tolerant", "E/ρ and KIc/ρ", "rho", "E", 1.0,
+      Also { x: "rho", y: "kic", slope: 1.0, above: true, index: "KIc/ρ", name: "Toughness of the light tie" },
+      "Tie rod or skin in tension", "Stiffness fixed; a given crack must not grow",
+      "Stiffness gives E/ρ and a crack that must not grow gives KIc/ρ. The tie must pass both lines: stiffness on the modulus–density chart, toughness on the toughness–density chart.", &[]),
 ];
 
 pub fn get(id: &str) -> Option<&'static Goal> {
     GOALS.iter().find(|g| g.id == id)
 }
 
-/// The edits that apply a goal to a chart ("" = explore: no line, the goal's limits removed).
+/// The line of `slope` on axes (x, y) placed through the median x so the best fifth of the
+/// materials pass (or the lowest fifth, for a line "below").
+fn place(db: &Db, x: &str, y: &str, lx: bool, ly: bool, slope: f64, above: bool) -> Option<ChartSel> {
+    let at = |m: &Material, k: &str, log: bool| { let (lo, hi) = m.props.get(k)?.range()?; span(lo, hi, log).map(|s| s.0) };
+    let pts: Vec<(f64, f64)> = db.materials.iter().filter_map(|m| Some((at(m, x, lx)?, at(m, y, ly)?))).collect();
+    if pts.is_empty() { return None; }
+    let mut xs: Vec<f64> = pts.iter().map(|p| p.0).collect();
+    xs.sort_by(f64::total_cmp);
+    let mut ks: Vec<f64> = pts.iter().map(|p| p.1 - slope * p.0).collect();
+    ks.sort_by(f64::total_cmp);
+    let q = ks[((ks.len() as f64 * if above { 0.8 } else { 0.2 }) as usize).min(ks.len() - 1)];
+    let c = xs[xs.len() / 2];
+    let v = |u: f64, log: bool| if log { 10f64.powf(u) } else { u };
+    Some(ChartSel::Line { slope, x: v(c, lx), y: v(q + slope * c, ly), above })
+}
+
+fn log_of(k: &str) -> bool { prop(k).is_none_or(|p| p.log) }
+
+/// The edits that apply a goal to a chart ("" = explore: no line, the goal's limits removed). A
+/// goal with two constraints also adds its second chart; the second chart of the chart's old goal
+/// is removed.
 pub fn apply(db: &Db, p: &Project, chart: u32, id: &str) -> Result<Op, String> {
     let mut c = p.chart(chart).ok_or("That chart no longer exists.")?.clone();
     let mut st = p.stages.clone();
     st.limits.retain(|l| !l.goal);
-    let Some(g) = get(id) else {
-        if !id.is_empty() { return Err(format!("There is no design goal “{id}”.")); }
+    let g = get(id);
+    if g.is_none() && !id.is_empty() { return Err(format!("There is no design goal “{id}”.")); }
+    let old = format!("{}/2", c.goal.trim_end_matches("/2"));
+    let mut ops: Vec<Op> = p.charts.iter().filter(|x| x.id != chart && !c.goal.is_empty() && x.goal == old).map(|x| Op::DelChart { id: x.id }).collect();
+    let Some(g) = g else {
         c.goal.clear();
-        c.select = None;
-        return Ok(Op::Batch(vec![Op::SetChart { chart: Box::new(c) }, Op::SetStages { stages: st }]));
+        c.sels.clear();
+        ops.insert(0, Op::SetChart { chart: Box::new(c) });
+        ops.push(Op::SetStages { stages: st });
+        return Ok(Op::Batch(ops));
     };
-    let (lx, ly) = (prop(g.x).is_none_or(|p| p.log), prop(g.y).is_none_or(|p| p.log));
+    let (lx, ly) = (log_of(g.x), log_of(g.y));
     c.kind = "bubble".into();
-    c.x = g.x.into();
-    c.y = g.y.into();
-    c.log_x = lx;
-    c.log_y = ly;
+    (c.x, c.y, c.log_x, c.log_y) = (g.x.into(), g.y.into(), lx, ly);
     c.goal = g.id.into();
     c.name = g.name.into();
-    // The line passes through the middle of the materials, placed so the best fifth pass.
-    let pts: Vec<(f64, f64)> = db.materials.iter().filter_map(|m| Some((span(m.props.get(g.x)?.range()?.0, m.props.get(g.x)?.range()?.1, lx)?.0, span(m.props.get(g.y)?.range()?.0, m.props.get(g.y)?.range()?.1, ly)?.0))).collect();
-    if pts.is_empty() { return Err("No material has both values for this goal.".into()); }
-    let mut xs: Vec<f64> = pts.iter().map(|p| p.0).collect();
-    xs.sort_by(f64::total_cmp);
-    let mut ks: Vec<f64> = pts.iter().map(|p| p.1 - g.slope * p.0).collect();
-    ks.sort_by(f64::total_cmp);
-    let q = ks[((ks.len() as f64 * if g.above { 0.8 } else { 0.2 }) as usize).min(ks.len() - 1)];
-    let x = xs[xs.len() / 2];
-    let v = |u: f64, log: bool| if log { 10f64.powf(u) } else { u };
-    c.select = Some(ChartSel::Line { slope: g.slope, x: v(x, lx), y: v(q + g.slope * x, ly), above: g.above });
+    c.sels = vec![place(db, g.x, g.y, lx, ly, g.slope, g.above).ok_or("No material has both values for this goal.")?];
+    ops.insert(0, Op::SetChart { chart: Box::new(c) });
+    if let Some(a) = &g.also {
+        let (ax, ay) = (log_of(a.x), log_of(a.y));
+        let sel = place(db, a.x, a.y, ax, ay, a.slope, a.above).ok_or("No material has both values for this goal.")?;
+        ops.push(Op::AddChart { chart: Box::new(Chart { x: a.x.into(), y: a.y.into(), log_x: ax, log_y: ay, goal: format!("{}/2", g.id), name: a.name.into(), sels: vec![sel], guides: vec![1.0, 2.0, 3.0], ..Default::default() }) });
+    }
     for (k, min, max) in g.limits {
         st.limits.push(Limit { prop: (*k).into(), min: *min, max: *max, goal: true, ..Default::default() });
     }
-    st.rank_chart = chart;
-    Ok(Op::Batch(vec![Op::SetChart { chart: Box::new(c) }, Op::SetStages { stages: st }]))
+    (st.rank_chart, st.rank_line, st.ranking) = (chart, 0, "line".into());
+    ops.push(Op::SetStages { stages: st });
+    Ok(Op::Batch(ops))
 }

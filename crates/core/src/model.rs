@@ -192,6 +192,11 @@ pub struct Chart {
     pub hidden: Vec<String>,
     /// Slopes of the guide lines shown (e.g. 1, 2, 3).
     pub guides: Vec<f64>,
+    /// Selections on this chart: lines, boxes and polygons. A material passes the chart when it
+    /// passes every one (two lines facing each other make a band).
+    pub sels: Vec<ChartSel>,
+    /// Files saved before 0.2.0 hold one selection here; it is moved into `sels` and never written.
+    #[serde(skip_serializing)]
     pub select: Option<ChartSel>,
     /// The design goal that set the axes and the line ("" when exploring).
     pub goal: String,
@@ -201,15 +206,37 @@ pub struct Chart {
 
 impl Default for Chart {
     fn default() -> Self {
-        Self { id: 0, name: String::new(), x: "rho".into(), y: "E".into(), log_x: true, log_y: true, hull: "family".into(), labels: false, hidden: vec![], guides: vec![], select: None, goal: String::new(), kind: "bubble".into() }
+        Self { id: 0, name: String::new(), x: "rho".into(), y: "E".into(), log_x: true, log_y: true, hull: "family".into(), labels: false, hidden: vec![], guides: vec![], sels: vec![], select: None, goal: String::new(), kind: "bubble".into() }
     }
 }
 
-/// A chart stage: materials above (or below) a line of slope `slope` through (x, y), or inside a box.
+/// A chart selection: materials above (or below) a line of slope `slope` through (x, y), inside a
+/// box, or inside a polygon. Points are values in stored units.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 pub enum ChartSel {
     Line { slope: f64, x: f64, y: f64, above: bool },
     Box { x0: f64, x1: f64, y0: f64, y1: f64 },
+    Poly { pts: Vec<[f64; 2]> },
+}
+
+impl ChartSel {
+    /// Every number in it is finite (and a polygon has at least three corners).
+    pub fn valid(&self) -> bool {
+        match self {
+            ChartSel::Line { slope, x, y, .. } => slope.is_finite() && x.is_finite() && y.is_finite(),
+            ChartSel::Box { x0, x1, y0, y1 } => [x0, x1, y0, y1].iter().all(|v| v.is_finite()),
+            ChartSel::Poly { pts } => pts.len() >= 3 && pts.iter().flatten().all(|v| v.is_finite()),
+        }
+    }
+}
+
+/// One part of a weighted ranking: a property, its weight, and whether high values are better.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Weight {
+    pub prop: String,
+    pub w: f64,
+    pub high: bool,
 }
 
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -222,13 +249,18 @@ pub struct Stages {
     pub rule: String,
     /// "fail": materials without the value fail; "flag": they pass, marked "no data".
     pub missing: String,
-    /// The chart whose index line ranks the results (0: the first chart with a line).
+    /// The chart whose index line ranks the results (0: the first chart with a line), and which of
+    /// its lines.
     pub rank_chart: u32,
+    pub rank_line: usize,
+    /// "line": rank by the index of that line; "weighted": by the weighted properties below.
+    pub ranking: String,
+    pub weights: Vec<Weight>,
 }
 
 impl Default for Stages {
     fn default() -> Self {
-        Self { limits: vec![], exclude: vec![], rule: "mean".into(), missing: "fail".into(), rank_chart: 0 }
+        Self { limits: vec![], exclude: vec![], rule: "mean".into(), missing: "fail".into(), rank_chart: 0, rank_line: 0, ranking: "line".into(), weights: vec![] }
     }
 }
 
@@ -274,7 +306,10 @@ impl Project {
             if prop(&c.x).is_none() { c.x = "rho".into(); }
             if prop(&c.y).is_none() { c.y = "E".into(); }
             c.guides.retain(|s| s.is_finite());
+            if let Some(s) = c.select.take() { if c.sels.is_empty() { c.sels.push(s) } }
+            c.sels.retain(ChartSel::valid);
         }
+        self.stages.weights.retain(|w| prop(&w.prop).is_some() && w.w.is_finite() && w.w > 0.0);
     }
     pub fn from_json(text: &str) -> Result<Self, String> {
         let mut p: Project = serde_json::from_str(text).map_err(|e| e.to_string())?;

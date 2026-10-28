@@ -46,7 +46,7 @@ const ChartPage = (p: { id: number; n: number; pages: number }) => {
   const [pw, ph] = paper(), c = () => P().charts.find(x => x.id === p.id)!, o = () => out()!.charts.find(x => x.id === p.id)!;
   const W = () => (pw - ps.margins[1] - ps.margins[3]) * MM, H = () => (ph - ps.margins[0] - ps.margins[2]) * MM - (ps.caption ? 150 : 110);
   const win = (): Win => [o().x.lim[0], o().x.lim[1], o().y.lim[0], o().y.lim[1]];
-  const line = () => out()!.results.lines.find(l => l.chart === p.id);
+  const lines = () => out()!.results.lines.filter(l => l.chart === p.id);
   return (
     <div class="ppage" style={{ width: `${pw * MM}px`, height: `${ph * MM}px` }}>
       <div class="pin" style={{ left: `${ps.margins[3] * MM}px`, top: `${ps.margins[0] * MM}px`, width: `${W()}px`, height: `${(ph - ps.margins[0] - ps.margins[2]) * MM}px` }}>
@@ -55,7 +55,7 @@ const ChartPage = (p: { id: number; n: number; pages: number }) => {
           <div class="plegendrow"><For each={o().families.filter(f => !c().hidden.includes(f))}>{f => <span><i style={{ background: famColor(o().families.indexOf(f)) }} />{f}</span>}</For></div>
           <ChartSvg c={c()} o={o()} w={W()} h={H()} win={win()} print />
           <Show when={ps.caption}><p class="pcap"><b>{c().name}.</b> Each ellipse spans a material's range of both properties; envelopes enclose each {c().hull === "class" ? "class" : "family"}.
-            {line() ? ` The selection line selects ${line()!.name} ≥ ${fmt(line()!.value)}.` : ""} {out()!.results.stages.length ? `${out()!.results.pass} of ${out()!.results.total} materials pass the selection (greyed: fail).` : ""} Data: Datum Atlas database, draft values with references.</p></Show>
+            {lines().map(l => { const s = c().sels[l.k], above = s && "Line" in s ? s.Line.above : true; return ` A selection line keeps ${l.name} ${above ? "≥" : "≤"} ${fmt(l.value)}.`; }).join("")} {out()!.results.stages.length ? `${out()!.results.pass} of ${out()!.results.total} materials pass the selection (greyed: fail).` : ""} Data: Datum Atlas database, draft values with references.</p></Show>
         </div>
         <HeadFoot k="footer" page={p.n} pages={p.pages} name={c().name} />
       </div>

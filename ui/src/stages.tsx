@@ -1,7 +1,7 @@
 // Selection stages (limits, the chart selections, families left out), the stage panel beside the
 // chart, and the Results page: what passes, ranked by the index, and why the others fail.
 import { For, Show, createSignal } from "solid-js";
-import { Limit, Stages, Material, fmt, SEP, famColor } from "./api";
+import { Limit, Stages, Material, Weight, fmt, SEP, famColor, lineOf, goalId } from "./api";
 import { act, out, P, db, cur, setCur, openSheet, show, setChartId, mat, propOf, srcOf, toShown, toStored, unitOf, vtext, goals } from "./store";
 import { Help } from "./help";
 import { Icon, Check } from "./ui";
@@ -11,7 +11,6 @@ const num = (v: string) => (v.trim() === "" || isNaN(+v) ? null : +v);
 /** A typed limit in the units shown → stored units, and back (rounded for display). */
 const inStored = (k: string, v: string) => { const x = num(v); return x === null ? null : toStored(k, x); };
 const shownOf = (k: string, v: number | null) => (v === null ? "" : String(+toShown(k, v).toPrecision(6)));
-const lineOf = (c: { select: any }) => c.select?.Line ?? null;
 
 /** One limit: property, then min/max with the unit, or yes/no, or the lowest rating. */
 const LimitRow = (p: { l: Limit; k: number }) => {
@@ -55,12 +54,13 @@ export const StagesPage = () => {
       </section>
       <section class="panel">
         <h2><Icon n="index" /> Chart selections</h2>
-        <p class="muted">A selection line or box on a chart. Draw it on the chart with the Line or Box tool.</p>
+        <p class="muted">Lines, boxes and shapes drawn on the charts. A material passes a chart when it passes every selection on it: two lines facing each other keep a band.</p>
         <For each={P().charts} fallback={<p class="muted">No charts.</p>}>{c => <div class="limit">
-          <b>{c.name}</b><span class="muted">{lineOf(c) ? `line of slope ${fmt(lineOf(c).slope)}, ${lineOf(c).above ? "above" : "below"} passes` : c.select ? "box" : "no selection"}</span>
-          <Show when={c.select}><span class="muted small">{r().stages.find(s => s.chart === c.id)?.pass} pass</span></Show>
+          <b>{c.name}</b><span class="muted">{c.sels.length ? c.sels.map(s => { const l = lineOf(s); return l ? `line of slope ${fmt(l.slope)}, ${l.above ? "above" : "below"} passes` : "Box" in s ? "box" : "shape"; }).join("; ") : "no selection"}</span>
+          <Show when={c.sels.length}><span class="muted small">{r().stages.find(s => s.chart === c.id)?.pass} pass</span></Show>
           <button class="btn sm" onClick={() => { setChartId(c.id); show("charts"); }}>Open the chart</button></div>}</For>
       </section>
+      <Ranking />
       <section class="panel">
         <h2><Icon n="tree" /> Families and classes <Help k="families" /></h2>
         <p class="muted">Untick what cannot be used, for example because of how the part is made.</p>
@@ -68,6 +68,34 @@ export const StagesPage = () => {
       </section>
       <p><button class="btn pri" onClick={() => show("results")}>See the results</button></p>
     </div>
+  );
+};
+
+/** How the materials that pass are ordered: by a selection line's index, or by weighted properties. */
+const Ranking = () => {
+  const st = () => P().stages, r = () => out()!.results, weighted = () => st().ranking === "weighted";
+  const props = () => db().props.filter(q => q.kind === "range" && db().materials.some(m => m.props[q.key]));
+  const total = () => st().weights.reduce((a, w) => a + w.w, 0) || 1;
+  const setW = (k: number, patch: Partial<Weight>) => setStages(s => { s.weights[k] = { ...s.weights[k], ...patch }; });
+  return (
+    <section class="panel">
+      <h2><Icon n="results" /> Ranking <Help k="ranking" /></h2>
+      <p class="muted">How the materials that pass are ordered in Results.</p>
+      <p class="inline"><label class="chk"><input type="radio" name="rank" checked={!weighted()} onChange={() => setStages(s => { s.ranking = "line"; })} />By the index of a selection line</label>
+        <select disabled={weighted() || !r().lines.length} value={`${r().rankChart}:${r().rankLine}`} onChange={e => { const [c, k] = e.currentTarget.value.split(":").map(Number); setStages(s => { s.rankChart = c; s.rankLine = k; s.ranking = "line"; }); }}>
+          <For each={r().lines} fallback={<option value="0:0">No selection line yet</option>}>{l => <option value={`${l.chart}:${l.k}`}>{l.name} on “{P().charts.find(c => c.id === l.chart)?.name}”</option>}</For></select></p>
+      <p class="inline"><label class="chk"><input type="radio" name="rank" checked={weighted()} onChange={() => setStages(s => { s.ranking = "weighted"; if (!s.weights.length) s.weights = [{ prop: "rho", w: 1, high: false }, { prop: "price", w: 1, high: false }]; })} />By weighted properties</label>
+        <span class="muted">each property scaled so the best material that passes scores 1, then averaged by weight</span></p>
+      <Show when={weighted()}>
+        <For each={st().weights}>{(w, k) => <div class="limit">
+          <select value={w.prop} onChange={e => { const v = e.currentTarget.value; setW(k(), { prop: v }); }}><For each={props()}>{x => <option value={x.key}>{x.name}</option>}</For></select>
+          <select value={w.high ? "high" : "low"} onChange={e => { const v = e.currentTarget.value === "high"; setW(k(), { high: v }); }}><option value="low">lower is better</option><option value="high">higher is better</option></select>
+          <label class="inline">weight <input type="number" min="0" step="1" style={{ width: "60px" }} value={w.w} onChange={e => { const v = +e.currentTarget.value; if (isFinite(v) && v >= 0) setW(k(), { w: v }); }} /></label>
+          <span class="muted">{fmt((100 * w.w) / total())} %</span>
+          <button class="btn sm" onClick={() => setStages(s => { s.weights.splice(k(), 1); })}>Remove</button></div>}</For>
+        <p><button class="btn sm" onClick={() => setStages(s => { s.weights.push({ prop: "E", w: 1, high: true }); })}>Add a property</button></p>
+      </Show>
+    </section>
   );
 };
 
@@ -93,7 +121,7 @@ export const StagePanel = () => {
   return (
     <aside class="spanel">
       <Show when={cur() && mat(cur())}><MaterialCard m={mat(cur())!} /></Show>
-      <Show when={goals().find(g => g.id === P().charts.find(c => c.id === r().rankChart)?.goal)}>{g => <div class="gcard"><small>Goal</small><b>{g().name}</b><span>{g().above || g().slope ? "Maximise" : "Minimise"} <span class="idx">{g().index}</span></span></div>}</Show>
+      <Show when={goals().find(g => g.id === goalId(P().charts.find(c => c.id === r().rankChart) ?? { goal: "" } as any))}>{g => <div class="gcard"><small>Goal</small><b>{g().name}</b><span>{g().above || g().slope ? "Maximise" : "Minimise"} <span class="idx">{g().index}</span></span></div>}</Show>
       <div class="pcount"><b>{r().pass}</b><span>of {r().total} materials pass</span><Help k="stages" /></div>
       <For each={r().stages} fallback={<p class="muted">No stages yet. Draw a selection line on the chart (Line tool), add a limit, or leave families out.</p>}>{s =>
         <button class="scard" onClick={() => (s.kind === "chart" ? (setChartId(s.chart), show("charts")) : show("stages"))}><Icon n={s.kind === "limit" ? "filter" : s.kind === "chart" ? "index" : "tree"} /><span>{s.name}</span><b>{s.pass}</b></button>}</For>
