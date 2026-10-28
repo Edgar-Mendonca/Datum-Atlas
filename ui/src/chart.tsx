@@ -317,7 +317,7 @@ const pngOf = async (id: number) => {
 export const copyChart = async () => {
   const c = chart();
   if (!c || !chartOut(c.id)) return toast("Open a chart first.");
-  try { await call("copy_png", { data: await pngOf(c.id) }); toast("Chart copied as a picture. Paste it into Word, PowerPoint or an email.", true); }
+  try { await call("copy_png", { data: await pngOf(c.id) }); toast("Chart copied as a picture. Paste it into a document, a slide or an email.", true); }
   catch (e) { toast(`Could not copy the picture: ${e}`); }
 };
 /** Saves the open chart as SVG (vector, editable text) or PNG at the resolution in Options. */

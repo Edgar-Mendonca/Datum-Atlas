@@ -46,7 +46,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 - **Your own materials**: the Add Material window explains what is needed (a name, the family, density, at least one more property, low and high values in the unit shown, and where the values come from). They appear in every view.
 - **Property charts** of any two properties, log or linear; family envelopes; hover for ranges, click for the datasheet; zoom, pan, guide lines of slope 1, 2 and 3.
 - **Selection**: limit, chart (line or box) and family stages; results ranked by the index with “× best”; failures explained.
-- **Browse** with a family tree and an Excel-like table (sort, select, copy to Excel), and **datasheets** with grouped properties and numbered references.
+- **Browse** with a family tree and a spreadsheet-like table (sort, select, copy to a spreadsheet), and **datasheets** with grouped properties and numbered references.
 - Design problems to start from: light stiff beam, strong tie, stiff panel, springs, hot and light, damage tolerant.
 - Print or save as PDF (charts, datasheets, results); export charts as SVG or PNG, or copy the chart as a picture.
 - Light, dark and auto themes; the in-app updater; recovery of unsaved work.
@@ -63,7 +63,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 
 ## Coming next
 
-Several selection lines and charts, results to Excel and more values checked against datasheets (0.1.2); the index builder, expression axes and derived properties (0.2); compare, radar charts, the selection report and 250 materials (0.3); your own databases with Excel import (0.3.1); eco audit (0.4); process selection (0.5). See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+Several selection lines and charts, results to a spreadsheet and more values checked against datasheets (0.1.2); the index builder, expression axes and formula properties (0.2.0); compare, radar charts, the selection report and 250 materials (0.3.0); your own databases with spreadsheet and CSV import (0.3.1); eco audit (0.4.0); process selection (0.5.0). See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Install
 

@@ -125,7 +125,7 @@ export const Ribbon = () => (
         <S><N i="fx" l="Expression Axis" id="B8" /><B i="fit" l="Fit" run={C.fit} /></S></G>
       <G l="Tools"><B big i="pan" l="Pan" on={tool() === "pan"} run={() => setTool("pan")} /><B big i="index" l="Line" on={tool() === "line"} run={() => setTool("line")} dd={e => openMenu(e, lineMenu())} /><B big i="box" l="Box" on={tool() === "box"} run={() => setTool("box")} /></G>
       <G l="Show"><B big i="hull" l="Envelopes" dd={e => openMenu(e, hullMenu())} /><S><B i="tag" l="Labels" on={!!chart()?.labels} run={() => setChart(c => { c.labels = !c.labels; })} /><B i="index" l="Guide Lines" on={!!chart()?.guides.length} run={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })} /><N i="tag" l="Smart Labels" id="B9" /></S></G>
-      <G l="Share"><B big i="export" l="Export" run={() => C.exportChart("svg")} dd={e => openMenu(e, [{ label: "SVG vector", icon: "export", run: () => C.exportChart("svg") }, { label: "PNG picture", run: () => C.exportChart("png") }, { label: "PDF (Print › Save as PDF)", icon: "print", run: C.print }])} /><S><B i="copy" l="Copy Picture" title="Paste into Word or PowerPoint" run={copyChart} /><B i="print" l="Print" run={C.print} /></S></G>
+      <G l="Share"><B big i="export" l="Export" run={() => C.exportChart("svg")} dd={e => openMenu(e, [{ label: "SVG vector", icon: "export", run: () => C.exportChart("svg") }, { label: "PNG picture", run: () => C.exportChart("png") }, { label: "PDF (Print › Save as PDF)", icon: "print", run: C.print }])} /><S><B i="copy" l="Copy Picture" title="Paste into a document or a slide" run={copyChart} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
     <Show when={tab() === "format"}>
       <G l="Envelopes"><S><For each={[["family", "Families"], ["class", "Classes"], ["none", "None"]]}>{([k, l]) => <B i="hull" l={l} on={chart()?.hull === k} run={() => setChart(c => { c.hull = k; })} />}</For></S></G>
@@ -134,7 +134,7 @@ export const Ribbon = () => (
     </Show>
     <Show when={tab() === "data"}>
       <G l="Materials"><B big i="tree" l="Browse" run={() => show("browse")} /><B big i="datasheet" l="Datasheet" run={C.sheet} /><B big i="material" l="Add Material" run={C.addMaterial} /></G>
-      <G l="Databases"><B big i="db" l="Data" run={() => show("data")} /><B big i="source" l="Sources" run={() => show("sources")} /><S><N i="import" l="Import Excel / CSV" id="A8" /><N i="export" l="Export Database" id="A8" /><N i="db" l="Open Database" id="A9" /></S></G>
+      <G l="Databases"><B big i="db" l="Data" run={() => show("data")} /><B big i="source" l="Sources" run={() => show("sources")} /><S><N i="import" l="Import Spreadsheet / CSV" id="A8" /><N i="export" l="Export Database" id="A8" /><N i="db" l="Open Database" id="A9" /></S></G>
       <G l="Properties"><S><N i="fx" l="Formula Property" id="A6" /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} run={() => setUnits(imperial() ? "si" : "imperial")} /><N i="image" l="Pictures" id="A10" /></S></G>
     </Show>
     <Show when={tab() === "report"}>

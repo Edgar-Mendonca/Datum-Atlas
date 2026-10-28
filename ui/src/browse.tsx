@@ -49,7 +49,7 @@ export const Browse = () => {
   const copy = () => {
     const g = sel.last(), head = keys().slice(g.c0, g.c1 + 1).map(k => k === "name" ? "Material" : k === "family" ? "Class" : `${propOf(k)?.name} (${unitOf(k)})`);
     const body = rows().slice(g.r0, g.r1 + 1).map(m => keys().slice(g.c0, g.c1 + 1).map(k => text(m, k)));
-    call("copy_text", { text: toTsv([head, ...body]) }).then(() => toast(`Copied ${body.length} ${body.length === 1 ? "row" : "rows"}: paste into Excel.`, true));
+    call("copy_text", { text: toTsv([head, ...body]) }).then(() => toast(`Copied ${body.length} ${body.length === 1 ? "row" : "rows"}: paste into a spreadsheet.`, true));
   };
   const key = (e: KeyboardEvent) => {
     const c = sel.cur(), ctrl = e.ctrlKey || e.metaKey;

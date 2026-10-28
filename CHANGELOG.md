@@ -38,7 +38,7 @@ The first Datum Atlas: about 100 referenced materials, property charts with fami
 - About 100 generic materials from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials.
 - Each value is a range with its source. The datasheet numbers the references and lists them at the bottom.
 - Built-in values are drafts: compiled from the named sources, not yet checked against each table or page.
-- Browse: a family tree and a table you can sort, select and copy to Excel (Ctrl+C), with Sum, Average and Count.
+- Browse: a family tree and a table you can sort, select and copy to a spreadsheet (Ctrl+C), with Sum, Average and Count.
 
 **Your own materials**
 - Add Material explains what is needed: a name, the family, density, at least one more property, low and high values in the unit shown, and where the values come from.

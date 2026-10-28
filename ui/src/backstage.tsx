@@ -48,7 +48,7 @@ const Home = () => {
         <p class="muted">Start a selection: every material on a property chart, then limits and a selection line. {db().materials.length} materials are ready, each value with its reference.</p>
         <div class="tiles">
           <For each={tpls() ?? []}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><MiniChart slope={t.slope} /><small>{t.slope ? `slope ${t.slope}` : "chart"}</small></div><b>{t.name}</b><span>{t.desc}</span></button>}</For>
-          <button class="tile" onClick={() => { setBackstage(null); show("browse"); }}><div class="pic"><svg class="ic"><use href="#i-tree" /></svg></div><b>Material Library</b><span>Every material by family, with its values; sort, search and copy to Excel.</span></button>
+          <button class="tile" onClick={() => { setBackstage(null); show("browse"); }}><div class="pic"><svg class="ic"><use href="#i-tree" /></svg></div><b>Material Library</b><span>Every material by family, with its values; sort, search and copy to a spreadsheet.</span></button>
           <button class="tile" onClick={() => { setBackstage(null); editMaterial(); }}><div class="pic"><svg class="ic"><use href="#i-material" /></svg></div><b>Add a material</b><span>Your own material, with a source for each value.</span></button>
           <button class="tile" onClick={() => { setBackstage(null); show("sources"); }}><div class="pic"><svg class="ic"><use href="#i-source" /></svg></div><b>Sources</b><span>Where every value comes from: open and public sources only.</span></button>
           <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Atlas will do, and when.</span></button>
@@ -89,10 +89,10 @@ const Export = () => (
     <Show when={chart()} fallback={<p class="muted">Open a chart first, then come back here to export it.</p>}>{c => <>
       <p class="muted">Exporting <b>{c().name}</b> with every material and its family legend.</p>
       <div class="tiles">
-        <button class="tile" onClick={() => exportChart("svg")}><div class="pic"><svg class="ic"><use href="#i-image" /></svg><small>.svg</small></div><b>SVG vector</b><span>Sharp at any size; text stays editable in Inkscape, Illustrator or Word.</span></button>
+        <button class="tile" onClick={() => exportChart("svg")}><div class="pic"><svg class="ic"><use href="#i-image" /></svg><small>.svg</small></div><b>SVG vector</b><span>Sharp at any size; text stays editable in drawing and document programs.</span></button>
         <button class="tile" onClick={() => exportChart("png")}><div class="pic"><svg class="ic"><use href="#i-image" /></svg><small>.png</small></div><b>PNG picture</b><span>For slides and documents, at {opts().dpi} dpi (Options).</span></button>
         <button class="tile" onClick={() => setBackstage("print")}><div class="pic"><svg class="ic"><use href="#i-print" /></svg></div><b>PDF</b><span>File › Print and choose “Save as PDF”: vector, with headers and footers.</span></button>
-        <button class="tile" onClick={() => { setBackstage(null); copyChart(); }}><div class="pic"><svg class="ic"><use href="#i-copy" /></svg></div><b>Copy picture</b><span>Paste the chart straight into Word, PowerPoint or an email.</span></button>
+        <button class="tile" onClick={() => { setBackstage(null); copyChart(); }}><div class="pic"><svg class="ic"><use href="#i-copy" /></svg></div><b>Copy picture</b><span>Paste the chart straight into a document, a slide or an email.</span></button>
       </div>
     </>}</Show>
   </div>

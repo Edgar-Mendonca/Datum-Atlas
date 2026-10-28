@@ -73,7 +73,7 @@ export const DataPage = () => {
         <table class="tbl"><tbody><For each={mine()} fallback={<tr><td class="muted">None yet. Add a material of your own, or copy a built-in one and change its values.</td></tr>}>{m =>
           <tr><td><b class="link" onClick={() => openSheet(m.id)}>{m.name}</b></td><td class="muted">{m.family.join(" › ")}</td><td class="muted">{Object.keys(m.props).length} properties</td>
             <td class="r"><button class="btn sm" onClick={() => editMaterial(m)}>Edit</button> <button class="btn sm" onClick={() => deleteMaterial(m)}>Delete</button></td></tr>}</For></tbody></table>
-        <p class="inline"><button class="btn pri" onClick={() => editMaterial()}><Icon n="material" /> Add a material</button><button class="btn" onClick={() => soon("A8")}>Import from Excel or CSV</button><Chip id="A8" /></p>
+        <p class="inline"><button class="btn pri" onClick={() => editMaterial()}><Icon n="material" /> Add a material</button><button class="btn" onClick={() => soon("A8")}>Import from a spreadsheet or CSV</button><Chip id="A8" /></p>
       </section>
       <section class="panel">
         <h2><Icon n="db" /> Built-in materials by family</h2>

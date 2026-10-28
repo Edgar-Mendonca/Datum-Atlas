@@ -76,7 +76,7 @@ export const glossary = () => openDialog(() => {
 export const shortcuts = () => openDialog(() => (
   <Dialog title="Keyboard Shortcuts">
     <table class="keys"><tbody><For each={[["Wheel", "Zoom the chart around the mouse"], ["Drag", "Pan the chart (Pan tool), move the selection line by its handle"], ["Click / double-click", "Show a material beside the chart / open its datasheet"],
-      ["Ctrl+C", "Copy the selected table cells (paste into Excel)"], ["Ctrl+A", "Select the whole table"], ["Arrows, Shift", "Move and extend the table selection"], ["Enter", "Open the datasheet of the table row"],
+      ["Ctrl+C", "Copy the selected table cells (paste into a spreadsheet)"], ["Ctrl+A", "Select the whole table"], ["Arrows, Shift", "Move and extend the table selection"], ["Enter", "Open the datasheet of the table row"],
       ["Ctrl+Z / Y", "Undo, redo"], ["Ctrl+S", "Save"], ["Ctrl+Shift+S", "Save As"], ["Ctrl+O", "Open"], ["Ctrl+N", "New (File › Home)"], ["Ctrl+P", "Print"], ["Ctrl+K or Alt+Q", "Tell me what you want to do"], ["F1", "This list"]]}>{([k, d]) => <tr><td>{k}</td><td>{d}</td></tr>}</For></tbody></table>
   </Dialog>
 ));

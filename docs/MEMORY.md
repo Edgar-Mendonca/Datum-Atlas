@@ -154,10 +154,10 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | — | Plan | CLAUDE.md, this file, PLAN-0.1 with questions | ✅ |
 | **0.1.0** | Data, charts, selection | Shell, updater, File page, Violet design and logo; 100 referenced materials; Browse; Datasheet; property charts (bubbles, family envelopes, hover, click, zoom, pan, guides, legend); limits, line, box and family stages; Results with reasons and ranking; Add Material + user database; `.datlas`; print; SVG/PNG export; whole UI laid out | ✅ |
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
-| 0.1.2 | Lines and charts | Several selection lines per chart, results to Excel, keyboard, more values checked (rest of the metals, then polymers) | 🔜 |
+| 0.1.2 | Lines and charts ([PLAN-0.1.2.md](PLAN-0.1.2.md)) | Several selection lines per chart, results to a spreadsheet, keyboard, more values checked (rest of the metals, then polymers). Proposed: also two-constraint goals, best-material labels, one roadmap from `site.json`; charts side by side moved to 0.1.3. Waiting for the user's choices. | 🔜 |
 | 0.2.0 | Indices | Index builder (~40 indices); expression axes; formula properties (GridCraft) | ⬜ |
 | 0.3.0 | Compare and report | Compare + radar; selection report; ~250 materials, more values checked | ⬜ |
-| 0.3.1 | Own data | Several databases, Excel/CSV import with mapping; label placement; style presets; polygon stage | ⬜ |
+| 0.3.1 | Own data | Several databases, spreadsheet/CSV import with mapping; label placement; style presets; polygon stage | ⬜ |
 | 0.4.0 | Eco audit | Energy and CO₂ across a product's life | ⬜ |
 | 0.5.0 | Process selection | Manufacturing processes alongside materials | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
@@ -207,13 +207,23 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-10-28: Session 5 (site.json)
 - Added `docs/site.json` (hub FAMILY §10) from the user's draft, checked against the roadmap and CHANGELOG. Corrected: not every value cites a public source (our compilation and price estimates are our own), so it now says every value names its source; datasheets and results are printed, not exported; bar charts, cost per volume and Copy Picture added; versions written with three numbers (also in the roadmap here).
 - New test `site_json_is_current`; CLAUDE.md and the release flow now include site.json. 17 engine tests pass.
-- Noticed: README and CHANGELOG 0.1.0 say "copy to Excel", a product name that FAMILY §13 keeps out of public text; not changed yet.
+- README, CHANGELOG 0.1.0 and the app said "Excel"; reworded to "spreadsheet" at the user's request (FAMILY §13).
+
+### 2026-10-28: Session 6 (wording, plan for 0.1.2)
+- Reworded "Excel" to "spreadsheet" in the README, CHANGELOG 0.1.0 and the app (Material Library tile, Browse copy toast, ? help, shortcuts, ribbon Import, Data page, roadmap features), and removed other product names from app text (Copy Picture and SVG tiles, the copy toast, the ribbon tooltip), per hub FAMILY §13. Code comments are unchanged.
+- Wrote [PLAN-0.1.2.md](PLAN-0.1.2.md):
+  - where we are;
+  - proposal: 0.1.2 lines and results, 0.1.3 charts side by side, 0.2.0/0.2.1/0.2.2 indices;
+  - size;
+  - 7 questions.
+- Diagnosis: several lines on one chart share its axes, so "stiff and strong" needs a second chart. Proposed goals that add it.
+- No feature code changed. **Waiting for the answers.**
 
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** the user reviews 0.1.1 on Windows; then 0.1.2 (several selection lines, results to Excel, more values checked).
+**Next:** the user answers [PLAN-0.1.2.md](PLAN-0.1.2.md) §6 and reviews 0.1.1 on Windows; then build 0.1.2.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
