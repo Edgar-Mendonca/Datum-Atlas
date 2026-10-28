@@ -89,6 +89,9 @@ flowchart LR
 | `ui/src/material.tsx` | Add/Edit Material window with the "What you need" panel; `deleteMaterial`. |
 | `crates/core/src/formula.rs` | Formulas of properties on ranges: `parse` (with names resolved), `key_of`, `refs`, `eval` (interval arithmetic), `show`. |
 | `ui/src/formula.tsx` | The formula-properties window (`editFormulas(axis?)`). |
+| `crates/core/src/export.rs` | Results as a table: `results`, `csv`, `xlsx`. |
+| `crates/core/src/compare.rs` | Compare and radar: `build`, `RADAR`, `MAX`. |
+| `ui/src/compare.tsx`, `ui/src/report.tsx` | The Compare page with the radar, and the selection report (screen and print). |
 | `ui/src/help.tsx` | `HELP` (18 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
 | `ui/src/pages.tsx` | Setup (requirements, goal list, design problems), `goalCard` (Why), Sources page (kinds, licences, cites), Data (your materials, families, sources), `Later` pages for Compare, Index builder, Report; `MiniChart`. |
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
@@ -303,6 +306,22 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - `selected` on options so a list shows a value whose option arrives late;
   - help topics `formula` and `index`.
 - 30 engine tests and the new UI checks pass.
+
+### 2026-10-28: Session 11, continued (0.2.0 stage D+E: charts, compare, report)
+- **Engine:**
+  - `export.rs` turns the results into a table (rank, index, × best, passes, the typical value of each property the selection uses, the reasons) and writes CSV (with a byte-order mark, quoted) or .xlsx (`rust_xlsxwriter` 0.101, as in Datum Plan).
+  - `compare.rs`: up to 6 materials (`Project.compare`, `Op::Compare`); per property the highest and lowest, and the spread; radar positions 0–1 between the database's lowest and highest (log scale for log properties). `Out.compare`.
+  - `Chart.best`, `style` (classic, publication, mono) and `moved` (label offsets).
+  - Shell command `export_results(fmt)`.
+- **Window:**
+  - `compare.tsx` (table and `Radar`);
+  - `report.tsx` (the selection report on screen and as a printed flowing document; parts in `ui.report`);
+  - Best 5 labels with ranks, label placement around bubbles with leader lines and dragging (double-click resets);
+  - styles;
+  - charts side by side (1, 2 or 4, a stable page holding the open chart; hover highlights on all; fit and zoom act on the open chart);
+  - "+ compare" in Results, Compare on the card beside the chart;
+  - To a spreadsheet and CSV buttons; ribbon Compare, Radar and Report are live.
+- 32 engine tests; UI checks for each of these pass.
 
 ---
 

@@ -63,7 +63,7 @@ export const [query, setQuery] = createSignal("");
 export const chart = (): Chart | undefined => out()?.project.charts.find(c => c.id === chartId()) ?? out()?.project.charts[0];
 export const chartOut = (id = chart()?.id): ChartOut | undefined => out()?.charts.find(c => c.id === id);
 const fixChart = () => { const cs = out()?.project.charts ?? []; if (!cs.some(c => c.id === chartId())) setChartId(cs[0]?.id ?? 0); };
-export const show = (v: View) => { setView(v); if (v === "charts") setTab("chart"); else if (v === "browse" || v === "datasheet" || v === "data" || v === "sources") setTab("data"); else if (v === "stages" || v === "results") setTab("select"); };
+export const show = (v: View) => { setView(v); if (v === "charts") setTab("chart"); else if (v === "browse" || v === "datasheet" || v === "data" || v === "sources") setTab("data"); else if (v === "stages" || v === "results" || v === "index") setTab("select"); else if (v === "report" || v === "compare") setTab("report"); };
 export const openSheet = (id: string) => { setCur(id); show("datasheet"); };
 /** Did a material fail the stages? (greyed on charts) */
 export const failed = () => { const s = new Set<string>(); const r = out()?.results; if (r && r.stages.length) r.rows.forEach(x => { if (!x.pass) s.add(x.id); }); return s; };
@@ -88,6 +88,14 @@ export const setGoal = (goal: string): Promise<boolean> => { const c = chart(); 
 export const [active, setActive] = createSignal<Record<number, number>>({});
 export const activeOf = (c: Chart) => Math.min(active()[c.id] ?? 0, Math.max(0, c.sels.length - 1));
 export const setActiveOf = (id: number, k: number) => setActive(a => ({ ...a, [id]: k }));
+/** The material under the mouse on any chart: charts side by side all highlight it. */
+export const [hoverId, setHoverId] = createSignal("");
+/** How many charts are shown at once: 1, 2 or 4. */
+export const [grid, setGrid] = createSignal(1);
+/** Adds a material to Compare (up to six), or removes it. */
+export const toggleCompare = (id: string) => { const p = P(), on = p.compare.includes(id);
+  if (!on && p.compare.length >= 6) return toast("Compare up to six materials: remove one first.");
+  return act({ Compare: { ids: on ? p.compare.filter(x => x !== id) : [...p.compare, id], radar: p.radar } }).then(ok => { if (ok) toast(on ? "Removed from Compare." : `Added to Compare (${p.compare.length + 1} of up to 6).`, true); }); };
 /** Replaces a chart's selections. */
 export const setSels = (c: Chart, sels: ChartSel[]) => act({ Select: { chart: c.id, sels } });
 /** Changes the open chart's settings. */

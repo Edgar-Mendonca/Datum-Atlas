@@ -20,6 +20,8 @@ pub enum Op {
     /// Replaces the project's formula properties. Charts, limits and weights on a formula that
     /// is gone go back to the defaults.
     SetFormulas { formulas: Vec<Formula> },
+    /// The materials to compare (up to six) and the radar chart's properties (empty: the default set).
+    Compare { ids: Vec<String>, radar: Vec<String> },
     Name { name: String },
     Notes { text: String },
     /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
@@ -147,6 +149,12 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 extra.push((f.key(), name.to_string()));
             }
             p.formulas = formulas.into_iter().map(|f| Formula { name: f.name.trim().into(), ..f }).collect();
+        }
+        Op::Compare { ids, radar } => {
+            if ids.len() > crate::compare::MAX { return Err(format!("Compare up to {} materials at once.", crate::compare::MAX)); }
+            let mut seen = vec![];
+            for id in ids { if !seen.contains(&id) { seen.push(id) } }
+            (p.compare, p.radar) = (seen, radar);
         }
         Op::Name { name } => {
             let name = name.trim().to_string();

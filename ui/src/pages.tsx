@@ -1,7 +1,7 @@
 // Pages of the sidebar besides Browse, the chart and the stages: Setup (the design problem), Data
 // (the databases and their sources), and the laid-out pages of features still to come.
 import { For, JSX, Show, createResource, createSignal } from "solid-js";
-import { P, act, db, show, loadOut, call, setNode, openSheet, setBackstage, goals, setGoal, chart, openDialog, propOf, unitOf, toShown } from "./store";
+import { P, act, db, show, loadOut, call, setNode, openSheet, goals, setGoal, chart, openDialog, propOf, unitOf, toShown } from "./store";
 import { Icon, Dialog } from "./ui";
 import { Help } from "./help";
 import { fmt } from "./api";
@@ -91,13 +91,6 @@ export const Later = (p: { icon: string; title: string; ids: string[]; children:
   <div class="page emptypage"><div class="emptybox"><Icon n={p.icon} size={42} /><h1>{p.title}</h1>{p.children}
     <div class="later"><For each={p.ids}>{id => <button class="btn" onClick={() => soon(id)}><Chip id={id} /> {id}</button>}</For></div></div></div>
 );
-export const ComparePage = () => (
-  <Later icon="compare" title="Compare" ids={["D2", "D3"]}>
-    <p>Put two to six candidates side by side: every property in one table with the differences highlighted, and a radar chart of their normalised properties.</p>
-    <p class="muted">Until then, open the datasheets of your candidates from Results (double-click a row).</p>
-    <p><button class="btn pri" onClick={() => show("results")}>Results</button></p>
-  </Later>
-);
 /** Puts an index (goal or library entry) on a new chart, so the open one is kept. */
 export const plotIndex = async (id: string) => { await C.newChart(); await setGoal(id); show("charts"); };
 
@@ -142,13 +135,6 @@ export const IndexPage = () => {
     </div>
   );
 };
-export const ReportPage = () => (
-  <Later icon="report" title="Report" ids={["D4"]}>
-    <p>One click gives a selection report: the requirements, the stages, the charts, the ranked shortlist and the datasheets.</p>
-    <p class="muted">Now: print the chart, the results and each datasheet from File › Print, or save them as PDF.</p>
-    <p><button class="btn pri" onClick={() => setBackstage("print")}>Print</button></p>
-  </Later>
-);
 
 /** A goal explained: function, constraint, objective, free variable, the index and why. */
 export const goalCard = (id: string) => openDialog(() => {

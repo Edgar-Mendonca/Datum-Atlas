@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod update;
 
-use datum_atlas_core::{chart, db::{self, Db}, doc::{write_atomic, Doc, Op}, goals, select, templates, Database, Material, Project, Source, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, export, goals, select, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
@@ -75,6 +75,7 @@ struct Out<'a> {
     rev: u64,
     charts: Vec<chart::ChartOut>,
     results: select::Results,
+    compare: compare::Compare,
     db_rev: u64,
 }
 
@@ -85,7 +86,7 @@ fn out(a: &App) -> Value {
     let charts = d.p.charts.iter().map(|c| chart::build(&db, c)).collect();
     serde_json::to_value(Out {
         project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
-        charts, results: select::run(&db, &d.p), db_rev: a.db_rev,
+        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), db_rev: a.db_rev,
     })
     .unwrap_or_default()
 }
@@ -269,6 +270,22 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
     clear_recovery(&app);
     a.rev += 1;
     Ok(Some(out(&a)))
+}
+
+/// Saves the ranked results with their reasons as a spreadsheet (.xlsx) or CSV.
+#[tauri::command]
+async fn export_results(app: AppHandle, st: State<'_, St>, fmt: String) -> R<Option<String>> {
+    let (name, bytes) = {
+        let a = st.lock();
+        let db = a.db.with_formulas(&a.doc.p.formulas);
+        let t = export::results(&db, &a.doc.p);
+        let bytes = if fmt == "csv" { export::csv(&t).into_bytes() } else { export::xlsx(&t, &a.doc.p.name)? };
+        (format!("{} results.{}", a.doc.p.name, if fmt == "csv" { "csv" } else { "xlsx" }), bytes)
+    };
+    let ext = if fmt == "csv" { "csv" } else { "xlsx" };
+    let Some(path) = app.dialog().file().add_filter(if fmt == "csv" { "CSV" } else { "Spreadsheet" }, &[ext]).set_file_name(&name).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    write_atomic(&path, &bytes)?;
+    Ok(Some(path.display().to_string()))
 }
 
 /// Saves a picture or a page the window made (SVG text, or a PNG data URL).
@@ -504,7 +521,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, pick_logo, copy_text, copy_png, goal_list,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, pick_logo, copy_text, copy_png, goal_list,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

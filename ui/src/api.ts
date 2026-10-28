@@ -21,13 +21,13 @@ export interface Db { materials: Material[]; sources: Source[]; userCount: numbe
 export type Line = { slope: number; x: number; y: number; above: boolean };
 export type ChartSel = { Line: Line } | { Box: { x0: number; x1: number; y0: number; y1: number } } | { Poly: { pts: [number, number][] } };
 /** A chart: two properties and its selections (lines, boxes, shapes); a material passes when it passes all. */
-export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; sels: ChartSel[]; goal: string; kind: string }
+export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; sels: ChartSel[]; goal: string; kind: string; best: boolean; style: string; moved: Record<string, [number, number]> }
 export interface Weight { prop: string; w: number; high: boolean }
 export interface Limit { prop: string; min: number | null; max: number | null; flag: boolean | null; rating: string | null; goal: boolean }
 export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number; rankLine: number; ranking: string; weights: Weight[] }
 /** A property of your own: a formula of other properties, saved with the project; its key is "f:" + name. */
 export interface Formula { name: string; expr: string; unit: string; log: boolean }
-export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[] }
+export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[]; compare: string[]; radar: string[] }
 
 export interface Bubble { id: string; name: string; fam: number; class: string; c: [number, number]; r: [number, number]; x: [number, number]; y: [number, number] }
 export interface Hull { name: string; fam: number; pts: [number, number][]; at: [number, number]; label: boolean; ids: string[] }
@@ -35,7 +35,11 @@ export interface Axis { key: string; name: string; sym: string; unit: string; lo
 export interface ChartOut { id: number; x: Axis; y: Axis; families: string[]; bubbles: Bubble[]; hulls: Hull[]; missing: [string, string][]; bands: { name: string; fam: number; from: number; to: number }[] }
 export interface Row { id: string; name: string; family: string; pass: boolean; reasons: string[]; index: number | null; ratio: number | null; rank: number | null }
 export interface Results { total: number; pass: number; stages: { kind: string; name: string; chart: number; pass: number }[]; rows: Row[]; indexName: string; rankChart: number; rankLine: number; lines: { chart: number; k: number; name: string; value: number }[] }
-export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; dbRev: number }
+/** Compare: per property each material's typical value, which is highest and lowest, and the radar positions (0–1 across the database). */
+export interface Compare { ids: string[]; rows: { key: string; vals: (number | null)[]; hi: number | null; lo: number | null; spread: number | null }[]; radar: { keys: string[]; vals: (number | null)[][] } }
+export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; compare: Compare; dbRev: number }
+/** Colours of the materials compared (and their radar outlines). */
+export const CMP_COLORS = ["#6C4AB6", "#E69F00", "#009E73", "#D55E00", "#0072B2", "#CC79A7"];
 export interface Goal {
   id: string; group: string; name: string; index: string; x: string; y: string; slope: number; above: boolean;
   function: string; constraint: string; objective: string; free: string; why: string; limits: [string, number | null, number | null][];

@@ -2,9 +2,11 @@
 //! (bubbles and family hulls), selection stages with reasons and ranking, edits and .datlas files.
 //! No UI or OS code lives here.
 pub mod chart;
+pub mod compare;
 pub mod db;
 pub mod formula;
 pub mod doc;
+pub mod export;
 pub mod geometry;
 pub mod goals;
 pub mod model;

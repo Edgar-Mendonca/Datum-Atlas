@@ -3,7 +3,8 @@
 // hover, clicks and dragging the selection line or box. `ChartSvg` also draws printed charts.
 import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Chart, ChartOut, ChartSel, Bubble, Line, famColor, fmt, range, lineOf, boxOf, polyOf, goalId } from "./api";
-import { act, out, failed, cur, setCur, openSheet, openMenu, chartOut, setChart, toast, db, chart, call, opts, conv, unitOf, toShown, goals, setGoal, activeOf, setActiveOf, setSels, P, chartProps, propOf } from "./store";
+import { grid, setGrid } from "./store";
+import { act, out, failed, cur, setCur, openSheet, openMenu, chartOut, setChart, toast, db, chart, call, opts, conv, unitOf, toShown, goals, setGoal, activeOf, setActiveOf, setSels, P, chartProps, propOf, hoverId, setHoverId, setChartId } from "./store";
 import { Icon } from "./ui";
 import { Help } from "./help";
 import { render } from "solid-js/web";
@@ -11,6 +12,9 @@ import { render } from "solid-js/web";
 export type Win = [number, number, number, number];
 const M = { l: 66, r: 16, t: 14, b: 48 };
 const LEG = 24;
+/** The mono style: greys, and a dash per family. */
+const MONO = ["#1F2933", "#52606D", "#7B8794", "#3E4C59", "#616E7C", "#9AA5B1", "#323F4B"];
+const DASH = ["", "6 3", "2 2", "8 3 2 3", "4 4", "1 3", "10 4"];
 const SUP: Record<string, string> = { "-": "⁻", "0": "⁰", "1": "¹", "2": "²", "3": "³", "4": "⁴", "5": "⁵", "6": "⁶", "7": "⁷", "8": "⁸", "9": "⁹" };
 const decade = (k: number) => (k >= -2 && k <= 4 ? fmt(10 ** k) : `10${String(k).replace(/./g, ch => SUP[ch] ?? ch)}`);
 
@@ -52,7 +56,7 @@ const nudge = (ls: { x: number; y: number; w: number }[]) => {
 };
 /** The chart as SVG at w × h pixels for the window `win`. `sels` previews selections being dragged,
  *  `draft` a shape being drawn (axis space), `act` the selection being edited. */
-export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: Win; sels?: ChartSel[]; draft?: [number, number][]; act?: number; print?: boolean; hover?: string; legend?: boolean }) => {
+export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: Win; sels?: ChartSel[]; draft?: [number, number][]; act?: number; print?: boolean; hover?: string; legend?: boolean; labOff?: { id: string; off: [number, number] } | null }) => {
   const W = () => Math.max(10, p.w - M.l - M.r), H = () => Math.max(10, p.h - M.t - M.b - (p.legend ? LEG : 0));
   const X = (u: number) => M.l + ((u - p.win[0]) / (p.win[1] - p.win[0])) * W();
   const Y = (v: number) => M.t + (1 - (v - p.win[2]) / (p.win[3] - p.win[2])) * H();
@@ -60,6 +64,10 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
   const tx = () => (bar() ? { major: [], minor: [] } : ticksFor(p.win[0], p.win[1], p.o.x.log, p.o.x.key)), ty = () => ticksFor(p.win[2], p.win[3], p.o.y.log, p.o.y.key);
   const hullLabels = () => { const hs = p.o.hulls.filter(h => h.label), ys = nudge(hs.map(h => ({ x: X(h.at[0]), y: Y(h.at[1]) - 4, w: h.name.length * 6.8 }))); return hs.map((h, i) => ({ h, y: ys[i] })); };
   const fail = () => failed();
+  // Styles: classic family colours, publication (finer), or mono (greys and dashes for print).
+  const mono = () => p.c.style === "mono", pub = () => p.c.style === "publication";
+  const col = (f: number) => (mono() ? MONO[f % MONO.length] : famColor(f));
+  const dash = (f: number) => (mono() ? DASH[f % DASH.length] : undefined);
   const sels = () => p.sels ?? p.c.sels;
   const ax = (v: number, log: boolean) => (log ? Math.log10(v) : v);
   const clip = `clip${p.c.id}${p.print ? "p" : "s"}`;
@@ -85,6 +93,32 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
   const on = (k: number) => !p.print && p.act === k && sels().length > 1;
   const guide = (n: number) => { const cu = (p.win[0] + p.win[1]) / 2, cv = (p.win[2] + p.win[3]) / 2, at = (x: number) => cv + n * (x - cu); return { d: `M${X(p.win[0])} ${Y(at(p.win[0]))}L${X(p.win[1])} ${Y(at(p.win[1]))}`, n }; };
   const bubbles = () => [...p.o.bubbles].sort((a, b) => b.r[0] * b.r[1] - a.r[0] * a.r[1]);
+  /** Material labels (all with Labels on, the five best with "Best" on), each placed where it does not
+   *  overlap another label: around its bubble, further out if needed, with a leader line when far.
+   *  A label moved by hand stays where it was put. */
+  const placed = () => {
+    if (bar()) return [];
+    const rank = new Map((out()?.results.rows ?? []).filter(r => r.pass && r.rank && r.rank <= 5).map(r => [r.id, r.rank!] as const));
+    const show = p.o.bubbles.filter(b => p.c.labels || (p.c.best && rank.has(b.id))).sort((a, b) => (rank.get(a.id) ?? 99) - (rank.get(b.id) ?? 99));
+    const boxes = hullLabels().map(({ h, y }) => ({ x: X(h.at[0]) - h.name.length * 3.4, y: y - 11, w: h.name.length * 6.8, h: 14 }));
+    const hits = (q: { x: number; y: number; w: number; h: number }) => boxes.some(b => q.x < b.x + b.w && q.x + q.w > b.x && q.y < b.y + b.h && q.y + q.h > b.y);
+    const inside = (q: { x: number; y: number; w: number; h: number }) => q.x > M.l + 2 && q.x + q.w < M.l + W() - 2 && q.y > M.t + 2 && q.y + q.h < M.t + H() - 2;
+    return show.flatMap(b => {
+      const bx = X(b.c[0]), by = Y(b.c[1]); if (bx < M.l || bx > M.l + W() || by < M.t || by > M.t + H()) return [];
+      const rx = Math.max(2.5, (b.r[0] / (p.win[1] - p.win[0])) * W()), ry = Math.max(2.5, (b.r[1] / (p.win[3] - p.win[2])) * H());
+      const best = rank.has(b.id), t = b.name.split(/[,(]/)[0].trim(), w = (t.length + (best ? 4 : 0)) * (best ? 6.2 : 5.5), h = 12;
+      const mv = p.labOff?.id === b.id ? p.labOff.off : p.c.moved[b.id];
+      let at: [number, number] | null = mv ? [bx + mv[0], by + mv[1]] : null;
+      if (!at) for (const d of [0, 12, 26, 44]) { for (const [ux, uy] of [[1, -1], [1, 1], [-1, -1], [-1, 1], [0, -1], [0, 1], [1, 0], [-1, 0]]) {
+        const x = bx + ux * (rx * 0.7 + 3 + d) - (ux < 0 ? w : ux === 0 ? w / 2 : 0), y = by + uy * (ry * 0.7 + 3 + d) + (uy > 0 ? h - 2 : uy === 0 ? 4 : -2);
+        const q = { x, y: y - h + 2, w, h }; if (inside(q) && !hits(q)) { at = [x, y]; break; } } if (at) break; }
+      if (!at) at = [bx + rx + 3, by - 3];
+      boxes.push({ x: at[0], y: at[1] - h + 2, w, h });
+      const cx = Math.max(at[0], Math.min(bx, at[0] + w)), cy = Math.max(at[1] - h + 2, Math.min(by, at[1] + 2));
+      const far = Math.hypot(cx - bx, cy - by) > Math.max(rx, ry) + 10;
+      return [{ id: b.id, t, x: at[0], y: at[1], bx, by, best, rank: rank.get(b.id), lead: far ? [bx, by, cx, cy] as [number, number, number, number] : null }];
+    });
+  };
   return (
     <svg class="chartsvg" width={p.w} height={p.h} viewBox={`0 0 ${p.w} ${p.h}`} xmlns="http://www.w3.org/2000/svg" font-family="IBM Plex Sans, Segoe UI, Arial, sans-serif">
       <Show when={p.print}><rect width={p.w} height={p.h} fill="#fff" /></Show>
@@ -95,18 +129,21 @@ export const ChartSvg = (p: { c: Chart; o: ChartOut; w: number; h: number; win: 
         <For each={ty().major}>{([v]) => <line y1={Y(v)} y2={Y(v)} x1={M.l} x2={M.l + W()} />}</For>
       </g>
       <g clip-path={`url(#${clip})`}>
-        <For each={p.o.hulls}>{h => <path class="hull" d={`M${h.pts.map(q => `${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("L")}Z`} fill={famColor(h.fam)} fill-opacity=".13" stroke={famColor(h.fam)} stroke-opacity=".55" stroke-width="1.2" />}</For>
+        <For each={p.o.hulls}>{h => <path class="hull" d={`M${h.pts.map(q => `${X(q[0]).toFixed(1)} ${Y(q[1]).toFixed(1)}`).join("L")}Z`} fill={col(h.fam)} fill-opacity={pub() ? 0.06 : mono() ? 0.05 : 0.13} stroke={col(h.fam)} stroke-opacity={mono() ? 0.9 : 0.55} stroke-width={pub() ? 0.9 : 1.2} stroke-dasharray={dash(h.fam)} />}</For>
         <For each={lines()}>{l => <path d={l.zone} fill="#6C4AB6" fill-opacity=".06" />}</For>
         <For each={bar() ? [] : p.c.guides}>{n => { const g = () => guide(n); return <path d={g().d} stroke="#5B6878" stroke-width="1" stroke-dasharray="5 4" fill="none" />; }}</For>
         <For each={bubbles()}>{b => {
-          const off = () => fail().has(b.id), on = () => b.id === cur() || b.id === p.hover;
+          const off = () => fail().has(b.id), on = () => b.id === cur() || b.id === p.hover || (!p.print && b.id === hoverId());
           if (bar()) { const x0 = X(b.c[0] - b.r[0]), x1 = X(b.c[0] + b.r[0]), y0 = Y(b.c[1] + Math.max(b.r[1], 0.004 * (p.win[3] - p.win[2]))), y1 = Y(b.c[1] - Math.max(b.r[1], 0.004 * (p.win[3] - p.win[2])));
-            return <rect class="bub" data-id={b.id} x={x0} y={y0} width={Math.max(1.5, x1 - x0)} height={Math.max(2, y1 - y0)} fill={off() ? "#C3C8CE" : famColor(b.fam)} fill-opacity={off() ? 0.4 : 0.7} stroke={on() ? "#0C1A2B" : "none"} stroke-width={on() ? 1.6 : 0} />; }
+            return <rect class="bub" data-id={b.id} x={x0} y={y0} width={Math.max(1.5, x1 - x0)} height={Math.max(2, y1 - y0)} fill={off() ? "#C3C8CE" : col(b.fam)} fill-opacity={off() ? 0.4 : 0.7} stroke={on() ? "#0C1A2B" : "none"} stroke-width={on() ? 1.6 : 0} />; }
           return <ellipse class="bub" data-id={b.id} cx={X(b.c[0])} cy={Y(b.c[1])} rx={Math.max(2.5, (b.r[0] / (p.win[1] - p.win[0])) * W())} ry={Math.max(2.5, (b.r[1] / (p.win[3] - p.win[2])) * H())}
-            fill={off() ? "#C3C8CE" : famColor(b.fam)} fill-opacity={off() ? 0.35 : 0.6} stroke={on() ? "#0C1A2B" : off() ? "#A9AFB6" : famColor(b.fam)} stroke-width={on() ? 2 : 0.8} />;
+            fill={off() ? "#C3C8CE" : col(b.fam)} fill-opacity={off() ? 0.35 : pub() ? 0.45 : mono() ? 0.3 : 0.6} stroke={on() ? "#0C1A2B" : off() ? "#A9AFB6" : col(b.fam)} stroke-width={on() ? 2 : 0.8} stroke-dasharray={on() ? undefined : dash(b.fam)} />;
         }}</For>
-        <For each={hullLabels()}>{({ h, y }) => <text x={X(h.at[0])} y={y} text-anchor="middle" font-size="12" font-weight="600" fill={famColor(h.fam)} stroke="#fff" stroke-width="3" paint-order="stroke" pointer-events="none">{h.name}</text>}</For>
-        <Show when={p.c.labels}><For each={p.o.bubbles}>{b => <text x={X(b.c[0]) + 4} y={Y(b.c[1]) - 4} font-size="9.5" fill="#3B4859" pointer-events="none">{b.name.split(/[,(]/)[0]}</text>}</For></Show>
+        <For each={hullLabels()}>{({ h, y }) => <text x={X(h.at[0])} y={y} text-anchor="middle" font-size="12" font-weight="600" fill={mono() ? "#222" : col(h.fam)} stroke="#fff" stroke-width="3" paint-order="stroke" pointer-events="none">{h.name}</text>}</For>
+        <For each={placed()}>{l => <>
+          <Show when={l.lead}><line x1={l.lead![0]} y1={l.lead![1]} x2={l.lead![2]} y2={l.lead![3]} stroke="#5B6878" stroke-width=".8" /></Show>
+          <text class="mlab" data-id={l.id} data-ox={String(l.x - l.bx)} data-oy={String(l.y - l.by)} x={l.x} y={l.y} font-size={l.best ? "10.5" : "9.5"} font-weight={l.best ? "600" : "400"} fill={l.best ? "#0C1A2B" : "#3B4859"} stroke="#fff" stroke-width="2.5" paint-order="stroke"
+            pointer-events={p.print ? "none" : "all"}>{l.best && l.rank ? `${l.rank} · ` : ""}{l.t}</text></>}</For>
         <For each={sels()}>{(s, k) => <>
           <Show when={boxOf(s)}>{bx => <rect class="selbox" data-k={k()} x={Math.min(X(ax(bx().x0, p.o.x.log)), X(ax(bx().x1, p.o.x.log)))} y={Math.min(Y(ax(bx().y0, p.o.y.log)), Y(ax(bx().y1, p.o.y.log)))}
             width={Math.abs(X(ax(bx().x1, p.o.x.log)) - X(ax(bx().x0, p.o.x.log)))} height={Math.abs(Y(ax(bx().y1, p.o.y.log)) - Y(ax(bx().y0, p.o.y.log)))} fill="#6C4AB6" fill-opacity=".07" stroke="#6C4AB6" stroke-width={on(k()) ? 2.6 : 1.6} stroke-dasharray="6 3" />}</Show>
@@ -158,9 +195,10 @@ const wins = new Map<number, { key: string; w: Win }>();
 const keyOf = (c: Chart) => `${c.kind}|${c.x}|${c.y}|${c.logX}|${c.logY}`;
 export const [tool, setTool] = createSignal<"pan" | "line" | "box" | "poly">("pan");
 export const [slope, setSlope] = createSignal(1);
-let fitNow: (() => void) | null = null, zoomBy: ((f: number) => void) | null = null;
-export const fitChart = () => fitNow?.();
-export const zoomChart = (f: number) => zoomBy?.(f);
+/** Fit and zoom of each chart on screen, so the buttons act on the open one. */
+const views = new Map<number, { fit: () => void; zoom: (f: number) => void }>();
+export const fitChart = () => views.get(chart()?.id ?? -1)?.fit();
+export const zoomChart = (f: number) => views.get(chart()?.id ?? -1)?.zoom(f);
 /** A new selection line on a chart, through (x, y) in stored units; it becomes the one being edited. */
 export const addLine = (c: Chart, l: Line) => { setActiveOf(c.id, c.sels.length); return setSels(c, [...c.sels, { Line: l }]); };
 /** Removes selection k (or all). */
@@ -192,12 +230,12 @@ export const ChartView = (p: { c: Chart }) => {
   const [drag, setDrag] = createSignal<ChartSel[] | undefined>(undefined);
   const [draft, setDraft] = createSignal<[number, number][]>([]);
   const [tip, setTip] = createSignal<{ x: number; y: number; b: Bubble } | null>(null);
+  const [labOff, setLabOff] = createSignal<{ id: string; off: [number, number] } | null>(null);
   onMount(() => {
     const ro = new ResizeObserver(() => setSize([box.clientWidth, box.clientHeight])); ro.observe(box); onCleanup(() => ro.disconnect());
-    fitNow = () => setWin(lim());
-    zoomBy = f => { const w = win(), cx = (w[0] + w[1]) / 2, cy = (w[2] + w[3]) / 2; setWin([cx - (cx - w[0]) / f, cx + (w[1] - cx) / f, cy - (cy - w[2]) / f, cy + (w[3] - cy) / f]); };
+    views.set(p.c.id, { fit: () => setWin(lim()), zoom: f => { const w = win(), cx = (w[0] + w[1]) / 2, cy = (w[2] + w[3]) / 2; setWin([cx - (cx - w[0]) / f, cx + (w[1] - cx) / f, cy - (cy - w[2]) / f, cy + (w[3] - cy) / f]); } });
   });
-  onCleanup(() => { fitNow = null; zoomBy = null; });
+  onCleanup(() => views.delete(p.c.id));
   const W = () => size()[0] - M.l - M.r, H = () => size()[1] - M.t - M.b;
   /** Mouse → axis space. */
   const at = (e: MouseEvent): [number, number] => { const r = box.getBoundingClientRect(), w = win(); return [w[0] + ((e.clientX - r.left - M.l) / W()) * (w[1] - w[0]), w[2] + (1 - (e.clientY - r.top - M.t) / H()) * (w[3] - w[2])]; };
@@ -228,7 +266,13 @@ export const ChartView = (p: { c: Chart }) => {
     let moved = false, mv: (m: MouseEvent) => void, up: (m: MouseEvent) => void;
     const pan = (m: MouseEvent) => { const dx = m.clientX - sx, dy = m.clientY - sy; if (!moved && Math.hypot(dx, dy) < 3) return; moved = true; const ku = (w0[1] - w0[0]) / W(), kv = (w0[3] - w0[2]) / H(); setWin([w0[0] - dx * ku, w0[1] - dx * ku, w0[2] + dy * kv, w0[3] + dy * kv]); };
     const pick = (m: MouseEvent) => { const b = hit(m); setCur(b ? b.id : ""); };
-    if (c.kind === "bar") { mv = pan; up = m => { if (!moved) pick(m); }; }
+    if (t.classList.contains("mlab")) {
+      // Move a material label; it keeps its place (a double-click puts it back).
+      const id = t.getAttribute("data-id")!, o0: [number, number] = [+(t.getAttribute("data-ox") ?? 0), +(t.getAttribute("data-oy") ?? 0)];
+      mv = m => { moved = true; setLabOff({ id, off: [o0[0] + m.clientX - sx, o0[1] + m.clientY - sy] }); };
+      up = () => { const l = labOff(); setLabOff(null); if (moved && l) setChart(c => { c.moved = { ...c.moved, [id]: l.off }; }); };
+    }
+    else if (c.kind === "bar") { mv = pan; up = m => { if (!moved) pick(m); }; }
     else if (k >= 0 && (t.classList.contains("selh") || t.classList.contains("sell")) && lineOf(c.sels[k])) {
       // Move a selection line: it keeps its slope and passes through the mouse.
       const l = lineOf(c.sels[k])!;
@@ -275,7 +319,7 @@ export const ChartView = (p: { c: Chart }) => {
     const ax = (v: number, log: boolean) => (log ? Math.log10(v) : v);
     setSels(c, c.sels.map((s, i) => (i === k ? { Line: { ...l, x: val(ax(l.x, x.x.log) + dx, x.x.log), y: val(ax(l.y, x.y.log) + dy, x.y.log) } } : s)));
   };
-  const move = (e: MouseEvent) => { if (e.buttons) return setTip(null); const b = hit(e); setTip(b ? { x: e.clientX, y: e.clientY, b } : null); };
+  const move = (e: MouseEvent) => { if (e.buttons) { setHoverId(""); return setTip(null); } const b = hit(e); setTip(b ? { x: e.clientX, y: e.clientY, b } : null); setHoverId(b?.id ?? ""); };
   const menu = (e: MouseEvent) => {
     const b = hit(e), c = p.c;
     openMenu(e, [
@@ -289,9 +333,9 @@ export const ChartView = (p: { c: Chart }) => {
   };
   const fails = () => out()?.results.rows.find(r => r.id === tip()?.b.id);
   return (
-    <div class="cbox" tabindex="0" ref={box} classList={{ tline: tool() === "line", tbox: tool() === "box" || tool() === "poly" }} onWheel={wheel} onMouseDown={down} onMouseMove={move} onMouseLeave={() => setTip(null)} onKeyDown={keys}
-      onDblClick={e => { if (tool() === "poly") return closeDraft(); const b = hit(e); if (b) openSheet(b.id); }} onContextMenu={menu}>
-      <Show when={o()} fallback={<div class="gwait">Laying out the chart…</div>}>{x => <ChartSvg c={p.c} o={x()} w={size()[0]} h={size()[1]} win={win()} sels={drag()} draft={draft()} act={activeOf(p.c)} hover={tip()?.b.id} />}</Show>
+    <div class="cbox" tabindex="0" ref={box} classList={{ tline: tool() === "line", tbox: tool() === "box" || tool() === "poly" }} onWheel={wheel} onMouseDown={down} onMouseMove={move} onMouseLeave={() => { setTip(null); setHoverId(""); }} onKeyDown={keys} onFocus={() => setChartId(p.c.id)}
+      onDblClick={e => { if (tool() === "poly") return closeDraft(); const id = (e.target as Element).getAttribute("data-id"); if ((e.target as Element).classList.contains("mlab") && id && p.c.moved[id]) return setChart(c => { const m = { ...c.moved }; delete m[id]; c.moved = m; }); const b = hit(e); if (b) openSheet(b.id); }} onContextMenu={menu}>
+      <Show when={o()} fallback={<div class="gwait">Laying out the chart…</div>}>{x => <ChartSvg c={p.c} o={x()} w={size()[0]} h={size()[1]} win={win()} sels={drag()} draft={draft()} act={activeOf(p.c)} hover={tip()?.b.id} labOff={labOff()} />}</Show>
       <Show when={tip()}>{t => { const x = o()!; return (
         <div class="gtip" style={{ left: `${t().x + 14}px`, top: `${t().y + 12}px` }}>
           <b>{t().b.name}</b><span class="muted">{db().materials.find(m => m.id === t().b.id)?.family.join(" › ")}</span>
@@ -329,7 +373,10 @@ export const ChartBar = (p: { c: Chart }) => {
         <button classList={{ on: p.c.kind === "bar" }} title="One property, a bar per material" onClick={() => setChart(c => { c.kind = "bar"; c.sels = []; c.goal = ""; c.logY = db().props.find(x => x.key === c.y)?.log ?? true; })}>Bars</button></div><Help k={p.c.kind === "bar" ? "bar" : "chart"} />
       <span class="grow" />
       <Show when={p.c.kind !== "bar"}><select title="Envelopes" value={p.c.hull} onChange={e => { const v = e.currentTarget.value; setChart(c => { c.hull = v; }); }}><option value="family">Envelopes: families</option><option value="class">Envelopes: classes</option><option value="none">No envelopes</option></select><Help k="envelopes" /></Show>
-      <button class="rb fb" classList={{ on: p.c.labels }} title="Material labels" onClick={() => setChart(c => { c.labels = !c.labels; })}><Icon n="tag" /></button>
+      <button class="rb fb" classList={{ on: p.c.best }} disabled={p.c.kind === "bar"} title="Label the five best materials by the ranking" onClick={() => setChart(c => { c.best = !c.best; })}>Best 5</button>
+      <button class="rb fb" classList={{ on: p.c.labels }} title="Label every material (labels move apart; drag one to place it)" onClick={() => setChart(c => { c.labels = !c.labels; })}><Icon n="tag" /></button>
+      <select title="Chart style" value={p.c.style} onChange={e => { const v = e.currentTarget.value; setChart(c => { c.style = v; }); }}><option value="classic">Classic</option><option value="publication">Publication</option><option value="mono">Mono</option></select>
+      <div class="seg" title="Charts at once: one, two side by side, or four"><For each={[1, 2, 4]}>{n => <button classList={{ on: grid() === n }} title={`${n} chart${n > 1 ? "s" : ""} at once`} onClick={() => setGrid(n)}>{n === 1 ? "▢" : n === 2 ? "▢▢" : "⊞"}</button>}</For></div>
       <button class="rb fb" classList={{ on: p.c.guides.length > 0 }} disabled={p.c.kind === "bar"} title="Guide lines of slope 1, 2 and 3" onClick={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })}><Icon n="index" /></button>
       <button class="rb fb" title="Zoom in" onClick={() => zoomChart(1.4)}><Icon n="zin" /></button><button class="rb fb" title="Zoom out" onClick={() => zoomChart(1 / 1.4)}><Icon n="zout" /></button><button class="rb fb" title="Fit all materials" onClick={fitChart}><Icon n="fit" /></button>
     </div>

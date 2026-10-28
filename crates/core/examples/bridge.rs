@@ -2,7 +2,7 @@
 //! ({"cmd": "...", "args": {...}}), one JSON answer per line on stdout ({"ok": ...} or {"err": "..."}).
 //! It answers the shell's commands that need the engine, without files or the OS:
 //! cargo run -q -p datum-atlas-core --example bridge
-use datum_atlas_core::{chart, db::{self, Db}, doc::{Doc, Op}, goals, select, templates, Database, Material, Source, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, goals, select, templates, Database, Material, Source, FORMAT};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
@@ -11,7 +11,7 @@ struct St { doc: Doc, user: Database, db: Db, rev: u64, db_rev: u64 }
 fn out(s: &St) -> Value {
     let db = s.db.with_formulas(&s.doc.p.formulas);
     let charts: Vec<_> = s.doc.p.charts.iter().map(|c| chart::build(&db, c)).collect();
-    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "dbRev": s.db_rev })
+    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "dbRev": s.db_rev })
 }
 
 fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {

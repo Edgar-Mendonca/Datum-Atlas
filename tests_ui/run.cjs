@@ -29,7 +29,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.exposeFunction("__engine", async (cmd, args) => ask(cmd, args));
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
-    const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined };
+    const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx" };
     const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
@@ -98,7 +98,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.click('.side button[title="Results"]');
   await p.waitForTimeout(300);
   const st = await p.evaluate(async () => { const s = await window.__TAURI__.core.invoke("state"); return { pass: s.results.pass, rows: s.results.rows.filter(r => r.pass).map(r => r.name) }; });
-  const listed = await p.$$eval(".tbl.results tbody tr", rs => rs.map(r => r.children[1].textContent));
+  const listed = await p.$$eval(".tbl.results tbody tr", rs => rs.map(r => r.children[1].querySelector("b").textContent));
   check("the results table lists exactly what passes", JSON.stringify(listed) === JSON.stringify(st.rows), `${listed.length} vs ${st.rows.length}`);
   check("results are ranked with × best", (await p.textContent(".tbl.results thead")).includes("× best") && (await p.textContent(".tbl.results tbody tr td:nth-child(5)")) === "1");
   await p.click(".resultspage .chk input");
@@ -243,6 +243,58 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.keyboard.press("Escape");
   await p.waitForTimeout(200);
   await shot("13-index");
+
+  // Compare, export, best labels, styles, charts side by side, label dragging, the report.
+  await p.click('.side button[title="Results"]');
+  await p.waitForTimeout(300);
+  const k3 = Math.min(3, (await state()).results.pass);
+  await p.getByText("Compare the best three").click();
+  await p.waitForTimeout(500);
+  s0 = await state();
+  check("Compare the best three fills Compare from the results", k3 >= 2 && s0.project.compare.length === k3 && s0.compare.ids.length === k3 && (await p.$$eval(".tbl.cmp thead th", e => e.length)) === k3 + 2, String(k3));
+  check("Compare marks the highest and lowest in each row", (await p.$$eval(".tbl.cmp td.hi", e => e.length)) > 5 && (await p.$$eval(".tbl.cmp td.lo", e => e.length)) > 5);
+  await p.fill('.comparepage input[placeholder^="Add a material"]', "7075");
+  await p.waitForTimeout(200);
+  await p.click('.cfound button');
+  await p.waitForTimeout(400);
+  check("a material is added to Compare by name", (await state()).project.compare.includes("al-7075-t6"));
+  check("the radar draws an outline per material", (await p.$$eval(".comparepage svg.radar polygon[fill-opacity]", e => e.length)) === k3 + 1);
+  await shot("14-compare");
+  await p.click('.side button[title="Results"]');
+  await p.waitForTimeout(200);
+  await p.click('.ptools button:has-text("To a spreadsheet")');
+  await p.waitForTimeout(300);
+  check("To a spreadsheet saves the results as .xlsx", (await p.evaluate(() => window.__calls.some(c => c[0] === "export_results" && c[1].fmt === "xlsx"))) && (await p.textContent("#toast").catch(() => "")).includes("results.xlsx"));
+  await p.click('.side button[title="Charts"]');
+  await p.waitForTimeout(300);
+  await p.click('.cbar button:has-text("Best 5")');
+  await p.waitForTimeout(400);
+  const labs = await p.$$eval(".cbox text.mlab", e => e.map(x => x.textContent));
+  const want = Math.min(5, (await state()).results.pass);
+  check("Best 5 labels the five best by rank", labs.length === want && labs[0].startsWith("1 · "), JSON.stringify(labs));
+  const lab = await p.$eval(".cbox text.mlab", e => { const r = e.getBoundingClientRect(); return { x: r.left + 6, y: r.top + r.height / 2, id: e.getAttribute("data-id") }; });
+  await p.mouse.move(lab.x, lab.y); await p.mouse.down(); await p.mouse.move(lab.x + 60, lab.y + 40, { steps: 5 }); await p.mouse.up();
+  await p.waitForTimeout(400);
+  const mv = (await state()).project.charts.map(c => c.moved?.[lab.id]).find(Boolean);
+  check("a dragged label keeps its place", !!mv && Math.abs(mv[0]) > 30 && Math.abs(mv[1]) > 20, JSON.stringify(mv));
+  await p.selectOption('.cbar select[title="Chart style"]', "mono");
+  await p.waitForTimeout(400);
+  check("the mono style draws envelopes in greys with dashes", (await p.$$eval(".cbox path.hull", e => e.filter(x => x.getAttribute("stroke-dasharray")).length)) > 0);
+  await p.selectOption('.cbar select[title="Chart style"]', "classic");
+  await p.click('.cbar .seg button[title="4 charts at once"]');
+  await p.waitForTimeout(600);
+  check("four charts at once, side by side", (await p.$$eval(".board.cgrid .cbox", e => e.length)) === 4);
+  await shot("15-grid");
+  await p.click('.cbar .seg button[title="1 chart at once"]');
+  await p.waitForTimeout(300);
+  await p.click('.side button[title="Report"]');
+  await p.waitForTimeout(500);
+  const rep = await p.textContent(".report");
+  const nch = (await state()).project.charts.length;
+  check("the report holds the requirements, stages, charts, shortlist, comparison and datasheets", ["1 · Requirements", "2 · Selection stages", "3 · Property charts", "4 · Shortlist", "5 · Comparison", "6 · Datasheets of the candidates", "Sources"].every(h => rep.includes(h)) && (await p.$$eval(".report figure.rfig", e => e.length)) === nch);
+  await shot("16-report");
+  await p.click('.side button[title="Charts"]');
+  await p.waitForTimeout(300);
   await p.selectOption(".goalpick select", "beam-cheap");
   await p.waitForTimeout(500);
   let svg = await p.textContent(".cbox svg");

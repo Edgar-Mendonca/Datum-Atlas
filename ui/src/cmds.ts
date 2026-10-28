@@ -10,7 +10,7 @@ import * as D from "./dialogs";
 
 /** Adds a chart of y against x (log axes by default) and opens it. */
 const newChart = async (x = "rho", y = "E") => {
-  const c: Partial<Chart> = { x, y, logX: true, logY: true, hull: "family", labels: false, hidden: [], guides: [], sels: [], name: "", goal: "", kind: "bubble" };
+  const c: Partial<Chart> = { x, y, logX: true, logY: true, hull: "family", labels: false, hidden: [], guides: [], sels: [], name: "", goal: "", kind: "bubble", best: false, style: "classic", moved: {} };
   if (await act({ AddChart: { chart: c } })) { const cs = P().charts; setChartId(cs[cs.length - 1].id); show("charts"); }
 };
 export const C = {

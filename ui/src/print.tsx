@@ -9,6 +9,7 @@ import { famColor, fmt } from "./api";
 import { out, opts, P, act, view, chart, cur, toast, call, mat , propOf } from "./store";
 import { ChartSvg, Win } from "./chart";
 import { Datasheet } from "./browse";
+import { ReportDoc } from "./report";
 import { Pick, Check, Seg } from "./ui";
 
 /** Paper sizes in millimetres (portrait). */
@@ -37,7 +38,7 @@ const HeadFoot = (p: { k: "header" | "footer"; page: number; pages: number; name
 );
 
 /** What File › Print prints: charts (from the chart and stage views), a datasheet, or the results. */
-export const pkind = () => (view() === "datasheet" || view() === "browse" ? "sheet" : view() === "results" ? "results" : "chart");
+export const pkind = () => (view() === "datasheet" || view() === "browse" ? "sheet" : view() === "results" ? "results" : view() === "report" || view() === "compare" ? "report" : "chart");
 const paper = () => { const p = PAPERS.find(x => x[0] === ps.paper) ?? PAPERS[0]; return ps.landscape ? [p[2], p[1]] : [p[1], p[2]]; };
 const charts = () => (ps.which === "all" ? P().charts : chart() ? [chart()!] : []);
 
@@ -81,7 +82,7 @@ const Flow = (p: { children: JSX.Element; name: string }) => (
   <table class="pflow"><thead><tr><td><HeadFoot k="header" page={1} pages={1} name={p.name} /></td></tr></thead>
     <tbody><tr><td>{p.children}</td></tr></tbody><tfoot><tr><td><HeadFoot k="footer" page={1} pages={1} name={p.name} /></td></tr></tfoot></table>
 );
-const FlowDoc = () => <Flow name={pkind() === "sheet" ? mat(cur())?.name ?? "" : "Results"}>{pkind() === "sheet" ? <Datasheet print /> : <ResultsPrint />}</Flow>;
+const FlowDoc = () => <Flow name={pkind() === "sheet" ? mat(cur())?.name ?? "" : pkind() === "report" ? "Selection report" : "Results"}>{pkind() === "sheet" ? <Datasheet print /> : pkind() === "report" ? <ReportDoc print /> : <ResultsPrint />}</Flow>;
 
 const [printing, setPrinting] = createSignal(false);
 export const PrintPage = () => {
@@ -112,7 +113,7 @@ export const PrintPage = () => {
     <div class="printpage">
       <div class="pset">
         <h1>Print</h1>
-        <p class="pwhat">Printing: <b>{pkind() === "chart" ? (ps.which === "all" ? `All charts (${P().charts.length})` : chart()?.name) : pkind() === "sheet" ? `Datasheet: ${mat(cur())?.name ?? "choose a material"}` : "Results"}</b><br />
+        <p class="pwhat">Printing: <b>{pkind() === "chart" ? (ps.which === "all" ? `All charts (${P().charts.length})` : chart()?.name) : pkind() === "sheet" ? `Datasheet: ${mat(cur())?.name ?? "choose a material"}` : pkind() === "report" ? "The selection report" : "Results"}</b><br />
           <span class="muted">Open a chart, a datasheet or the results first to print it.</span></p>
         <div class="pbtns"><button class="btn pri big" onClick={printNow}><svg class="ic"><use href="#i-print" /></svg> Print / Save as PDF</button></div>
         <p class="muted">In the print window choose your printer, or <b>Save as PDF</b>. {ps.paper} {ps.landscape ? "landscape" : "portrait"}.</p>

@@ -11,6 +11,7 @@ import { soon } from "./roadmap";
 import { tool, setTool, copyChart, activeLine } from "./chart";
 import { helpCard, HELP } from "./help";
 import { editFormulas } from "./formula";
+import { exportResults } from "./stages";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Atlas";
 const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
@@ -119,7 +120,7 @@ export const Ribbon = () => (
       <G l="Stages"><B big i="filter" l="Limit" title="Minimum and maximum values, yes/no and ratings" run={C.addLimit} /><B big i="index" l="Line" title="A selection line of a slope: a performance index" run={() => C.line(2)} dd={e => openMenu(e, lineMenu())} />
         <B big i="box" l="Box" title="Drag a box on the chart" run={() => { show("charts"); setTool("box"); }} on={tool() === "box"} /><B big i="tree" l="Families" title="Leave families or classes out" run={() => show("stages")} /><B big i="poly" l="Shape" title="Click the corners of a shape on the chart; the materials inside pass" run={() => { show("charts"); setTool("poly"); }} on={tool() === "poly"} /><S><B i="index" l="Add Line" title="Another selection line on the chart (two facing lines make a band)" run={C.addLine} /><B i="del" l="Clear Selections" run={C.clearSel} off={!sels().length} /><B i="list" l="All Stages" run={() => show("stages")} /></S></G>
       <G l="Index"><B big i="builder" l="Index Builder" title="Function, constraint and objective give the performance index" run={() => show("index")} /><S><B i="list" l="Index Library" run={() => show("index")} /><B i="fx" l="Formula Property" run={() => editFormulas()} /><B i="setup" l="Design Problems" run={() => show("setup")} /></S></G>
-      <G l="Results"><B big i="results" l="Results" run={() => show("results")} /><S><N i="compare" l="Compare" id="D2" /><N i="eco" l="Greener Substitutes" id="E3" /></S></G>
+      <G l="Results"><B big i="results" l="Results" run={() => show("results")} /><S><B i="compare" l="Compare" run={() => show("compare")} /><B i="export" l="To a Spreadsheet" title="The ranked results with the reasons, as .xlsx" run={() => exportResults("xlsx")} /><N i="eco" l="Greener Substitutes" id="E3" /></S></G>
     </Show>
     <Show when={tab() === "chart"}>
       <G l="Chart"><B big i="atlas" l="New Chart" run={() => C.newChart()} dd={e => openMenu(e, chartMenu())} /><S><B i="list" l="Open Chart" dd={e => openMenu(e, chartsMenu())} /><B i="del" l="Delete Chart" run={C.delChart} /><B i="bar" l="Bar Chart" on={chart()?.kind === "bar"} run={() => setChart(c => { c.kind = c.kind === "bar" ? "bubble" : "bar"; c.sels = []; c.goal = ""; })} /></S></G>
@@ -140,8 +141,8 @@ export const Ribbon = () => (
       <G l="Properties"><S><B i="fx" l="Formula Property" title="A property of your own: a formula of other properties" run={() => editFormulas()} /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} run={() => setUnits(imperial() ? "si" : "imperial")} /><N i="image" l="Pictures" id="A10" /></S></G>
     </Show>
     <Show when={tab() === "report"}>
-      <G l="Compare"><N big i="compare" l="Compare" id="D2" /><N big i="radar" l="Radar Chart" id="D3" /></G>
-      <G l="Report"><N big i="report" l="Selection Report" id="D4" /><S><B i="print" l="Print" run={C.print} /><B i="results" l="Results" run={() => show("results")} /></S></G>
+      <G l="Compare"><B big i="compare" l="Compare" title="Two to six materials side by side" run={() => show("compare")} /><B big i="radar" l="Radar Chart" run={() => show("compare")} /></G>
+      <G l="Report"><B big i="report" l="Selection Report" title="Requirements, stages, charts, shortlist and datasheets in one document" run={() => show("report")} /><S><B i="print" l="Print" run={C.print} /><B i="export" l="Results to a Spreadsheet" run={() => exportResults("xlsx")} /><B i="export" l="Results as CSV" run={() => exportResults("csv")} /></S></G>
       <G l="Eco"><N big i="eco" l="Eco Audit" id="E1" /><S><N i="bar" l="Eco Charts" id="E2" /><N i="eco" l="Greener Substitutes" id="E3" /></S></G>
       <G l="Process"><N big i="process" l="Process Selection" id="F2" /><S><N i="list" l="Processes" id="F1" /><N i="bar" l="Cost Model" id="F3" /></S></G>
     </Show>

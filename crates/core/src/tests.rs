@@ -477,3 +477,40 @@ fn formula_properties_chart_limit_and_rank() {
     doc.apply(Op::SetFormulas { formulas: vec![] }).unwrap();
     assert_eq!((doc.p.charts[0].y.as_str(), doc.p.stages.limits.len()), ("E", 0));
 }
+
+#[test]
+fn results_export_to_csv_and_xlsx() {
+    use crate::export::{csv, results, xlsx, Cell};
+    let d = db();
+    let p = crate::templates::build(&d, Some("beam")).unwrap();
+    let r = run(&d, &p);
+    let t = results(&d, &p);
+    assert_eq!(t.rows.len(), r.total);
+    assert_eq!(t.head[4], "E½/ρ");
+    assert!(t.head.iter().any(|h| h == "Young's modulus (GPa)") && t.head.iter().any(|h| h == "Density (kg/m³)"));
+    // The first row is the best: rank 1, × best 1; failures say why.
+    assert_eq!((&t.rows[0][0], &t.rows[0][5]), (&Cell::Num(1.0), &Cell::Num(1.0)));
+    let fail = t.rows.iter().find(|x| x[3] == Cell::Text("No".into())).unwrap();
+    assert!(matches!(fail.last(), Some(Cell::Text(s)) if !s.is_empty()));
+    let c = csv(&t);
+    assert!(c.starts_with('\u{FEFF}') && c.lines().count() == r.total + 1);
+    assert!(c.contains(",\"Low carbon steel, AISI 1020\","), "names with commas are quoted");
+    let b = xlsx(&t, "Light, stiff beam").unwrap();
+    assert!(b.starts_with(b"PK"), "an .xlsx is a zip file");
+}
+
+#[test]
+fn compare_and_radar() {
+    let d = db();
+    let mut doc = Doc::new(Project::new("T"));
+    assert!(doc.apply(Op::Compare { ids: (0..7).map(|i| format!("m{i}")).collect(), radar: vec![] }).is_err(), "up to six");
+    doc.apply(Op::Compare { ids: vec!["steel-1045".into(), "al-6061-t6".into(), "steel-1045".into(), "pa66".into()], radar: vec![] }).unwrap();
+    assert_eq!(doc.p.compare.len(), 3, "a material once");
+    let c = crate::compare::build(&d, &doc.p);
+    let rho = c.rows.iter().find(|r| r.key == "rho").unwrap();
+    assert_eq!((rho.hi, rho.lo), (Some(0), Some(2)), "steel is the densest, the polymer the lightest");
+    assert!(rho.spread.unwrap() > 5.0);
+    assert_eq!(c.radar.keys, crate::compare::RADAR);
+    assert!(c.radar.vals.iter().flatten().flatten().all(|v| (0.0..=1.0).contains(v)));
+    assert!(c.radar.vals[0][0].unwrap() > c.radar.vals[2][0].unwrap(), "steel sits further out on density");
+}

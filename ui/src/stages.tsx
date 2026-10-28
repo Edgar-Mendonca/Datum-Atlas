@@ -2,7 +2,7 @@
 // chart, and the Results page: what passes, ranked by the index, and why the others fail.
 import { For, Show, createSignal } from "solid-js";
 import { Limit, Stages, Material, Weight, fmt, SEP, famColor, lineOf, goalId } from "./api";
-import { act, out, P, db, cur, setCur, openSheet, show, setChartId, mat, propOf, srcOf, toShown, toStored, unitOf, vtext, goals, chartProps, formulaProps } from "./store";
+import { act, out, P, db, cur, setCur, openSheet, show, setChartId, mat, propOf, srcOf, toShown, toStored, unitOf, vtext, goals, chartProps, formulaProps, toggleCompare, call, toast } from "./store";
 import { Help } from "./help";
 import { Icon, Check } from "./ui";
 
@@ -110,7 +110,7 @@ const MaterialCard = (p: { m: Material }) => {
         <Show when={!row()!.pass}><ul class="why"><For each={row()!.reasons}>{x => <li>{x}</li>}</For></ul></Show></Show>
       <table class="tbl mini"><tbody><For each={keys.filter(k => p.m.props[k])}>{k => <tr><td>{propOf(k)?.name}</td><td class="r">{vtext(k, p.m.props[k])}</td><td class="muted">{unitOf(k)}</td></tr>}</For></tbody></table>
       <p class="muted small">{p.m.uses}</p>
-      <button class="btn sm pri" onClick={() => openSheet(p.m.id)}>Full datasheet</button> <button class="btn sm" onClick={() => setCur("")}>Close</button>
+      <button class="btn sm pri" onClick={() => openSheet(p.m.id)}>Full datasheet</button> <button class="btn sm" onClick={() => toggleCompare(p.m.id)}>{P().compare.includes(p.m.id) ? "In Compare ✓" : "Compare"}</button> <button class="btn sm" onClick={() => setCur("")}>Close</button>
     </div>
   );
 };
@@ -136,6 +136,9 @@ export const StagePanel = () => {
   );
 };
 
+/** Saves the ranked results with the reasons as a spreadsheet or CSV. */
+export const exportResults = async (fmt: "xlsx" | "csv") => { const path = await call<string | null>("export_results", { fmt }); if (path) toast(`Saved ${path}`, true); };
+
 /** Select › Results: the ranked shortlist and the reasons for every failure. */
 export const ResultsPage = () => {
   const [all, setAll] = createSignal(false);
@@ -146,10 +149,12 @@ export const ResultsPage = () => {
       <h1>Results <Help k="results" /></h1>
       <p class="muted">{r().stages.length ? `${r().pass} of ${r().total} materials pass ${r().stages.length} ${r().stages.length === 1 ? "stage" : "stages"}.` : "No stages yet: every material passes."}
         {r().indexName ? ` Ranked by the performance index ${r().indexName} (higher is better); “× best” compares each with the best one.` : " Draw a selection line on a chart to rank by its index."}</p>
-      <div class="ptools"><Check label="Show the materials that fail, with the reasons" value={all()} set={setAll} /><span class="grow" /><button class="btn sm" onClick={() => show("stages")}>Edit the stages</button></div>
+      <div class="ptools"><Check label="Show the materials that fail, with the reasons" value={all()} set={setAll} /><span class="grow" /><button class="btn sm" onClick={() => show("stages")}>Edit the stages</button>
+        <button class="btn sm" title="Compare the best three side by side" onClick={() => act({ Compare: { ids: r().rows.filter(x => x.pass).slice(0, 3).map(x => x.id), radar: P().radar } }).then(() => show("compare"))}>Compare the best three</button>
+        <button class="btn sm pri" title="The ranked results with the reasons, as a spreadsheet" onClick={() => exportResults("xlsx")}>To a spreadsheet</button><button class="btn sm" onClick={() => exportResults("csv")}>CSV</button></div>
       <table class="tbl results"><thead><tr><th>Rank</th><th>Material</th><th>Family</th><Show when={r().indexName}><th class="r"><span class="idx">{r().indexName}</span></th><th class="r">× best</th></Show><th>Result</th></tr></thead>
         <tbody><For each={rows()}>{x => <tr class="link" classList={{ fail: !x.pass, sel: x.id === cur() }} onClick={() => setCur(x.id)} onDblClick={() => openSheet(x.id)}>
-          <td class="muted">{x.rank ?? ""}</td><td><b>{x.name}</b></td><td class="muted">{x.family}</td>
+          <td class="muted">{x.rank ?? ""}</td><td><b>{x.name}</b> <button class="lnk small" classList={{ on: P().compare.includes(x.id) }} title="Add to Compare" onClick={e => { e.stopPropagation(); toggleCompare(x.id); }}>{P().compare.includes(x.id) ? "✓ compare" : "+ compare"}</button></td><td class="muted">{x.family}</td>
           <Show when={r().indexName}><td class="r">{fmt(x.index)}</td><td class="r">{x.ratio !== null ? fmt(x.ratio) : ""}</td></Show>
           <td>{x.pass ? <span class="ok">Passes{x.reasons.length ? ` (${x.reasons.join("; ")})` : ""}</span> : <span class="late">Fails: {x.reasons.join("; ")}</span>}</td></tr>}</For></tbody></table>
       <Show when={!rows().length}><p class="muted">Nothing passes. Relax a limit, move the selection line, or bring a family back.</p></Show>

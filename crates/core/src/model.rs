@@ -169,6 +169,9 @@ pub struct Project {
     pub ui: serde_json::Value,
     /// Your own properties: formulas of other properties, usable in charts, limits and ranking.
     pub formulas: Vec<Formula>,
+    /// The materials side by side on the Compare page (up to six), and the radar chart's properties.
+    pub compare: Vec<String>,
+    pub radar: Vec<String>,
 }
 
 /// A property of your own: a formula of other properties (`[E]^0.5/[rho]`), saved with the
@@ -194,7 +197,7 @@ pub fn pname(k: &str) -> String {
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![] }
+        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![] }
     }
 }
 
@@ -225,11 +228,17 @@ pub struct Chart {
     pub goal: String,
     /// "bubble" (two properties) or "bar" (the y property for every material).
     pub kind: String,
+    /// Label the five best materials by the ranking.
+    pub best: bool,
+    /// "classic" (family colours), "publication" (finer, for papers) or "mono" (greys and dashes, for print).
+    pub style: String,
+    /// Labels moved by hand: material id → offset from its bubble, in pixels.
+    pub moved: BTreeMap<String, [f64; 2]>,
 }
 
 impl Default for Chart {
     fn default() -> Self {
-        Self { id: 0, name: String::new(), x: "rho".into(), y: "E".into(), log_x: true, log_y: true, hull: "family".into(), labels: false, hidden: vec![], guides: vec![], sels: vec![], select: None, goal: String::new(), kind: "bubble".into() }
+        Self { id: 0, name: String::new(), x: "rho".into(), y: "E".into(), log_x: true, log_y: true, hull: "family".into(), labels: false, hidden: vec![], guides: vec![], sels: vec![], select: None, goal: String::new(), kind: "bubble".into(), best: false, style: "classic".into(), moved: BTreeMap::new() }
     }
 }
 
@@ -340,6 +349,8 @@ impl Project {
             if !known(&c.y) { c.y = "E".into(); }
             c.guides.retain(|s| s.is_finite());
             if let Some(s) = c.select.take() { if c.sels.is_empty() { c.sels.push(s) } }
+            if !["classic", "publication", "mono"].contains(&c.style.as_str()) { c.style = "classic".into(); }
+            c.moved.retain(|_, v| v.iter().all(|x| x.is_finite() && x.abs() < 5000.0));
             c.sels.retain(ChartSel::valid);
         }
         self.stages.weights.retain(|w| known(&w.prop) && w.w.is_finite() && w.w > 0.0);

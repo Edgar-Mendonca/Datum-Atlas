@@ -10,6 +10,7 @@ import "@fontsource/ibm-plex-mono/latin-500.css";
 import "@fontsource/ibm-plex-mono/latin-600.css";
 import "./styles.css";
 import { invoke, listen, Out, Options } from "./api";
+import { grid } from "./store";
 import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, setThemeRaw, applyTheme, view, show, View, chart, db, loadDb, mat, cur, P, setChartId, setGoals, imperial, setUnits } from "./store";
 import { C } from "./cmds";
 import { TitleBar, Ribbon, palette } from "./ribbon";
@@ -17,7 +18,9 @@ import { Backstage, update, checkUpdate } from "./backstage";
 import { ChartView, ChartBar, ChartTools, SelChips, Legend } from "./chart";
 import { Browse, Datasheet } from "./browse";
 import { StagePanel, StagesPage, ResultsPage } from "./stages";
-import { SetupPage, DataPage, SourcesPage, ComparePage, IndexPage, ReportPage } from "./pages";
+import { SetupPage, DataPage, SourcesPage, IndexPage } from "./pages";
+import { ReportPage } from "./report";
+import { ComparePage } from "./compare";
 import { Goal } from "./api";
 import { Menu, Toast, Dialog, Icon } from "./ui";
 import * as D from "./dialogs";
@@ -28,6 +31,8 @@ const SIDE: ([View, string, string] | "-")[] = [
   ["stages", "filter", "Stages"], ["results", "results", "Results"], ["compare", "compare", "Compare"], ["index", "builder", "Index"], "-", ["report", "report", "Report"], ["data", "db", "Data"], ["sources", "source", "Sources"],
 ];
 
+/** The charts shown side by side: the page of n charts that holds the open one, in project order. */
+const page = (n: number) => { const cs = P().charts, i = Math.max(0, cs.findIndex(x => x.id === chart()?.id)); return cs.slice(Math.floor(i / n) * n, Math.floor(i / n) * n + n); };
 const ChartsPage = () => (
   <Show when={chart()} fallback={<div class="page"><p class="muted">No chart. <button class="btn sm" onClick={() => C.newChart()}>New chart</button></p></div>}>{c => (
     <div class="chartpage">
@@ -38,7 +43,10 @@ const ChartsPage = () => (
         <ChartTools c={c()} />
         <SelChips c={c()} />
         <Show when={out()!.charts.find(o => o.id === c().id)}>{o => <Legend c={c()} o={o()} />}</Show>
-        <div class="board"><For each={[c().id]}>{() => <ChartView c={c()} />}</For></div>
+        <Show when={grid() > 1} fallback={<div class="board"><For each={[c().id]}>{() => <ChartView c={c()} />}</For></div>}>
+          <div class="board cgrid" classList={{ four: grid() === 4 }}><For each={page(grid())}>{x => <div class="gcell" classList={{ on: x.id === c().id }} onMouseDown={() => setChartId(x.id)}>
+            <div class="gtitle">{x.name}</div><For each={[x.id]}>{() => <ChartView c={P().charts.find(y => y.id === x.id)!} />}</For></div>}</For></div>
+        </Show>
       </div>
       <StagePanel />
     </div>
