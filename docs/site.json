@@ -6,6 +6,15 @@
   "logo": "docs/brand/datum-atlas-icon.svg",
   "tagline": "Choose the right material: property charts, selection and referenced data, in one app for Windows.",
   "for": "Design and materials engineers, and students.",
+  "about": [
+    "Datum Atlas helps you pick a material and show why it is the right one. Choose a design goal, such as a light, stiff beam or a cheap, strong tie, and Atlas sets the property chart, the selection line and the limits for you.",
+    "Every material is a bubble spanning its range of values, grouped by family. Limits, index lines, boxes and whole families left out narrow the field; the materials that pass are ranked, and every one that fails says why. Every value names its source, and you can add your own materials."
+  ],
+  "steps": [
+    {"title": "Pick a goal", "text": "Choose a design goal, or set the two properties to chart yourself."},
+    {"title": "Chart and select", "text": "Move the selection line, add limits and boxes, and watch the field narrow."},
+    {"title": "Rank and report", "text": "See the materials that pass, ranked by the index. Open their datasheets, print the results, or export the chart."}
+  ],
   "highlights": [
     "100 materials from every family. Every value names its source, and values are being checked against published datasheets one by one, starting with the metals.",
     "Property charts of any two properties, with family envelopes, zoom, pan and guide lines, and bar charts of one property.",

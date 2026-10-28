@@ -320,6 +320,10 @@ fn site_json_is_current() {
     let s: serde_json::Value = serde_json::from_str(include_str!("../../../docs/site.json")).unwrap();
     for k in ["id", "name", "accent", "logo", "tagline", "for"] { assert!(s[k].as_str().is_some_and(|v| !v.is_empty()), "site.json: {k}"); }
     for f in s["screenshots"].as_array().unwrap().iter().chain([&s["logo"]]) { assert!(root.join(f.as_str().unwrap()).exists(), "site.json: {f} missing"); }
+    let about = s["about"].as_array().unwrap();
+    assert!((1..=2).contains(&about.len()) && about.iter().all(|p| p.as_str().is_some_and(|p| !p.is_empty())), "site.json: about is one or two paragraphs");
+    let steps = s["steps"].as_array().unwrap();
+    assert!(steps.len() == 3 && steps.iter().all(|x| ["title", "text"].iter().all(|k| x[k].as_str().is_some_and(|v| !v.is_empty()))), "site.json: three steps with title and text");
     let ver = |v: &str| v.split('.').map(|n| n.parse::<u32>().unwrap()).collect::<Vec<_>>();
     let road = s["roadmap"].as_array().unwrap();
     for r in road {

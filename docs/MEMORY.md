@@ -91,7 +91,7 @@ flowchart LR
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
 | `ui/src/features.ts`, `roadmap.tsx` | The feature catalogue (A data, B charts, C selection, D compare/report, E eco, F process, G help) and `soon(id)` cards, Roadmap page. |
 | `ui/src/ribbon.tsx`, `backstage.tsx`, `dialogs.tsx`, `cmds.ts`, `ui.tsx`, `selection.ts`, `cells.ts`, `fmt.ts`, `main.tsx`, `styles.css` | Family patterns from Plan and Plot, adapted. |
-| `docs/site.json` | The public summary (FAMILY §10): tagline, audience, highlights, screenshots, roadmap (Next/Soon/Later/Goal). Read by the family site, the Datum network and Help › Roadmap. `site_json_is_current` checks its fields, files and that its roadmap starts after the current version. |
+| `docs/site.json` | The public summary (FAMILY §10): tagline, audience, about (Overview paragraphs), three steps, highlights, screenshots, roadmap (Next/Soon/Later/Goal). Read by the family site, the Datum network and Help › Roadmap. `site_json_is_current` checks its fields, about and steps, files and that its roadmap starts after the current version. |
 | `tests_ui/run.cjs` | Playwright against `ui/dist` with the real engine (bridge): 41 checks (goals, units, bars, Tell Me materials, sources, ? help, Home tiles, checked ✓, chart, hulls, hover, click on the line, datasheet, drag changes the pass count, limits and results, browse and TSV, Add Material, ribbon fit at 1280/1600, planned cards, print of every view, glossary, Options, no script errors). `SHOTS=dir` saves screenshots. |
 
 ### Update flow (same as Plan)
@@ -139,7 +139,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | **? help beside the tools in every Datum app**: a click opens a card saying what the tool is for and how to use it, from one `HELP` table | The user, instead of a teaching mode: “we should do it in all of our applications”. |
 | 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never aggregator sites (MatWeb, MakeItFrom, Total Materia, Wikipedia); a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
 | 0.1.1 | The check used the figures quoted by web search from each datasheet (the build machine cannot open web pages); a second pass that opens each document is planned | Recorded so nobody mistakes it for a table-level check. |
-| 0.1.1 | `docs/site.json` is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
+| 0.1.1 | `docs/site.json` (about, steps, highlights, roadmap) is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
 | 0.1.1 | Derived properties are computed by the engine at load, not stored | One source of truth; they follow corrections automatically. |
 | 0.1.0 | Logo: violet log–log axes, a dotted selection line between two family envelopes (the upper one with a violet bubble), the amber diamond at the line's end | The user asked for a better violet logo; it keeps FAMILY §5. |
 
@@ -218,6 +218,15 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - 7 questions.
 - Diagnosis: several lines on one chart share its axes, so "stiff and strong" needs a second chart. Proposed goals that add it.
 - No feature code changed. **Waiting for the answers.**
+
+### 2026-10-28: Session 7 (site Overview)
+- Added `about` and `steps` to `docs/site.json` (hub FAMILY §10: the Overview of /apps/atlas) from the user's draft, checked against the app. Corrected:
+  - not every value cites a public source, so it now says every value "names its source";
+  - leaving whole families out added to the ways of narrowing the field;
+  - Compare is not built yet (0.3.0), so step 3 says "see the materials that pass, ranked";
+  - results print but do not export, so it says print the chart, datasheets and results, or export the chart.
+- README links to the family page. The test checks about (1–2 paragraphs) and steps (3).
+- Noticed: hub FAMILY §11 now asks every app for a hardening standard (`hardening` tests, `deny.toml` with `cargo deny`, Windows/macOS CI, SECURITY.md, CONTRIBUTING.md). Atlas has none of it yet; to plan with 0.1.2.
 
 ---
 

@@ -26,6 +26,8 @@
 
 ## What it does
 
+Datum Atlas is part of Datum; see its page: https://edgar-mendonca.github.io/Datum/apps/atlas
+
 Datum Atlas helps engineers, designers and students pick a material and show why it is the right one:
 
 1. **Pick a design goal** (light stiff beam, cheap strong tie, spring, heat sink…) or write down the requirements: what the part does, what it must meet, what to minimise.
