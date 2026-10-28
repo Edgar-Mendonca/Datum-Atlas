@@ -154,7 +154,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | — | Plan | CLAUDE.md, this file, PLAN-0.1 with questions | ✅ |
 | **0.1.0** | Data, charts, selection | Shell, updater, File page, Violet design and logo; 100 referenced materials; Browse; Datasheet; property charts (bubbles, family envelopes, hover, click, zoom, pan, guides, legend); limits, line, box and family stages; Results with reasons and ranking; Add Material + user database; `.datlas`; print; SVG/PNG export; whole UI laid out | ✅ |
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
-| 0.1.2 | Lines and charts ([PLAN-0.1.2.md](PLAN-0.1.2.md)) | Several selection lines per chart, results to a spreadsheet, keyboard, more values checked (rest of the metals, then polymers). Proposed: also two-constraint goals, best-material labels, one roadmap from `site.json`; charts side by side moved to 0.1.3. Waiting for the user's choices. | 🔜 |
+| 0.1.2 | Lines and charts ([PLAN-0.1.2.md](PLAN-0.1.2.md)) | Several selection lines per chart, results to a spreadsheet, keyboard, more values checked (rest of the metals, then polymers). Proposed: also two-constraint goals, best-material labels, one roadmap from `site.json`, and the family **hardening standard** (FAMILY §11) with a fix for losing your own materials when `My materials.datdb` is damaged; charts side by side moved to 0.1.3. Waiting for the user's choices. | 🔜 |
 | 0.2.0 | Indices | Index builder (~40 indices); expression axes; formula properties (GridCraft) | ⬜ |
 | 0.3.0 | Compare and report | Compare + radar; selection report; ~250 materials, more values checked | ⬜ |
 | 0.3.1 | Own data | Several databases, spreadsheet/CSV import with mapping; label placement; style presets; polygon stage | ⬜ |
@@ -228,6 +228,16 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - README links to the family page. The test checks about (1–2 paragraphs) and steps (3).
 - Noticed: hub FAMILY §11 now asks every app for a hardening standard (`hardening` tests, `deny.toml` with `cargo deny`, Windows/macOS CI, SECURITY.md, CONTRIBUTING.md). Atlas has none of it yet; to plan with 0.1.2.
 
+### 2026-10-28: Session 8 (hardening in the plan)
+- Added hardening (hub FAMILY §11) to [PLAN-0.1.2.md](PLAN-0.1.2.md):
+  - what Atlas has and lacks;
+  - the work (§3 item 8, done first);
+  - its size (~1,200 lines in all);
+  - Q8: in 0.1.2 or alone first.
+- Found: a damaged `My materials.datdb` is read as empty with `.ok()`, and the next Add Material writes over it, so the user's materials are lost. The fix is the first hardening item.
+- Found: every shell command uses `lock().unwrap()`, so one panic makes every later command fail.
+- `site.json` roadmap: 0.1.2 lists the hardening.
+
 ---
 
 ## 5. Known limits and next steps
@@ -237,6 +247,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
 **Known limits:**
+- A damaged `My materials.datdb` is read as empty and overwritten by the next Add Material (fix planned first in 0.1.2).
 - Built-in values are drafts with document-level references, except 51 metal values checked against datasheets (from search-quoted figures; a pass that opens each document is planned). Polymers, ceramics, composites, foams and natural materials are next, one family per release.
 - Hull labels can overlap where families meet (label placement in 0.3.1). Envelopes are convex per group, not concave.
 - Copy Picture is not yet tried on a real Windows clipboard.

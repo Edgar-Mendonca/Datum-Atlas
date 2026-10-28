@@ -25,7 +25,7 @@
   ],
   "screenshots": ["docs/images/chart.png", "docs/images/results.png", "docs/images/browse.png", "docs/images/datasheet.png"],
   "roadmap": [
-    { "v": "0.1.2", "title": "Lines and charts", "when": "Next", "items": ["Several selection lines per chart.", "Results to a spreadsheet; keyboard control.", "More values checked against published datasheets (the rest of the metals, then polymers)."] },
+    { "v": "0.1.2", "title": "Lines and charts", "when": "Next", "items": ["Several selection lines per chart.", "Results to a spreadsheet; keyboard control.", "More values checked against published datasheets (the rest of the metals, then polymers).", "Sturdier: damaged or unusual files never crash the app or lose your materials; tests on Windows and macOS."] },
     { "v": "0.2.0", "title": "Indices", "when": "Soon", "items": ["An index builder with about 40 indices.", "Expression axes and formula properties."] },
     { "v": "0.3.0", "title": "Compare and report", "when": "Soon", "items": ["Compare materials with radar charts.", "A selection report.", "About 250 materials, more values checked."] },
     { "v": "0.3.1", "title": "Your own data", "when": "Later", "items": ["Several databases; CSV and spreadsheet import with column mapping.", "Label placement, style presets, polygon selection."] },

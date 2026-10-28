@@ -41,6 +41,18 @@ Plan the next releases from the roadmap (MEMORY §3, `docs/site.json`):
 - **Housekeeping:**
   - The in-app roadmap (`ui/src/features.ts`) keeps its own release list, and it uses two-number versions ("0.2", "0.3").
   - `docs/site.json` now holds the same roadmap, so the two can drift apart.
+- **Hardening (hub FAMILY §11, added at the user's request).** Every Datum app must meet the family's hardening standard, from Datum Plan 0.3.11. Atlas has only part of it:
+
+  | Required | Atlas today |
+  | --- | --- |
+  | `hardening` test module: failed edits change nothing; random documents never panic; damaged files never panic; speed gate | Missing |
+  | `deny.toml` and `cargo deny check` (advisories, licences, sources) | Missing |
+  | `license = "MIT"` in every crate | Yes (core, shell) |
+  | CI runs `cargo test` on Windows and macOS as well as Linux | Linux only |
+  | The shell's state lock recovers from a poisoned mutex | No: every command calls `lock().unwrap()`, so one panic makes every later command fail |
+  | `SECURITY.md` and `CONTRIBUTING.md` | Missing |
+
+  **Data-loss risk found while checking:** the shell reads `My materials.datdb` with `.ok()`. A damaged file is treated as empty, without a word. The next Add Material then writes that empty list plus the new material, so the user's own materials are lost. Hardening fixes this first.
 - **Not yet confirmed on a real Windows PC:**
   - Copy Picture;
   - printing;
@@ -74,6 +86,24 @@ Keep every release small. Split the 0.1.2 theme in two, and the 0.2 theme in thr
    - Embed `docs/site.json` in the app, and have Help › Roadmap take its release names, timing and items from it, so the app, the family site and MEMORY show the same plan.
    - Versions in the app become three numbers.
 
+8. **Hardening (FAMILY §11).** Copy the standard from Datum Plan 0.3.11 and adapt it to Atlas's files:
+   - **Your materials are never lost.**
+     - The `.datdb` reader moves into the engine (`db::read_user`) and returns a clear error.
+     - A damaged file is kept aside as `My materials (damaged <date>).datdb`, and the window says so.
+     - Saving never writes over a file that could not be read.
+     - Saves go through a temporary file and a rename, so a crash mid-save leaves the old file whole.
+   - **`hardening` tests in `crates/core`:**
+     - a failed edit (`Op`, including `Goal` and `Batch`) leaves the project exactly as it was;
+     - random projects and user databases (a small built-in generator, no extra crate) never panic, and keep their invariants: hulls hold their bubbles, counts add up, no NaN;
+     - damaged `.datlas`, `.datdb`, options, recent-files and recovery files (cut short, garbled bytes, wrong types, huge numbers, deep nesting) never panic: each opens or gives a clear error;
+     - a speed gate: a project of 20 charts over 1,000 materials (built-in data repeated) is laid out and selected within a time limit, looser in debug builds.
+   - **Shell:** the state lock recovers from a poisoned mutex, as in Plan.
+   - **Supply chain:**
+     - `deny.toml` and `cargo deny check` in CI;
+     - `license = "MIT"` stays in every crate;
+     - CI runs `cargo test` on Windows and macOS as well as Linux.
+   - **Repo:** `SECURITY.md` (how to report a problem; the app's only network call is the update check, to this repo) and `CONTRIBUTING.md` (the checks; data corrections need a published source, never a proprietary database).
+
 ### 0.1.3 "Charts side by side"
 - **B13:** two or four charts at once, one selection shared across them. Hovering a material highlights it on every chart.
 - Two-constraint goals open their two charts side by side.
@@ -96,6 +126,13 @@ Keep every release small. Split the 0.1.2 theme in two, and the 0.2 theme in thr
 
 ## 4. Order of work in 0.1.2
 
+0. Hardening first (it protects the user's data and makes the rest safer to build):
+   - the `.datdb` fix;
+   - the `hardening` tests;
+   - the poisoned-lock recovery;
+   - `deny.toml`;
+   - the Windows/macOS CI jobs;
+   - SECURITY.md and CONTRIBUTING.md.
 1. Engine (`crates/core`):
    - selections as a list (`model.rs`, with old files loading);
    - `select.rs` with bands and the ranking line;
@@ -123,8 +160,9 @@ Keep every release small. Split the 0.1.2 theme in two, and the 0.2 theme in thr
 | Results to `.xlsx`/CSV | ~80 | ~30 | `.xlsx` adds a Rust crate, a few hundred kB to the installer |
 | One roadmap from `site.json` | — | ~40 | |
 | Data check | data only | — | About 60 values, as far as published datasheets can be found |
+| Hardening | ~350 (mostly tests) | ~30 (damaged-file notice) | Shell ~40; `deny.toml`, two CI jobs, two docs. No new crates. |
 
-About 800 lines in all, similar to 0.1.1.
+About 1,200 lines in all, a third of them tests. If that is too big for one small release, hardening can ship alone as 0.1.2 and the features as 0.1.3 (Q8).
 
 ## 6. Questions
 
@@ -134,4 +172,5 @@ About 800 lines in all, similar to 0.1.1.
 4. **Ranking with several lines:** rank by one line you choose (proposed), or by a combination of all the lines?
 5. **Data check:** this session's network policy only reaches GitHub, so I cannot open the datasheets themselves, only search results quoting them. To check value by value against the document, the environment's **Network access** needs a broader level or the datasheet hosts added under Allowed domains. Change it in the cloud environment settings (the environment menu in the session's title bar → Edit; steps: https://code.claude.com/docs/en/cloud-environments#network-access). Do you want to open it up, or continue with search-quoted checks, clearly labelled as such?
 6. **Indices:** split 0.2 into 0.2.0 (library and builder), 0.2.1 (expressions and formula properties), 0.2.2 (weighted ranking)?
+8. **Hardening:** ship it inside 0.1.2 with the features (proposed), or alone as 0.1.2 first, so your materials are safe sooner? The features would then be 0.1.3 and charts side by side 0.1.4.
 7. **0.1.1 on Windows:** before 0.1.2, could you try Copy Picture, printing, and the update from 0.1.0, and send screenshots of anything wrong? Fixes would go first, as 0.1.2 or a quick 0.1.1-fix release before it.
