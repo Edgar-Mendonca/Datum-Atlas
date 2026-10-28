@@ -140,6 +140,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never aggregator sites (MatWeb, MakeItFrom, Total Materia, Wikipedia); a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
 | 0.1.1 | The check used the figures quoted by web search from each datasheet (the build machine cannot open web pages); a second pass that opens each document is planned | Recorded so nobody mistakes it for a table-level check. |
 | 0.1.1 | `docs/site.json` (about, steps, highlights, roadmap) is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
+| 0.2.0 | **Data for the 250 materials: open, public and free sources only** (government, open datasets, producers' free datasheets cited value by value, our labelled compilation). Never a proprietary or licensed database or aggregator, not even to check a value. Enforced by the source kinds in `db::check`. | The user, 2026-10-28, before the big update. |
 | 0.2.0 | **One big update instead of small splits**: 0.1.2 and the old 0.2/0.3/0.3.1 become one release, 0.2.0 ([PLAN-0.2.0.md](PLAN-0.2.0.md)); eco audit and process selection become 0.3.0. Hardening is still built first. Fixes between big updates still go out as small releases. | The user, 2026-10-28: Atlas is far behind the other Datum apps; "we are capable of doing a big build". |
 | 0.1.2 | Hardening (FAMILY §11) ships with the new features, built first | The user's answer to PLAN-0.1.2 Q8. |
 | 0.1.1 | Derived properties are computed by the engine at load, not stored | One source of truth; they follow corrections automatically. |
@@ -156,7 +157,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | — | Plan | CLAUDE.md, this file, PLAN-0.1 with questions | ✅ |
 | **0.1.0** | Data, charts, selection | Shell, updater, File page, Violet design and logo; 100 referenced materials; Browse; Datasheet; property charts (bubbles, family envelopes, hover, click, zoom, pan, guides, legend); limits, line, box and family stages; Results with reasons and ranking; Add Material + user database; `.datlas`; print; SVG/PNG export; whole UI laid out | ✅ |
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
-| 0.2.0 | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Proposed: hardening first; several lines, bands, two-constraint goals, keyboard, polygon, weighted ranking; index library (~40) and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to spreadsheet; ~250 materials, durability ratings, more values checked; several databases, import/export. Waiting for the user's go. | 🔜 |
+| 0.2.0 | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Proposed: hardening first; several lines, bands, two-constraint goals, keyboard, polygon, weighted ranking; index library (~40) and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to spreadsheet; ~250 materials, durability ratings, more values checked; several databases, import/export. Go given 2026-10-28; being built. | 🔜 |
 | 0.3.0 | Eco and process | Eco audit (energy and CO₂ across a product's life, greener substitutes); process selection | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
 
@@ -253,7 +254,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ## 5. Known limits and next steps
 
-**Next:** the user confirms the big update in [PLAN-0.2.0.md](PLAN-0.2.0.md) §6; then build 0.2.0, hardening first.
+**Next:** build 0.2.0 ([PLAN-0.2.0.md](PLAN-0.2.0.md)), hardening first, pushing each stage.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

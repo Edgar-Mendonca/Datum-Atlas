@@ -1,6 +1,6 @@
 # Datum Atlas 0.2.0: the big update (plan)
 
-Status: **proposed, waiting for the user's go** (§6). Written 2026-10-28. The user: "Don't split too much… list a big build… make it a big update. This is the only application where we are far behind." This file replaces the small-release split in [PLAN-0.1.2.md](PLAN-0.1.2.md). Its hardening answer (built first) still holds.
+Status: **go given** (§7), being built. Written 2026-10-28. The user: "Don't split too much… list a big build… make it a big update. This is the only application where we are far behind." This file replaces the small-release split in [PLAN-0.1.2.md](PLAN-0.1.2.md). Its hardening answer (built first) still holds.
 
 ---
 
@@ -131,3 +131,16 @@ About 6,000 to 7,000 new lines (engine ~2,500 with tests, window ~3,000, UI test
 2. **Eco audit:** add it to 0.2.0 too (it uses the CO₂ and energy data Atlas already has, plus public transport and processing factors), or keep it for 0.3.0 with process selection?
 3. **Checking data:** this environment can only reach GitHub, so values are checked from search results quoting the datasheets. Opening the environment's **Network access** (environment menu in the session title bar → Edit; https://code.claude.com/docs/en/cloud-environments#network-access) would let me open the datasheets themselves. Open it, or keep search-quoted checks, labelled as such?
 4. **0.1.1 on Windows:** anything wrong with Copy Picture, printing or the update from 0.1.0? Fixes would go into 0.2.0.
+
+## 7. Answers (2026-10-28)
+
+1. **The list:** all of §2, nothing dropped. Build it.
+2. **Eco audit:** not answered; it stays with process selection in 0.3.0, as proposed.
+3. **Checking data:** network unchanged, so values are checked from search results quoting the datasheets, labelled as such.
+4. **Data rule (the user, repeated and made strict for the 250 materials):** only open, public and free sources:
+   - government handbooks and data (public domain);
+   - open datasets;
+   - producers' and suppliers' own datasheets that are free to read, cited value by value;
+   - our own compilation of typical textbook ranges, labelled as ours.
+
+   Never a proprietary or licensed database or an aggregator site, not even to check a value, and never named in public text. `db::check` refuses any source whose kind is not on the open list. CONTRIBUTING.md states the rule.
