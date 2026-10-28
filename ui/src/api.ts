@@ -10,6 +10,8 @@ export const listen = (e: string, f: (p: any) => void) => window.__TAURI__?.even
 /** A value: [low, high, source, typical?] | [yes/no, source] | [rating, source]. */
 export type Val = [number, number, string] | [number, number, string, number] | [boolean, string] | [string, string];
 export interface Material {
+  /** The database it comes from, when it is not built in or yours. */
+  origin?: string;
   id: string; name: string; family: string[]; syn: string[]; des: Record<string, string>; props: Record<string, Val>;
   notes: string; uses: string; status: string; user: boolean; checked: string[];
 }

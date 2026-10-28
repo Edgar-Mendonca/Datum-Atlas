@@ -109,7 +109,7 @@ export const Datasheet = (p: { id?: string; print?: boolean }) => {
           <Show when={m().uses}><div><b>Typical uses</b><span>{m().uses}</span></div></Show>
           <Show when={m().notes}><div><b>Notes</b><span>{m().notes}</span></div></Show>
           <Show when={row() && out()!.results.stages.length}><div><b>Selection</b><span classList={{ ok: row()!.pass, late: !row()!.pass }}>{row()!.pass ? `Passes${row()!.rank ? `, rank ${row()!.rank}` : ""}` : `Fails: ${row()!.reasons.join("; ")}`}</span></div></Show>
-          <div><b>Status</b><span>{m().user ? "Your own material." : m().checked?.length ? `${m().checked.length} values checked against their source (✓); the others are drafts.` : "Draft: compiled from the sources below; not yet checked value by value."}</span></div>
+          <div><b>Status</b><span>{m().user ? "Your own material." : m().origin ? `From the database “${m().origin}” (opened beside the built-in data).` : m().checked?.length ? `${m().checked.length} values checked against their source (✓); the others are drafts.` : "Draft: compiled from the sources below; not yet checked value by value."}</span></div>
         </div>
         <For each={GROUPS}>{g => { const ps = () => db().props.filter(x => x.group === g); const have = () => ps().filter(x => m().props[x.key]);
           return <Show when={have().length || !p.print}><h2>{g}{g === "Derived" && !p.print ? <> <Help k="derived" /></> : ""}</h2><table class="tbl dsheet"><tbody><For each={p.print ? have() : ps()}>{x => { const v = m().props[x.key];

@@ -11,6 +11,7 @@ pub mod geometry;
 pub mod goals;
 pub mod model;
 pub mod select;
+pub mod sheet;
 pub mod templates;
 pub mod units;
 

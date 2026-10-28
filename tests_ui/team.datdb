@@ -1,0 +1,1 @@
+{"format":1,"name":"Team data","sources":[{"id":"s1","title":"Team lab report 3","kind":"user"}],"materials":[{"id":"u-1","name":"Team alloy T","family":["Metals"],"props":{"rho":[2750,2800,"s1"],"E":[72,74,"s1"],"sy":[300,320,"s1"]}}]}

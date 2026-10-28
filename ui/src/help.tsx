@@ -50,6 +50,10 @@ export const HELP: Record<string, Topic> = {
     how: ["Add materials from Results (“+ compare”), from the card beside the chart, or by name here.", "On the radar each spoke is a property: the centre is the lowest value in the whole database, the rim the highest. Tick the properties to show.", "Click a name for its datasheet; ✕ removes it."] },
   report: { t: "Selection report", what: "The whole selection as one document: requirements, goal and index, stages, charts, the shortlist, the comparison and a datasheet of each candidate with its sources.",
     how: ["Tick the parts to include; the candidates are the materials in Compare, or else the best of the results.", "Print / Save as PDF prints it with your header and footer (File › Print)."] },
+  import: { t: "Import from a spreadsheet or CSV", what: "Adds the rows of a spreadsheet (.xlsx) or CSV to your own materials, one material per row.",
+    how: ["Each column is matched to a property by its heading, such as “Density (kg/m³)” or “Yield strength (ksi)”; change any that are wrong, or skip a column.", "A cell may hold one value or a range (2690 – 2710); blank cells are gaps, never zero.", "Give a source for the values, or a column that holds one for each row.", "Values the app cannot use are left out and listed when the import is done."] },
+  databases: { t: "Databases", what: "Your own materials are saved in “My materials”. Other Datum Atlas databases (.datdb) can be opened beside the built-in data, for example a team's shared file, and closed again.",
+    how: ["Open a database… adds its materials to every view, marked with the database's name. It stays open next time.", "Save my materials as .datdb to share them, or as a spreadsheet or CSV to edit them elsewhere and import them again."] },
   setup: { t: "Setup", what: "Write down what the part must do: its function, the constraints it must meet, the objective (what to minimise) and the free variables. Then pick the design goal that matches." },
 };
 

@@ -92,6 +92,8 @@ flowchart LR
 | `crates/core/src/export.rs` | Results as a table: `results`, `csv`, `xlsx`. |
 | `crates/core/src/compare.rs` | Compare and radar: `build`, `RADAR`, `MAX`. |
 | `ui/src/compare.tsx`, `ui/src/report.tsx` | The Compare page with the radar, and the selection report (screen and print). |
+| `crates/core/src/sheet.rs` | Spreadsheets in and out of a database: `read`, `from_text`, `guess`, `range`, `to_database`, `of_database`, `bytes`. |
+| `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `ui/src/help.tsx` | `HELP` (18 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
 | `ui/src/pages.tsx` | Setup (requirements, goal list, design problems), `goalCard` (Why), Sources page (kinds, licences, cites), Data (your materials, families, sources), `Later` pages for Compare, Index builder, Report; `MiniChart`. |
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
@@ -337,6 +339,27 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - The data was appended by a one-off script (scratchpad), so the 0.1.1 datasheet checks stay.
 - Fixed: after saving your own material the datasheet opened only if the database reloaded within 150 ms; it now waits for the reload.
 - The speed test builds exactly 1,000 materials (~200 ms release).
+
+### 2026-10-28: Session 11, continued (0.2.0 stage F, databases and import)
+- **Engine:**
+  - `sheet.rs`:
+    - reads CSV (the separator is guessed; quotes) and the first sheet of a workbook (calamine 0.37, as in Plan);
+    - guesses each column from its heading (key, name or symbol; an imperial unit in brackets is converted);
+    - reads one value or a range per cell, with blanks as gaps;
+    - `to_database` (needs a name column and a source; cleaned like a `.datdb`);
+    - `of_database` writes a database out so it reads back.
+  - `Db::with_others`: other databases with prefixed ids and sources, and `Material.origin`.
+  - Tests: import, round trip, other databases; damaged CSV and .xlsx never panic.
+- **Shell:**
+  - `databases`, `open_database`, `close_database` (the list is kept in Options `databases`, preserved when the window saves Options; an unreadable one is closed and reported at start);
+  - `export_database` (.datdb, .xlsx, .csv);
+  - `import_preview`, `import_materials` (fresh `u-` ids and sources).
+- **Window:**
+  - `importer.tsx`: the import window with a property per column and imperial choices, and the Databases section on the Data page;
+  - the datasheet says which database a material comes from;
+  - help topics `import` and `databases`.
+- The bridge serves the same commands with fixtures `tests_ui/import.csv` and `team.datdb`.
+- 35 engine tests and all UI checks pass; cargo deny ok.
 
 ---
 

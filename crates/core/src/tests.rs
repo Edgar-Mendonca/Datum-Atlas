@@ -514,3 +514,54 @@ fn compare_and_radar() {
     assert!(c.radar.vals.iter().flatten().flatten().all(|v| (0.0..=1.0).contains(v)));
     assert!(c.radar.vals[0][0].unwrap() > c.radar.vals[2][0].unwrap(), "steel sits further out on density");
 }
+
+#[test]
+fn spreadsheets_in_and_out() {
+    use crate::sheet::{from_text, guess, of_database, range, to_database};
+    assert_eq!(range("2700"), Some((2700.0, 2700.0)));
+    assert_eq!(range("2690 – 2710"), Some((2690.0, 2710.0)));
+    assert_eq!(range("-50 to 20"), Some((-50.0, 20.0)));
+    assert_eq!(range("1.2e3-1.5e3"), Some((1200.0, 1500.0)));
+    assert_eq!(range("7,85"), Some((7.85, 7.85)));
+    assert_eq!(range("n/a"), None);
+    assert_eq!(guess("Density (kg/m³)"), "rho");
+    assert_eq!(guess("Yield strength (ksi)"), "sy|imperial");
+    assert_eq!(guess("E"), "E");
+    assert_eq!(guess("Material"), "name");
+    assert_eq!(guess("Colour"), "");
+    // A semicolon file with quotes, a range, an imperial column, a bad cell and a row without values.
+    let t = from_text("Material;Family;Density (kg/m³);Yield strength (ksi);Recyclable;Water\n\"Alloy; A\";Metals;2690 – 2710;40;yes;Good\nResin B;polymers;1200;abc;no;\nEmpty C;Metals;;;;\n").unwrap();
+    assert_eq!(t.head.len(), 6);
+    assert_eq!(t.guess, ["name", "family", "rho", "sy|imperial", "recyclable", "water"]);
+    let (d, notes) = to_database(&t, &t.guess, "Metals", "Test report 9").unwrap();
+    assert_eq!(d.materials.len(), 2, "the row without values is left out");
+    let a = &d.materials[0];
+    assert_eq!((a.name.as_str(), a.family[0].as_str()), ("Alloy; A", "Metals"));
+    assert_eq!(a.props["rho"].range(), Some((2690.0, 2710.0)));
+    assert!((a.props["sy"].range().unwrap().0 - 275.79).abs() < 0.01, "40 ksi is 275.8 MPa");
+    assert_eq!(d.materials[1].family[0], "Polymers");
+    assert!(notes.iter().any(|n| n.contains("abc")) && notes.iter().any(|n| n.contains("Empty C")));
+    assert_eq!(d.sources.len(), 1);
+    assert!(to_database(&t, &t.guess, "Metals", "").is_err(), "a source is needed");
+    // A database written out reads back the same values.
+    let out = of_database(&db::builtin());
+    let text = crate::export::csv(&out);
+    let back = from_text(&text).unwrap();
+    let (d2, _) = to_database(&back, &back.guess, "Metals", "Round trip").unwrap();
+    let steel = d2.materials.iter().find(|m| m.name == "Medium carbon steel, AISI 1045").unwrap();
+    assert_eq!(steel.props["E"].range(), Some((200.0, 210.0)));
+    assert_eq!(d2.materials.len(), db::builtin().materials.len());
+}
+
+#[test]
+fn other_databases_sit_beside_the_built_in_data() {
+    let mine = Database { name: "Team data".into(), sources: vec![Source { id: "s1".into(), title: "Lab report".into(), kind: "user".into(), ..Default::default() }],
+        materials: vec![Material { id: "u-1".into(), name: "Team alloy".into(), family: vec!["Metals".into()], props: [("rho".to_string(), Val::Range(2700.0, 2800.0, "s1".into())), ("E".to_string(), Val::Range(70.0, 72.0, "s1".into()))].into(), ..Default::default() }], ..Default::default() };
+    let d = Db::new(db::builtin(), None).with_others(&[mine.clone(), mine]);
+    let a = d.get("d1:u-1").unwrap();
+    assert_eq!((a.origin.as_str(), a.props["rho"].src(), a.user), ("Team data", "d1:s1", false));
+    assert!(d.get("d2:u-1").is_some(), "the same file opened twice does not clash");
+    assert!(a.props.contains_key("es"), "derived properties are worked out");
+    assert!(d.sources.iter().any(|s| s.id == "d2:s1"));
+    assert!(db::check(&Database { materials: d.materials.iter().filter(|m| !m.origin.is_empty()).cloned().collect(), ..Default::default() }, &d.sources).is_empty());
+}

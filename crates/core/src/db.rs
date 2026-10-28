@@ -56,6 +56,24 @@ impl Db {
     pub fn get(&self, id: &str) -> Option<&Material> {
         self.materials.iter().find(|m| m.id == id)
     }
+    /// Adds other databases (opened `.datdb` files): their ids and sources are prefixed "d1:", "d2:"…
+    /// so they never clash, and each material says which database it comes from.
+    pub fn with_others(mut self, others: &[Database]) -> Self {
+        for (k, d) in others.iter().enumerate() {
+            let p = format!("d{}:", k + 1);
+            self.sources.extend(d.sources.iter().map(|s| Source { id: format!("{p}{}", s.id), ..s.clone() }));
+            self.materials.extend(d.materials.iter().map(|m| {
+                let mut m = Material { id: format!("{p}{}", m.id), origin: if d.name.trim().is_empty() { format!("Database {}", k + 1) } else { d.name.clone() }, user: false, ..m.clone() };
+                for v in m.props.values_mut() {
+                    let s = format!("{p}{}", v.src());
+                    match v { Val::Range(_, _, x) | Val::RangeT(_, _, x, _) | Val::Flag(_, x) | Val::Rating(_, x) => *x = s }
+                }
+                derive(&mut m);
+                m
+            }));
+        }
+        self
+    }
     /// A built-in property or one of the project's formulas.
     pub fn info(&self, k: &str) -> Option<Info> {
         if let Some(p) = prop(k) { return Some(Info { name: p.name.into(), sym: p.sym.into(), unit: p.unit.into(), log: p.log }); }

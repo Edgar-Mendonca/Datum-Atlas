@@ -9,6 +9,7 @@ import { soon, Chip } from "./roadmap";
 import { editMaterial, deleteMaterial } from "./material";
 import { addLimit } from "./stages";
 import { C } from "./cmds";
+import { Databases, importMaterials } from "./importer";
 
 type Tpl = { id: string; name: string; desc: string; slope: number | null };
 
@@ -68,15 +69,16 @@ export const DataPage = () => {
   return (
     <div class="page datapage">
       <h1>Data</h1>
-      <p class="muted">Datum Atlas ships with {db().materials.length - db().userCount} generic materials from every family. Every value is compiled from public sources and points to its reference; no proprietary database is used. Add your own materials beside them.</p>
+      <p class="muted">Datum Atlas ships with {db().materials.filter(m => !m.user && !m.origin).length} generic materials from every family. Every value is compiled from open and public sources and points to its reference; no proprietary database is used. Add your own materials beside them.</p>
       <section class="panel">
         <h2><Icon n="material" /> Your materials <small class="muted">{mine().length}</small></h2>
         <p class="muted">Saved on this computer in “My materials.datdb”, with a source for each value. They appear in Browse, the datasheets, every chart and the selection.</p>
         <table class="tbl"><tbody><For each={mine()} fallback={<tr><td class="muted">None yet. Add a material of your own, or copy a built-in one and change its values.</td></tr>}>{m =>
           <tr><td><b class="link" onClick={() => openSheet(m.id)}>{m.name}</b></td><td class="muted">{m.family.join(" › ")}</td><td class="muted">{Object.keys(m.props).length} properties</td>
             <td class="r"><button class="btn sm" onClick={() => editMaterial(m)}>Edit</button> <button class="btn sm" onClick={() => deleteMaterial(m)}>Delete</button></td></tr>}</For></tbody></table>
-        <p class="inline"><button class="btn pri" onClick={() => editMaterial()}><Icon n="material" /> Add a material</button><button class="btn" onClick={() => soon("A8")}>Import from a spreadsheet or CSV</button><Chip id="A8" /></p>
+        <p class="inline"><button class="btn pri" onClick={() => editMaterial()}><Icon n="material" /> Add a material</button><button class="btn" onClick={importMaterials}>Import from a spreadsheet or CSV</button></p>
       </section>
+      <Databases />
       <section class="panel">
         <h2><Icon n="db" /> Built-in materials by family</h2>
         <div class="famrow"><For each={db().tree.filter(n => n.depth === 0)}>{n => <button class="btn sm" onClick={() => { setNode(n.path); show("browse"); }}>{n.name} · {n.count}</button>}</For></div>

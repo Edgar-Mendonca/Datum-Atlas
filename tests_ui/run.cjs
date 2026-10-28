@@ -29,8 +29,8 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.exposeFunction("__engine", async (cmd, args) => ask(cmd, args));
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
-    const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list"];
+    const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb" };
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -293,6 +293,29 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   const nch = (await state()).project.charts.length;
   check("the report holds the requirements, stages, charts, shortlist, comparison and datasheets", ["1 · Requirements", "2 · Selection stages", "3 · Property charts", "4 · Shortlist", "5 · Comparison", "6 · Datasheets of the candidates", "Sources"].every(h => rep.includes(h)) && (await p.$$eval(".report figure.rfig", e => e.length)) === nch);
   await shot("16-report");
+
+  // Your own data: import from a CSV with the columns guessed, open another database and close it.
+  await p.click('.side button[title="Data"]');
+  await p.waitForTimeout(300);
+  await p.click('.datapage button:has-text("Import from a spreadsheet or CSV")');
+  await p.waitForSelector(".imptable", { timeout: 5000 });
+  const sel = await p.$$eval(".imptable thead select", e => e.map(x => x.value));
+  check("the import guesses each column, with imperial units converted", JSON.stringify(sel) === JSON.stringify(["name", "family", "rho", "E", "sy|imperial", "recyclable", "source"]), JSON.stringify(sel));
+  await shot("17-import");
+  await p.click(".dlg footer .btn.pri");
+  await p.waitForTimeout(800);
+  let dbx = await p.evaluate(async () => await window.__TAURI__.core.invoke("database"));
+  const ia = dbx.materials.find(m => m.name === "Imported alloy A");
+  check("imported rows join your own materials; a bad cell is left out and reported", !!ia && ia.user && Math.abs(ia.props.sy[0] - 275.79) < 0.1 && ia.props.rho[1] === 2710
+    && dbx.materials.some(m => m.name === "Imported resin B" && !m.props.sy) && (await p.textContent("#toast").catch(() => "")).includes("abc"));
+  await p.click('.datapage button:has-text("Open a database")');
+  await p.waitForTimeout(800);
+  dbx = await p.evaluate(async () => await window.__TAURI__.core.invoke("database"));
+  check("an opened database adds its materials, marked with its name", dbx.materials.some(m => m.name === "Team alloy T" && m.origin === "Team data") && (await p.textContent(".datapage")).includes("Team data"));
+  await p.click('.datapage tr:has-text("Team data") button:has-text("Close")');
+  await p.waitForTimeout(800);
+  dbx = await p.evaluate(async () => await window.__TAURI__.core.invoke("database"));
+  check("closing it takes its materials away again", !dbx.materials.some(m => m.name === "Team alloy T"));
   await p.click('.side button[title="Charts"]');
   await p.waitForTimeout(300);
   await p.selectOption(".goalpick select", "beam-cheap");

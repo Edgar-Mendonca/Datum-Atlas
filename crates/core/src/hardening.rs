@@ -286,3 +286,34 @@ fn a_large_selection_stays_fast() {
     assert!(ms < limit, "1,000 materials on 20 charts took {ms:.0} ms (limit {limit} ms)");
     eprintln!("1,000 materials on 20 charts: {ms:.0} ms");
 }
+
+#[test]
+fn damaged_spreadsheets_never_panic() {
+    use crate::sheet;
+    let dir = std::env::temp_dir().join(format!("datum-atlas-sheets-{}", std::process::id()));
+    let _ = std::fs::create_dir_all(&dir);
+    let t = sheet::of_database(&db::builtin());
+    let (csv, xlsx) = (dir.join("good.csv"), dir.join("good.xlsx"));
+    let _ = std::fs::write(&csv, crate::export::csv(&t));
+    let _ = std::fs::write(&xlsx, crate::export::xlsx(&t, "Materials").unwrap_or_default());
+    // The good workbook reads back with its columns guessed.
+    let back = sheet::read(&xlsx).unwrap_or_else(|e| panic!("{e}"));
+    assert!(back.guess.iter().any(|g| g == "rho") && back.rows.len() == db::builtin().materials.len());
+    let mut r = Rng(0xBF58_476D_1CE4_E5B9);
+    for (k, good) in [csv, xlsx].iter().enumerate() {
+        let b = std::fs::read(good).unwrap_or_default();
+        for case in 0..200 {
+            let mut v = if case < 30 { b[..b.len() * case / 30].to_vec() } else { b.clone() };
+            for _ in 0..if case < 30 { 0 } else { 1 + r.below(6) } {
+                let i = r.below(v.len().max(1) as u64) as usize;
+                if let Some(x) = v.get_mut(i) { *x = *r.pick(&[b',', b'"', b'\n', b'\r', b'0', b'-', b';', 0, 0xFF]) }
+            }
+            let f = dir.join(format!("bad{k}_{case}.{}", if k == 0 { "csv" } else { "xlsx" }));
+            let _ = std::fs::write(&f, &v);
+            let res = panic::catch_unwind(|| sheet::read(&f).map(|t| sheet::to_database(&t, &t.guess, "Metals", "x").map(|(d, _)| Db::new(db::builtin(), Some(&d)))));
+            assert!(res.is_ok(), "{} case {case} panicked", f.display());
+            let _ = std::fs::remove_file(&f);
+        }
+    }
+    let _ = std::fs::remove_dir_all(&dir);
+}

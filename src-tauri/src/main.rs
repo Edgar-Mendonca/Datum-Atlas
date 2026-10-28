@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod update;
 
-use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, export, goals, select, templates, Database, Material, Project, Source, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, export, goals, select, sheet, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
@@ -34,11 +34,13 @@ struct Options {
     landscape: bool,
     company: String,
     logo: String,
+    /// Other databases (.datdb) opened beside the built-in data and your own materials.
+    databases: Vec<String>,
 }
 
 impl Default for Options {
     fn default() -> Self {
-        Self { theme: "auto".into(), autosave: 5, beta: false, open_last: false, labels: false, guides: true, dpi: 300, units: "si".into(), paper: "A4".into(), landscape: true, company: String::new(), logo: String::new() }
+        Self { theme: "auto".into(), autosave: 5, beta: false, open_last: false, labels: false, guides: true, dpi: 300, units: "si".into(), paper: "A4".into(), landscape: true, company: String::new(), logo: String::new(), databases: vec![] }
     }
 }
 
@@ -54,6 +56,18 @@ struct App {
     user_note: Option<String>,
     /// False when the file exists but could not be read or set aside: it is then never written over.
     user_ok: bool,
+    /// Other databases opened (read only here), with their paths.
+    others: Vec<(PathBuf, Database)>,
+}
+
+impl App {
+    /// The materials the window sees: built in, yours, then the other databases.
+    fn rebuild(&mut self) {
+        let others: Vec<Database> = self.others.iter().map(|o| o.1.clone()).collect();
+        self.db = Db::new(db::builtin(), Some(&self.user)).with_others(&others);
+        self.db_rev += 1;
+        self.rev += 1;
+    }
 }
 
 struct St(Mutex<App>);
@@ -188,9 +202,7 @@ fn save_user(app: &AppHandle, a: &mut App) -> R<()> {
     let f = user_file(app).ok_or("The app's data folder is not available.")?;
     let text = serde_json::to_string_pretty(&a.user).map_err(|e| e.to_string())?;
     write_atomic(&f, text.as_bytes())?;
-    a.db = Db::new(db::builtin(), Some(&a.user));
-    a.db_rev += 1;
-    a.rev += 1;
+    a.rebuild();
     Ok(())
 }
 
@@ -229,6 +241,97 @@ fn delete_material(app: AppHandle, st: State<St>, id: String) -> R<Value> {
     }
     save_user(&app, &mut a)?;
     Ok(out(&a))
+}
+
+// ---------- other databases, and spreadsheets in and out ----------
+
+fn save_opts(app: &AppHandle, o: &Options) {
+    if let Some(f) = options_file(app) { let _ = write_atomic(&f, serde_json::to_string(o).unwrap_or_default().as_bytes()); }
+}
+
+/// Your database and the other ones open: name, path, number of materials.
+#[tauri::command]
+fn databases(app: AppHandle, st: State<St>) -> Value {
+    let a = st.lock();
+    let mut v = vec![json!({ "name": "My materials", "path": user_file(&app).map(|p| p.display().to_string()), "count": a.user.materials.len(), "mine": true })];
+    v.extend(a.others.iter().map(|(p, d)| json!({ "name": if d.name.is_empty() { "Database".to_string() } else { d.name.clone() }, "path": p.display().to_string(), "count": d.materials.len(), "mine": false })));
+    json!(v)
+}
+
+/// Opens another .datdb beside the built-in data (read only); it stays open next time.
+#[tauri::command]
+async fn open_database(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<Value>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Datum Atlas database", &["datdb"])) else { return Ok(None) };
+    let text = std::fs::read(&path).map_err(|e| format!("Could not open {}: {e}", path.display()))?;
+    let (mut d, _) = db::read_user(&String::from_utf8_lossy(&text))?;
+    if d.name.trim().is_empty() { d.name = path.file_stem().map(|s| s.to_string_lossy().into_owned()).unwrap_or_default(); }
+    let mut a = st.lock();
+    if a.others.iter().any(|o| o.0 == path) { return Err("That database is already open.".into()); }
+    a.others.push((path.clone(), d));
+    a.opts.databases.push(path.display().to_string());
+    save_opts(&app, &a.opts);
+    a.rebuild();
+    Ok(Some(out(&a)))
+}
+
+#[tauri::command]
+fn close_database(app: AppHandle, st: State<St>, path: String) -> R<Value> {
+    let mut a = st.lock();
+    a.others.retain(|o| o.0.display().to_string() != path);
+    a.opts.databases.retain(|p| *p != path);
+    save_opts(&app, &a.opts);
+    a.rebuild();
+    Ok(out(&a))
+}
+
+/// Saves your own materials as a .datdb to share, or as a spreadsheet or CSV.
+#[tauri::command]
+async fn export_database(app: AppHandle, st: State<'_, St>, fmt: String) -> R<Option<String>> {
+    let user = st.lock().user.clone();
+    if user.materials.is_empty() { return Err("You have no materials of your own yet.".into()); }
+    let ext = match fmt.as_str() { "csv" => "csv", "xlsx" => "xlsx", _ => "datdb" };
+    let bytes = if ext == "datdb" { serde_json::to_string_pretty(&user).map_err(|e| e.to_string())?.into_bytes() } else { sheet::bytes(&sheet::of_database(&user), ext, "My materials")? };
+    let Some(path) = app.dialog().file().add_filter(ext.to_uppercase(), &[ext]).set_file_name(format!("My materials.{ext}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    write_atomic(&path, &bytes)?;
+    Ok(Some(path.display().to_string()))
+}
+
+/// Reads a spreadsheet or CSV and guesses what each column holds, for the import window.
+#[tauri::command]
+async fn import_preview(app: AppHandle, path: Option<String>) -> R<Option<Value>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Spreadsheet or CSV", &["xlsx", "xls", "ods", "csv", "txt"])) else { return Ok(None) };
+    let t = sheet::read(&path)?;
+    Ok(Some(json!({ "path": path.display().to_string(), "head": t.head, "rows": t.rows.iter().take(30).collect::<Vec<_>>(), "count": t.rows.len(), "guess": t.guess })))
+}
+
+/// Adds the rows of a spreadsheet to your own materials, with the columns mapped as chosen.
+#[tauri::command]
+fn import_materials(app: AppHandle, st: State<St>, path: String, map: Vec<String>, family: String, source: String) -> R<Value> {
+    let t = sheet::read(Path::new(&path))?;
+    let (d, notes) = sheet::to_database(&t, &map, &family, &source)?;
+    let mut a = st.lock();
+    let n0 = a.user.materials.len();
+    // Fresh ids and source ids in your database.
+    let free = |used: &[String], stem: &str| (1..).map(|k| format!("{stem}{k}")).find(|id| !used.contains(id)).unwrap_or_default();
+    let mut ren: Vec<(String, String)> = vec![];
+    for s in d.sources {
+        let used: Vec<String> = a.user.sources.iter().map(|x| x.id.clone()).collect();
+        let id = free(&used, "u-s-imp");
+        ren.push((s.id.clone(), id.clone()));
+        a.user.sources.push(Source { id, ..s });
+    }
+    for mut m in d.materials {
+        let used: Vec<String> = a.user.materials.iter().map(|x| x.id.clone()).collect();
+        m.id = free(&used, "u-");
+        for v in m.props.values_mut() {
+            let to = ren.iter().find(|r| r.0 == v.src()).map(|r| r.1.clone()).unwrap_or_default();
+            match v { datum_atlas_core::Val::Range(_, _, x) | datum_atlas_core::Val::RangeT(_, _, x, _) | datum_atlas_core::Val::Flag(_, x) | datum_atlas_core::Val::Rating(_, x) => *x = to }
+        }
+        a.user.materials.push(m);
+    }
+    let added = a.user.materials.len() - n0;
+    save_user(&app, &mut a)?;
+    Ok(json!({ "out": out(&a), "added": added, "notes": notes }))
 }
 
 fn pick(app: &AppHandle, name: &str, exts: &[&str]) -> Option<PathBuf> {
@@ -367,11 +470,11 @@ fn options(st: State<St>) -> Options {
 }
 
 #[tauri::command]
-fn set_options(app: AppHandle, st: State<St>, opts: Options) -> Value {
-    if let Some(f) = options_file(&app) {
-        let _ = write_atomic(&f, serde_json::to_string(&opts).unwrap_or_default().as_bytes());
-    }
+fn set_options(app: AppHandle, st: State<St>, mut opts: Options) -> Value {
     let mut a = st.lock();
+    // The list of open databases is kept by the shell; the window's options do not carry it.
+    opts.databases = a.opts.databases.clone();
+    save_opts(&app, &opts);
     a.opts = opts;
     out(&a)
 }
@@ -504,10 +607,21 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let opts: Options = options_file(app.handle()).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
-            let (user, user_note, user_ok) = load_user(app.handle());
-            let db = Db::new(db::builtin(), Some(&user));
+            let (user, mut user_note, user_ok) = load_user(app.handle());
+            // The other databases opened last time; one that cannot be read is closed and reported.
+            let mut others = vec![];
+            for p in &opts.databases {
+                match std::fs::read(p).map_err(|e| e.to_string()).and_then(|b| db::read_user(&String::from_utf8_lossy(&b))) {
+                    Ok((d, _)) => others.push((PathBuf::from(p), d)),
+                    Err(e) => user_note = Some(format!("{}The database {p} could not be opened ({e}); it was closed.", user_note.map(|n| format!("{n}\n")).unwrap_or_default())),
+                }
+            }
+            let mut opts = opts;
+            opts.databases = others.iter().map(|o: &(PathBuf, Database)| o.0.display().to_string()).collect();
+            let all: Vec<Database> = others.iter().map(|o| o.1.clone()).collect();
+            let db = Db::new(db::builtin(), Some(&user)).with_others(&all);
             let p = fresh(&db, &opts, None).unwrap_or_default();
-            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok })));
+            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
             Ok(())
         })
         .on_window_event(|w, e| {
@@ -521,7 +635,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, pick_logo, copy_text, copy_png, goal_list,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

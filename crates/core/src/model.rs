@@ -48,6 +48,9 @@ pub struct Material {
     /// Set when loaded from the user's own database (not saved).
     #[serde(skip_deserializing)]
     pub user: bool,
+    /// The database another material comes from, when it is not built in or yours (not saved).
+    #[serde(skip_deserializing, skip_serializing_if = "String::is_empty")]
+    pub origin: String,
 }
 
 /// Where values come from. `kind`: handbook, government, open-dataset, datasheet, textbook-typical,
