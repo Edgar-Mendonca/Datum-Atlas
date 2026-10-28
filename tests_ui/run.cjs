@@ -382,7 +382,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.click('.tabs button:has-text("Report")');
   await p.click('.ribbon button[title^="Eco Audit"]');
   await p.waitForTimeout(200);
-  check("a planned command opens its card", (await p.textContent(".dlg").catch(() => "")).includes("0.4"));
+  check("a planned command opens its card", (await p.textContent(".dlg").catch(() => "")).includes("0.3.0") && (await p.textContent(".dlg").catch(() => "")).includes("Eco and process"));
   await p.keyboard.press("Escape");
 
   // 8. Every view prints; the chart prints as a vector page.

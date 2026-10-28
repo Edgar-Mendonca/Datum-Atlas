@@ -7,12 +7,12 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the Ashby method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.1.1** (released 2026-10-25: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.1.1). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md) |
+| **Current version** | **0.2.0** (released 2026-10-28: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.2.0). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md) |
 | **Installer** | NSIS `.exe`, per-user: **2.2 MB** (0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
 | **Stack** | Rust engine (`crates/core`) + Rust shell (`src-tauri`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. Own SVG chart engine (geometry in Rust). Chart.js later for bar/radar, GridCraft later for expressions. **No Python.** |
-| **Code size** | About 5,400 lines: core 1,690 (17 tests), shell 630, UI 2,820 TSX/TS + CSS, UI tests 250 (41 checks); data: 100 materials, 25 sources, 51 values checked |
+| **Code size** | About 7,800 lines: core 3,180 (35 tests, incl. hardening), shell 790, UI 3,440 TSX/TS + CSS, UI tests 415 (72 checks); data: 252 materials, 36 sources, 73 values checked |
 
 ---
 
@@ -77,7 +77,7 @@ flowchart LR
 | `crates/core/src/hardening.rs` | FAMILY §11 tests: failed edits change nothing (incl. a failing `Batch` and goal), random projects and random edits never panic and keep their invariants (finite geometry, counts add up, every failure has a reason), random user databases, damaged `.datlas`/`.datdb` files (cut, garbled, deep nesting), a damaged `.datdb` is an error never empty, atomic save, speed gate (1,000 materials × 20 charts: ~200 ms release, ~1.2 s debug). |
 | `crates/core/src/tests.rs` | Data checks, bad-data detection, unit round trips, bubbles in log space, hulls contain their bubbles (6 axis pairs × family/class), missing values, index lines for slopes 1/2/3 above/below, limits (missing, flag, whole range, flags), combined stages, edits/undo/round trip/templates, user materials, tree and search; derived ranges; every goal (line, ranking by its hand-computed index, limits, Explore); index names; bar charts; checked values cite linked datasheets. |
 | `crates/core/examples/bridge.rs` | The engine over stdin/stdout JSON lines for the UI tests. |
-| `data/*.json`, `data/sources.json` | The built-in database (252 materials, 25 sources: 9 general + 16 datasheets), `status: draft`; 20 materials have `checked` lists (73 values); durability ratings on every material. |
+| `data/*.json`, `data/sources.json` | The built-in database (252 materials, 36 sources), `status: draft`; 20 materials have `checked` lists (73 values); durability ratings on every material. |
 | `src-tauri/src/main.rs` | Commands in the diagram; options (theme, autosave, beta, openLast, labels, guides, dpi, units, paper, landscape, company, logo); user database file; recovery; recent files; `open_url` only for this repo. |
 | `src-tauri/src/update.rs` | Datum Plan's updater with `REPO = Edgar-Mendonca/Datum-Atlas`. |
 | `ui/index.html` | Icon sprite (Plan/Plot icons recoloured violet + atlas, bar, box, compare, datasheet, db, eco, eye, hull, index, material, pan, poly, process, radar, swap, tree, units). |
@@ -94,13 +94,13 @@ flowchart LR
 | `ui/src/compare.tsx`, `ui/src/report.tsx` | The Compare page with the radar, and the selection report (screen and print). |
 | `crates/core/src/sheet.rs` | Spreadsheets in and out of a database: `read`, `from_text`, `guess`, `range`, `to_database`, `of_database`, `bytes`. |
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
-| `ui/src/help.tsx` | `HELP` (18 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
+| `ui/src/help.tsx` | `HELP` (26 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
 | `ui/src/pages.tsx` | Setup (requirements, goal list, design problems), `goalCard` (Why), Sources page (kinds, licences, cites), Data (your materials, families, sources), `Later` pages for Compare, Index builder, Report; `MiniChart`. |
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
-| `ui/src/features.ts`, `roadmap.tsx` | The feature catalogue (A data, B charts, C selection, D compare/report, E eco, F process, G help) and `soon(id)` cards, Roadmap page. |
+| `ui/src/features.ts`, `roadmap.tsx` | The feature catalogue (A data, B charts, C selection, D compare/report, E eco, F process, G help) and `soon(id)` cards, Roadmap page; past releases plus `RELEASES`/`PLANS` read from `docs/site.json`. |
 | `ui/src/ribbon.tsx`, `backstage.tsx`, `dialogs.tsx`, `cmds.ts`, `ui.tsx`, `selection.ts`, `cells.ts`, `fmt.ts`, `main.tsx`, `styles.css` | Family patterns from Plan and Plot, adapted. |
 | `docs/site.json` | The public summary (FAMILY §10): tagline, audience, about (Overview paragraphs), three steps, highlights, screenshots, roadmap (Next/Soon/Later/Goal). Read by the family site, the Datum network and Help › Roadmap. `site_json_is_current` checks its fields, about and steps, files and that its roadmap starts after the current version. |
-| `tests_ui/run.cjs` | Playwright against `ui/dist` with the real engine (bridge): 41 checks (goals, units, bars, Tell Me materials, sources, ? help, Home tiles, checked ✓, chart, hulls, hover, click on the line, datasheet, drag changes the pass count, limits and results, browse and TSV, Add Material, ribbon fit at 1280/1600, planned cards, print of every view, glossary, Options, no script errors). `SHOTS=dir` saves screenshots. |
+| `tests_ui/run.cjs` | Playwright against `ui/dist` with the real engine (bridge): 72 checks (goals, units, bars, Tell Me materials, sources, ? help, Home tiles, checked ✓, chart, hulls, hover, click on the line, datasheet, drag changes the pass count, limits and results, browse and TSV, Add Material, ribbon fit at 1280/1600, planned cards, print of every view, glossary, Options, no script errors). `SHOTS=dir` saves screenshots. |
 
 ### Update flow (same as Plan)
 On start and on "Check again": GET `/repos/Edgar-Mendonca/Datum-Atlas/releases/latest` (or `/releases` with beta) → badge + Home card with the CHANGELOG section → Update now downloads `DatumAtlas-x.y.z-setup.exe`, checks `SHA256SUMS.txt`, runs it with `/S`, restarts. Install only from this repo's release URLs.
@@ -165,8 +165,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | — | Plan | CLAUDE.md, this file, PLAN-0.1 with questions | ✅ |
 | **0.1.0** | Data, charts, selection | Shell, updater, File page, Violet design and logo; 100 referenced materials; Browse; Datasheet; property charts (bubbles, family envelopes, hover, click, zoom, pan, guides, legend); limits, line, box and family stages; Results with reasons and ranking; Add Material + user database; `.datlas`; print; SVG/PNG export; whole UI laid out | ✅ |
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
-| 0.2.0 | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Proposed: hardening first; several lines, bands, two-constraint goals, keyboard, polygon, weighted ranking; index library (~40) and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to spreadsheet; ~250 materials, durability ratings, more values checked; several databases, import/export. Go given 2026-10-28; being built. | 🔜 |
-| 0.3.0 | Eco and process | Eco audit (energy and CO₂ across a product's life, greener substitutes); process selection | ⬜ |
+| **0.2.0** | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Hardening (safe writes, damaged files set aside, fuzz tests, cargo deny, Windows/macOS CI); several lines, bands, polygons, two-chart goals, keyboard, weighted ranking; 25 goals + 47-index library and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to xlsx/CSV; 252 materials from open sources, durability ratings, 73 values checked; several databases, spreadsheet/CSV import and export; roadmap read from site.json | ✅ |
+| 0.3.0 | Eco and process | Eco audit (energy and CO₂ across a product's life, greener substitutes); process selection | 🔜 |
 | 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
 
 ---
@@ -374,19 +374,28 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Source titles made generic where they carried brand names ("Nickel alloy 718", "Steel 1.6582", "Zinc die-casting alloy 3"); the links stay as published.
 - The checked-value test accepts datasheet, government and handbook sources with a link (≥ 70 values).
 
+### 2026-10-28: Session 11, continued (0.2.0 stage G and release)
+- Help › Roadmap and the in-app release list read `docs/site.json` (`features.ts` imports it), so the site and the app say the same.
+- Ribbon and File stubs wired: Best 5 Labels, Style, Import, Save My Materials, Open Database.
+- Getting Started and the Glossary cover bands, shapes, weighted ranking, the index library, formula properties, radar, databases and durability ratings.
+- site.json: about, steps and highlights rewritten for 0.2.0 and checked against the app; roadmap now starts at 0.3.0 (Next).
+- README features 0.2.0 and Coming next; CHANGELOG 0.2.0; versions 0.2.0.
+- Checks: clippy, cargo test, check:ui, test:ui (72 checks), cargo deny, the real app under Xvfb.
+- Released 0.2.0 through `release.yml`.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** build 0.2.0 ([PLAN-0.2.0.md](PLAN-0.2.0.md)), hardening first, pushing each stage.
+**Next:** plan 0.3.0 (eco audit and process selection) with a `docs/PLAN-0.3.0.md` and questions first.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
 **Known limits:**
-- Built-in values are drafts with document-level references, except 51 metal values checked against datasheets (from search-quoted figures; a pass that opens each document is planned). Polymers, ceramics, composites, foams and natural materials are next, one family per release.
-- Hull labels can overlap where families meet (label placement in 0.3.1). Envelopes are convex per group, not concave.
+- Built-in values are drafts with document-level references, except 73 values checked against datasheets (from search-quoted figures; a pass that opens each document is planned). Still drafts with no primary source found: 1020, 1080, 304, grey iron, AZ91, CoCr F75, lead, tin, tungsten, most polymers.
+- Envelopes are convex per group, not concave.
 - Copy Picture is not yet tried on a real Windows clipboard.
-- One selection line per chart; goals with two constraints (e.g. stiff **and** strong) need two charts.
+- Import reads the first sheet of a workbook only; the radar places log properties on a log scale, which can surprise.
 - Windows SmartScreen warns on the first install (unsigned).
 
 **Open risks:**

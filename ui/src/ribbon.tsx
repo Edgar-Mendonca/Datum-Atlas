@@ -12,6 +12,7 @@ import { tool, setTool, copyChart, activeLine } from "./chart";
 import { helpCard, HELP } from "./help";
 import { editFormulas } from "./formula";
 import { exportResults } from "./stages";
+import { importMaterials, openDatabase, saveMine } from "./importer";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Atlas";
 const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
@@ -127,17 +128,17 @@ export const Ribbon = () => (
       <G l="Axes"><S><B i="log" l="Log X" on={!!chart()?.logX} run={() => setChart(c => { c.logX = !c.logX; c.sels = []; })} /><B i="log" l="Log Y" on={!!chart()?.logY} run={() => setChart(c => { c.logY = !c.logY; c.sels = []; })} /><B i="swap" l="Swap Axes" run={() => setChart(c => { [c.x, c.y, c.logX, c.logY] = [c.y, c.x, c.logY, c.logX]; c.sels = []; })} /></S>
         <S><B i="fx" l="Expression Axis" title="Plot a formula of properties on the Y axis" run={() => editFormulas("y")} /><B i="fit" l="Fit" run={C.fit} /></S></G>
       <G l="Tools"><B big i="pan" l="Pan" on={tool() === "pan"} run={() => setTool("pan")} /><B big i="index" l="Line" on={tool() === "line"} run={() => setTool("line")} dd={e => openMenu(e, lineMenu())} /><B big i="box" l="Box" on={tool() === "box"} run={() => setTool("box")} /><B big i="poly" l="Shape" on={tool() === "poly"} run={() => setTool("poly")} /></G>
-      <G l="Show"><B big i="hull" l="Envelopes" dd={e => openMenu(e, hullMenu())} /><S><B i="tag" l="Labels" on={!!chart()?.labels} run={() => setChart(c => { c.labels = !c.labels; })} /><B i="index" l="Guide Lines" on={!!chart()?.guides.length} run={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })} /><N i="tag" l="Smart Labels" id="B9" /></S></G>
+      <G l="Show"><B big i="hull" l="Envelopes" dd={e => openMenu(e, hullMenu())} /><S><B i="tag" l="Labels" on={!!chart()?.labels} run={() => setChart(c => { c.labels = !c.labels; })} /><B i="index" l="Guide Lines" on={!!chart()?.guides.length} run={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })} /><B i="tag" l="Best 5 Labels" title="Label the five best materials; labels move apart and can be dragged" on={!!chart()?.best} run={() => setChart(c => { c.best = !c.best; })} /></S></G>
       <G l="Share"><B big i="export" l="Export" run={() => C.exportChart("svg")} dd={e => openMenu(e, [{ label: "SVG vector", icon: "export", run: () => C.exportChart("svg") }, { label: "PNG picture", run: () => C.exportChart("png") }, { label: "PDF (Print › Save as PDF)", icon: "print", run: C.print }])} /><S><B i="copy" l="Copy Picture" title="Paste into a document or a slide" run={copyChart} /><B i="print" l="Print" run={C.print} /></S></G>
     </Show>
     <Show when={tab() === "format"}>
       <G l="Envelopes"><S><For each={[["family", "Families"], ["class", "Classes"], ["none", "None"]]}>{([k, l]) => <B i="hull" l={l} on={chart()?.hull === k} run={() => setChart(c => { c.hull = k; })} />}</For></S></G>
       <G l="Families"><S><B i="eye" l="Show All Families" run={() => setChart(c => { c.hidden = []; })} /><B i="tag" l="Labels" on={!!chart()?.labels} run={() => setChart(c => { c.labels = !c.labels; })} /><B i="index" l="Guide Lines" on={!!chart()?.guides.length} run={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })} /></S></G>
-      <G l="Style"><N big i="style" l="Chart Styles" id="B10" /><S><N i="style" l="Publication" id="B10" /><N i="style" l="Monochrome" id="B10" /></S></G>
+      <G l="Style"><B big i="style" l="Chart Style" dd={e => openMenu(e, [["classic", "Classic (family colours)"], ["publication", "Publication (finer)"], ["mono", "Mono (greys and dashes, for print)"]].map(([k, l]) => ({ label: l, on: chart()?.style === k, run: () => setChart(c => { c.style = k; }) })))} /><S><B i="style" l="Publication" on={chart()?.style === "publication"} run={() => setChart(c => { c.style = c.style === "publication" ? "classic" : "publication"; })} /><B i="style" l="Monochrome" on={chart()?.style === "mono"} run={() => setChart(c => { c.style = c.style === "mono" ? "classic" : "mono"; })} /></S></G>
     </Show>
     <Show when={tab() === "data"}>
       <G l="Materials"><B big i="tree" l="Browse" run={() => show("browse")} /><B big i="datasheet" l="Datasheet" run={C.sheet} /><B big i="material" l="Add Material" run={C.addMaterial} /></G>
-      <G l="Databases"><B big i="db" l="Data" run={() => show("data")} /><B big i="source" l="Sources" run={() => show("sources")} /><S><N i="import" l="Import Spreadsheet / CSV" id="A8" /><N i="export" l="Export Database" id="A8" /><N i="db" l="Open Database" id="A9" /></S></G>
+      <G l="Databases"><B big i="db" l="Data" run={() => show("data")} /><B big i="source" l="Sources" run={() => show("sources")} /><S><B i="import" l="Import Spreadsheet / CSV" run={importMaterials} /><B i="export" l="Save My Materials" dd={e => openMenu(e, [{ label: "As a database (.datdb), to share", run: () => saveMine("datdb") }, { label: "As a spreadsheet (.xlsx)", run: () => saveMine("xlsx") }, { label: "As CSV", run: () => saveMine("csv") }])} /><B i="db" l="Open Database" run={openDatabase} /></S></G>
       <G l="Properties"><S><B i="fx" l="Formula Property" title="A property of your own: a formula of other properties" run={() => editFormulas()} /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} run={() => setUnits(imperial() ? "si" : "imperial")} /><N i="image" l="Pictures" id="A10" /></S></G>
     </Show>
     <Show when={tab() === "report"}>

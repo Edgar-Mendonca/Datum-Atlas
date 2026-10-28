@@ -32,26 +32,23 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 
 1. **Pick a design goal** (light stiff beam, cheap strong tie, spring, heat sink…) or write down the requirements: what the part does, what it must meet, what to minimise.
 2. **See every material on a property chart**: two properties on log axes; each material is a bubble spanning its ranges, each family has its envelope.
-3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a box, or whole families left out.
-4. **Rank and check**: the materials that pass, ranked by the index, and the reason every other one fails.
+3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
+4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Features (0.1.1)
+## Features (0.2.0)
 
-- **About 100 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from public sources (U.S. government handbooks, NIST, USGS, the Wood Handbook, open datasets and typical textbook ranges). No proprietary database is used.
-- **22 design goals** in a list beside the chart, grouped as minimum mass, minimum cost, minimum carbon, elastic design, damage tolerance and thermal. A goal sets the axes, draws the selection line of the right slope through the best materials, adds the limits it needs (marked, so you can change them) and ranks the results by its index. “Why?” explains the function, constraint, objective and free variable behind it.
-- **Derived properties**: price, CO₂ and energy per volume, specific stiffness and strength, thermal diffusivity and thermal shock resistance, calculated from each material's own values.
-- **SI or imperial units** everywhere: axes, tables, datasheets and limits. Values are stored in SI, so switching loses nothing.
-- **Bar charts** of one property for every material, grouped by family.
-- **Sources page**: every source, what kind it is, its licence, and which materials and values cite it. Metals are being checked against published datasheets value by value (51 values in 15 metals so far, marked ✓).
-- **? help** beside the tools: a click says what the tool is for and how to use it.
-- **Tell Me** (Ctrl+K) finds commands, design goals and materials (by name, UNS or EN number).
-- **Your own materials**: the Add Material window explains what is needed (a name, the family, density, at least one more property, low and high values in the unit shown, and where the values come from). They appear in every view.
-- **Property charts** of any two properties, log or linear; family envelopes; hover for ranges, click for the datasheet; zoom, pan, guide lines of slope 1, 2 and 3.
-- **Selection**: limit, chart (line or box) and family stages; results ranked by the index with “× best”; failures explained.
-- **Browse** with a family tree and a spreadsheet-like table (sort, select, copy to a spreadsheet), and **datasheets** with grouped properties and numbered references.
-- Design problems to start from: light stiff beam, strong tie, stiff panel, springs, hot and light, damage tolerant.
-- Print or save as PDF (charts, datasheets, results); export charts as SVG or PNG, or copy the chart as a picture.
-- Light, dark and auto themes; the in-app updater; recovery of unsaved work.
+- **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
+- **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
+- **25 design goals and 47 performance indices.** A goal sets the axes, draws the selection line of the right slope through the best materials, adds the limits it needs and ranks the results; goals with two constraints set up two charts. “Why?” explains the function, constraint, objective and free variable. An **index builder** makes your own.
+- **Formula properties and axes**: define σy/ρ or any formula of the properties; it is calculated for every material, with its range, and works in charts, limits and tables.
+- **Property charts** of any two properties, log or linear; family envelopes; hover for ranges, click for the datasheet; zoom, pan, guide lines; the best materials labelled with labels that keep apart; classic, publication and mono styles; **up to four charts side by side**. **Bar charts** of one property.
+- **Selection**: limits, several selection lines, bands, boxes, drawn shapes and families left out. Results ranked by an index with “× best”, or by **weighted properties**; every failure explained.
+- **Compare** up to six materials in a table and a **radar chart**, and print a **selection report** with the requirements, charts, shortlist, comparison and datasheets.
+- **Your own data**: add materials by hand, **import from a spreadsheet or CSV**, open a colleague's database beside the built-in data, and save yours as a database, a spreadsheet or CSV. Results go to a spreadsheet too.
+- **SI or imperial units** everywhere; derived properties such as specific stiffness, cost per volume and thermal diffusivity.
+- **Browse** with a family tree and a spreadsheet-like table, **datasheets** with numbered references, and a **Sources** page.
+- **? help** beside the tools, a Glossary, and **Tell Me** (Ctrl+K) for commands, goals and materials.
+- Print or save as PDF; export charts as SVG or PNG, or copy them as a picture. Light, dark and auto themes; the in-app updater; recovery of unsaved work; damaged files never crash the app.
 
 <table><tr>
 <td><img src="docs/images/browse.png" alt="Browse: family tree and materials table"></td>
@@ -65,7 +62,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 
 ## Coming next
 
-Several selection lines and charts, results to a spreadsheet and more values checked against datasheets (0.1.2); the index builder, expression axes and formula properties (0.2.0); compare, radar charts, the selection report and 250 materials (0.3.0); your own databases with spreadsheet and CSV import (0.3.1); eco audit (0.4.0); process selection (0.5.0). See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+Eco and process (0.3.0): energy and CO₂ across a product's life, greener substitutes, and manufacturing processes chosen alongside materials. Then 1.0.0: about 1,000 materials, a user guide and a signed installer. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Install
 

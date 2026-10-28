@@ -19,10 +19,11 @@ export const gettingStarted = () => openDialog(() => (
       <h4>3 · Select</h4>
       <ul><li><b>Limits</b> remove materials that cannot work: max service temperature at least 150 °C, price at most 5 USD/kg, recyclable.</li>
         <li>A <b>selection line</b> picks the materials that do the job best. A light, stiff beam needs a high E^½/ρ: on the modulus–density chart that is a line of slope 2, and the materials above it pass. Tie: slope 1 (E/ρ). Panel: slope 3 (E^⅓/ρ).</li>
-        <li>A <b>box</b> picks a window of values; the <b>tree</b> leaves families out.</li></ul>
+        <li>A <b>box</b> or a drawn <b>shape</b> picks a window of values; two facing lines make a <b>band</b>; the <b>tree</b> leaves families out.</li></ul>
       <h4>4 · Rank and check</h4>
       <ul><li><b>Results</b> lists what passes, ranked by the index, with “× best” against the leader, and says why each other material fails.</li>
-        <li>Open the datasheets of the best few, check their references, and print the chart, the results and the datasheets.</li></ul>
+        <li>Several indices at once? Rank by a <b>weighted</b> score instead of one line.</li>
+        <li>Put the best few side by side in <b>Compare</b>, open their datasheets, check their references, and make the <b>Report</b>: requirements, charts, shortlist, comparison and datasheets in one document.</li></ul>
       <p class="muted">Start from File › Home: “Light, stiff beam” sets up steps 2–4 for you. Planned features are shown dimmed; Help › Roadmap says when each arrives.</p>
     </div>
   </Dialog>
@@ -41,6 +42,11 @@ const GLOSSARY: [string, [string, string][]][] = [
     ["Stage", "One step of the selection: limits, a chart selection, or families left out. A material passes when it passes every stage."],
     ["Limit", "A minimum or maximum value (or yes/no, or a lowest rating) that a material must meet."],
     ["× best", "A material's index divided by the best material's: 1 for the best, 0.5 for half as good."],
+    ["Band", "Two facing selection lines on one chart: the materials between them pass."],
+    ["Weighted ranking", "Ranking by several properties at once, each scaled from worst to best and given a weight."],
+    ["Index library", "Performance indices for common designs, each with its function, constraint, objective and free variable. Plot one, or build your own."],
+    ["Formula property", "A property you define from others, such as σy/ρ or E·α. It is calculated for every material, with its range, and works like any other property."],
+    ["Radar chart", "Compare's picture: one spoke per property, each material placed between the lowest (centre) and highest (rim) value in the database."],
   ]],
   ["Properties", [
     ["Density, ρ", "Mass per volume, kg/m³. Water is 1000; aluminium about 2700; steel about 7850."],
@@ -59,6 +65,8 @@ const GLOSSARY: [string, [string, string][]][] = [
     ["Typical value", "The value most often met inside the range (geometric mean when not given)."],
     ["No data", "A property not known for a material. Shown as a gap, never as zero. A limit on it can fail the material or keep it, marked."],
     ["Reference", "Where a value comes from: each value points to a source, listed on the datasheet."],
+    ["Database", "A file of materials (.datdb). Your own materials are one; others from colleagues can be opened beside the built-in data."],
+    ["Durability rating", "How well a material stands water, acids, alkalis, sunlight (UV) and fire, from Unacceptable to Excellent."],
     ["Draft value", "A built-in value compiled from the named source but not yet checked against its exact table or page."],
     ["Log axis", "An axis where each step multiplies by 10, so materials that differ a thousand times fit on one chart. Zero and negative values cannot be shown."],
   ]],

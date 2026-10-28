@@ -1,5 +1,49 @@
 # Changelog
 
+## 0.2.0 — 2026-10-28
+
+The big update: sturdier files, several selections and weighted ranking, a library of performance indices and your own formulas, compare and a selection report, about 250 materials, and your own databases with spreadsheet import.
+
+**Sturdier**
+- A damaged or unusual project, database or spreadsheet gives a clear message and never crashes the app. A damaged “My materials” file is kept aside under a new name, never emptied.
+- Files are written safely: a save that is cut off leaves the old file whole.
+- Over a thousand random and broken inputs are tried by the tests on every change, and the build checks the licences of everything the app is made from.
+
+**Selection**
+- Several selection lines on one chart, and bands: two facing lines with the materials between them.
+- Draw a shape around the materials you want, besides lines and boxes.
+- Goals that need two charts, such as stiff and strong, set up both.
+- Set a line to pass through an index value you type, and nudge the active line with the arrow keys.
+- Rank by weighted properties instead of one index: each property scaled from worst to best, with your weights.
+
+**Indices and formulas**
+- 25 design goals and a library of 47 performance indices, each with its function, constraint, objective and free variable. Plot any of them in one click.
+- Build an index from properties and powers; the chart and the line follow.
+- Formula axes and your own formula properties, such as σy/ρ: calculated for every material with its range, usable in charts, limits and tables. Gaps stay gaps.
+
+**Charts**
+- Up to four charts side by side, with the hovered material shown on all of them.
+- The best materials labelled, and labels placed so they do not overlap, with leader lines; drag a label to move it.
+- Chart styles: classic, publication and mono (greys, for black-and-white print).
+
+**Compare and report**
+- Compare up to six materials in a table, with the highest and lowest of each property marked, and in a radar chart.
+- A selection report: requirements, design goal, stages, charts, shortlist, comparison and the candidates' datasheets with their sources, ready to print or save as PDF.
+- Results to a spreadsheet (.xlsx) or CSV.
+
+**Data**
+- 252 materials (105 metals, 53 polymers, 16 elastomers, 30 ceramics and glasses, 15 composites, 12 foams, 21 natural materials), compiled from open and public sources only: government handbooks, open datasets, university notes, producers' datasheets and typical textbook ranges. The tests refuse any source that is not open or public.
+- Durability ratings for every material: water, acids, alkalis, sunlight and fire resistance. Fatigue strength and electrical resistivity for the metals.
+- 73 values now checked against published datasheets (✓). The other values remain drafts.
+
+**Your own data**
+- Import materials from a spreadsheet or CSV: the app guesses what each column holds, reads ranges and imperial units, and shows the rows before adding them.
+- Open a colleague's database beside the built-in data; its materials are marked with its name and can be closed again.
+- Save your own materials as a database to share, a spreadsheet or CSV.
+
+**Help**
+- Help › Roadmap shows what each coming release brings. New ? cards for selections, ranking, formulas, indices, compare, report, import and databases, and new terms in the Glossary.
+
 ## 0.1.1 — 2026-10-25
 
 Design goals that set up the chart, the line and the limits in one pick; SI or imperial units; bar charts; a Sources page; ? help beside the tools; and the first values checked against published datasheets.

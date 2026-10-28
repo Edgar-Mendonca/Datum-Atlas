@@ -1,6 +1,6 @@
 // The whole app laid out: a card for every feature that is not built yet, and the Roadmap page.
 import { For, Show, createSignal, createMemo } from "solid-js";
-import { FEATURES, AREAS, RELEASES, feature, ready, VERSION_NOW } from "./features";
+import { FEATURES, AREAS, RELEASES, PLANS, feature, ready, VERSION_NOW } from "./features";
 import { openDialog, closeDialog, setBackstage } from "./store";
 import { Dialog, Pick } from "./ui";
 
@@ -30,7 +30,8 @@ export const RoadmapPage = () => {
       <p class="muted">Everything Datum Atlas will do, in the order it is being built. {done} of {FEATURES.length} features are ready in {rel(VERSION_NOW)}. Planned commands already have their place in the ribbon and the sidebar; clicking one tells you when it arrives.</p>
       <div class="rmbar"><input class="find" placeholder="Search features (e.g. index, eco, import)" value={q()} onInput={e => setQ(e.currentTarget.value)} />
         <Pick value={r()} set={setR} options={[["all", "All releases"], ["ready", "Ready now"], ...Object.entries(RELEASES).map(([k, v]) => [k, `${rel(k)} · ${v}`] as [string, string])]} /></div>
-      <div class="rmrel"><For each={Object.entries(RELEASES)}>{([k, v]) => <div classList={{ now: k === VERSION_NOW }}><b>{rel(k)}</b><span>{v}</span><small>{FEATURES.filter(f => f[2] === k).length} features</small></div>}</For></div>
+      <div class="rmrel"><For each={Object.entries(RELEASES)}>{([k, v]) => <div classList={{ now: k === VERSION_NOW }}><b>{rel(k)}{PLANS[k] ? ` · ${PLANS[k].when}` : k === VERSION_NOW ? " · now" : ""}</b><span>{v}</span><small>{FEATURES.filter(f => f[2] === k).length} features</small>
+        <Show when={PLANS[k]}><ul class="rmitems"><For each={PLANS[k].items}>{x => <li>{x}</li>}</For></ul></Show></div>}</For></div>
       <For each={Object.entries(AREAS)}>{([a, name]) => { const fs = () => list().filter(f => f[0].replace(/\d+/, "") === a); return <Show when={fs().length}>
         <h2>{a} · {name}</h2>
         <table class="tbl rmtbl"><tbody><For each={fs()}>{f => <tr><td class="fid">{f[0]}</td><td><b>{f[1]}</b><div class="muted">{f[3]}</div></td><td><Chip id={f[0]} /></td></tr>}</For></tbody></table>

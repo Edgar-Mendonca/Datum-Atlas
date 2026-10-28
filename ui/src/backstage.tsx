@@ -7,7 +7,8 @@ import { C } from "./cmds";
 import * as D from "./dialogs";
 import { Icon, Text, Pick, Check } from "./ui";
 import { listen, invoke } from "./api";
-import { RoadmapPage, soon } from "./roadmap";
+import { RoadmapPage } from "./roadmap";
+import { importMaterials } from "./importer";
 import { MiniChart } from "./pages";
 import { exportChart, copyChart } from "./chart";
 import { editMaterial } from "./material";
@@ -141,7 +142,7 @@ export const Backstage = () => (
       <button class="back" onClick={() => out() && setBackstage(null)} title="Back">←</button>
       <For each={[["home", "home", "Home"], ["new", "new", "New"], ["open", "open", "Open"], ["import", "import", "Import"], ["save", "save", "Save"], ["saveas", "save", "Save As"], ["export", "export", "Export"], ["print", "print", "Print"]]}>{([k, i, l]) =>
         <button classList={{ on: backstage() === k }} onClick={() => {
-          if (k === "open") C.open(); else if (k === "import") soon("A8"); else if (k === "new") setBackstage("home"); else if (k === "save") C.save(); else if (k === "saveas") C.save(true);
+          if (k === "open") C.open(); else if (k === "import") { setBackstage(null); importMaterials(); } else if (k === "new") setBackstage("home"); else if (k === "save") C.save(); else if (k === "saveas") C.save(true);
           else setBackstage(k);
         }}><Icon n={i} size={22} />{l}</button>}</For>
       <span class="grow" />

@@ -8,7 +8,7 @@
   "for": "Design and materials engineers, and students.",
   "about": [
     "Datum Atlas helps you pick a material and show why it is the right one. Choose a design goal, such as a light, stiff beam or a cheap, strong tie, and Atlas sets the property chart, the selection line and the limits for you.",
-    "Every material is a bubble spanning its range of values, grouped by family. Limits, index lines, boxes and whole families left out narrow the field; the materials that pass are ranked, and every one that fails says why. Every value names its source, and you can add your own materials."
+    "Every material is a bubble spanning its range of values, grouped by family. Limits, index lines, bands, boxes, drawn shapes and whole families left out narrow the field; the materials that pass are ranked, by one index or by weighted properties, and every one that fails says why. Compare the best side by side and print a report. Every value names its source, and you can add, import and share your own materials."
   ],
   "steps": [
     {
@@ -20,17 +20,17 @@
       "text": "Move the selection line, add limits and boxes, and watch the field narrow."
     },
     {
-      "title": "Rank and report",
-      "text": "See the materials that pass, ranked by the index. Open their datasheets, print the results, or export the chart."
+      "title": "Rank, compare and report",
+      "text": "See the materials that pass, ranked. Compare the best side by side, then print the selection report or send the results to a spreadsheet."
     }
   ],
   "highlights": [
-    "100 materials from every family. Every value names its source, and values are being checked against published datasheets one by one, starting with the metals.",
-    "Property charts of any two properties, with family envelopes, zoom, pan and guide lines, and bar charts of one property.",
-    "22 design goals that set the axes, the selection line and the limits in one pick, and explain why.",
-    "Selection by limits, index lines, boxes and families; results ranked, with the reason every other material fails.",
-    "SI or imperial units everywhere; derived properties such as specific stiffness, cost per volume and thermal diffusivity.",
-    "Add your own materials; print charts, datasheets and results, export charts as SVG or PNG, or copy them as a picture."
+    "About 250 materials from every family, compiled from open and public sources. Every value names its source; 73 values are checked against published datasheets so far, and gaps stay gaps, never zero.",
+    "Property charts of any two properties or of your own formulas, with family envelopes, zoom, pan, the best materials labelled and labels kept apart; bar charts; up to four charts side by side.",
+    "25 design goals and a library of 47 performance indices, with an index builder; a goal sets the axes, the selection line and the limits in one pick, and explains why.",
+    "Selection by limits, index lines, bands, boxes, drawn shapes and families; results ranked by an index or by weighted properties, with the reason every other material fails.",
+    "Compare up to six materials in a table and a radar chart, and print a selection report with the charts, the shortlist and the datasheets.",
+    "Your own materials and formula properties; import from a spreadsheet or CSV, open a colleague's database, and export results and materials to a spreadsheet. SI or imperial units everywhere."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -40,22 +40,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.2.0",
-      "title": "The big update",
-      "when": "Next",
-      "items": [
-        "Sturdier: damaged or unusual files never crash the app or lose your materials.",
-        "Several selection lines and bands, goals that use two charts, polygon selection and weighted ranking.",
-        "A library of about 40 performance indices, an index builder, formula axes and your own formula properties.",
-        "Charts side by side, the best materials labelled, labels that do not overlap, chart styles.",
-        "Compare materials with radar charts, a selection report, and results to a spreadsheet.",
-        "About 250 materials from open and public sources, durability ratings, more values checked, and your own databases with spreadsheet and CSV import."
-      ]
-    },
-    {
       "v": "0.3.0",
       "title": "Eco and process",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Energy and CO₂ across a product's life, and greener substitutes.",
         "Choose manufacturing processes alongside materials."

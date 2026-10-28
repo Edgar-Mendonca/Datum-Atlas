@@ -45,15 +45,20 @@ export const importMaterials = async () => {
   });
 };
 
+/** Opens another .datdb beside the built-in data. */
+export const openDatabase = async () => { const o = await call<Out | null>("open_database", { path: null }); if (o) { setOut(o); await loadDb(); toast("Database opened: its materials are in every view, marked with its name.", true); return true; } return false; };
+/** Saves your own materials as .datdb, .xlsx or .csv. */
+export const saveMine = async (fmt: string) => { const p = await call<string | null>("export_database", { fmt }); if (p) toast(`Saved ${p}`, true); };
+
 /** The databases open: yours, and others opened beside the built-in data. */
 export const Databases = () => {
   type Row = { name: string; path: string; count: number; mine: boolean };
   const [list, setList] = createSignal<Row[]>([]);
   const load = () => call<Row[]>("databases").then(v => v && setList(v));
   load();
-  const open = async () => { const o = await call<Out | null>("open_database", { path: null }); if (o) { setOut(o); await loadDb(); load(); toast("Database opened: its materials are in every view, marked with its name.", true); } };
+  const open = async () => { if (await openDatabase()) load(); };
   const close = async (path: string) => { const o = await call<Out>("close_database", { path }); if (o) { setOut(o); await loadDb(); load(); } };
-  const save = async (fmt: string) => { const p = await call<string | null>("export_database", { fmt }); if (p) toast(`Saved ${p}`, true); };
+  const save = saveMine;
   return (
     <section class="panel">
       <h2>Databases <Help k="databases" /></h2>
