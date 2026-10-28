@@ -12,7 +12,7 @@
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
 | **Stack** | Rust engine (`crates/core`) + Rust shell (`src-tauri`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. Own SVG chart engine (geometry in Rust). Chart.js later for bar/radar, GridCraft later for expressions. **No Python.** |
-| **Code size** | About 5,400 lines: core 1,670 (16 tests), shell 630, UI 2,820 TSX/TS + CSS, UI tests 250 (41 checks); data: 100 materials, 25 sources, 51 values checked |
+| **Code size** | About 5,400 lines: core 1,690 (17 tests), shell 630, UI 2,820 TSX/TS + CSS, UI tests 250 (41 checks); data: 100 materials, 25 sources, 51 values checked |
 
 ---
 
@@ -91,13 +91,14 @@ flowchart LR
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
 | `ui/src/features.ts`, `roadmap.tsx` | The feature catalogue (A data, B charts, C selection, D compare/report, E eco, F process, G help) and `soon(id)` cards, Roadmap page. |
 | `ui/src/ribbon.tsx`, `backstage.tsx`, `dialogs.tsx`, `cmds.ts`, `ui.tsx`, `selection.ts`, `cells.ts`, `fmt.ts`, `main.tsx`, `styles.css` | Family patterns from Plan and Plot, adapted. |
+| `docs/site.json` | The public summary (FAMILY §10): tagline, audience, highlights, screenshots, roadmap (Next/Soon/Later/Goal). Read by the family site, the Datum network and Help › Roadmap. `site_json_is_current` checks its fields, files and that its roadmap starts after the current version. |
 | `tests_ui/run.cjs` | Playwright against `ui/dist` with the real engine (bridge): 41 checks (goals, units, bars, Tell Me materials, sources, ? help, Home tiles, checked ✓, chart, hulls, hover, click on the line, datasheet, drag changes the pass count, limits and results, browse and TSV, Add Material, ribbon fit at 1280/1600, planned cards, print of every view, glossary, Options, no script errors). `SHOTS=dir` saves screenshots. |
 
 ### Update flow (same as Plan)
 On start and on "Check again": GET `/repos/Edgar-Mendonca/Datum-Atlas/releases/latest` (or `/releases` with beta) → badge + Home card with the CHANGELOG section → Update now downloads `DatumAtlas-x.y.z-setup.exe`, checks `SHA256SUMS.txt`, runs it with `/S`, restarts. Install only from this repo's release URLs.
 
 ### Release flow (same as Plan)
-Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z — date` → update this file → commit + push → `release.yml` (tag push, or workflow_dispatch when tags are blocked) → GitHub Release with setup.exe + SHA256SUMS.txt → users click Update now.
+Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z — date` → update this file **and `docs/site.json`** (the roadmap in both) → commit + push → `release.yml` (tag push, or workflow_dispatch when tags are blocked) → GitHub Release with setup.exe + SHA256SUMS.txt → users click Update now.
 
 ### How we work (from Datum Plan, FAMILY §11)
 1. **The user reviews the last release** in the app and sends screenshots with bugs and wishes.
@@ -138,6 +139,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | **? help beside the tools in every Datum app**: a click opens a card saying what the tool is for and how to use it, from one `HELP` table | The user, instead of a teaching mode: “we should do it in all of our applications”. |
 | 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never aggregator sites (MatWeb, MakeItFrom, Total Materia, Wikipedia); a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
 | 0.1.1 | The check used the figures quoted by web search from each datasheet (the build machine cannot open web pages); a second pass that opens each document is planned | Recorded so nobody mistakes it for a table-level check. |
+| 0.1.1 | `docs/site.json` is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
 | 0.1.1 | Derived properties are computed by the engine at load, not stored | One source of truth; they follow corrections automatically. |
 | 0.1.0 | Logo: violet log–log axes, a dotted selection line between two family envelopes (the upper one with a violet bubble), the amber diamond at the line's end | The user asked for a better violet logo; it keeps FAMILY §5. |
 
@@ -156,9 +158,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.2.0 | Indices | Index builder (~40 indices); expression axes; formula properties (GridCraft) | ⬜ |
 | 0.3.0 | Compare and report | Compare + radar; selection report; ~250 materials, more values checked | ⬜ |
 | 0.3.1 | Own data | Several databases, Excel/CSV import with mapping; label placement; style presets; polygon stage | ⬜ |
-| 0.4 | Eco audit | | ⬜ |
-| 0.5 | Process selection | | ⬜ |
-| 1.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
+| 0.4.0 | Eco audit | Energy and CO₂ across a product's life | ⬜ |
+| 0.5.0 | Process selection | Manufacturing processes alongside materials | ⬜ |
+| 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
 
 ---
 
@@ -201,6 +203,11 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Checked: clippy, 16 engine tests, `check:ui`, 41 UI checks (all pass); the real app under Xvfb (Home tiles, “Light, stiff beam”: line E½/ρ, 12 of 100 pass, ranking by the index).
 - Fixed while testing: the bar chart used the bubble chart's zoom window (now one window per kind and axes); the goal list crashed the UI tests until the bridge learnt `goal_list`; the toolbar wrapped at 1440 px (now two rows).
 - Not done: metals still draft: 1020, 1080, 304, 316, 430, grey iron, 1100, AZ91, Inconel 625, CoCr F75, zinc AG40A, lead, tin, tungsten (no primary datasheet found, or the datasheet disagreed with our range in a way that needs a closer look). Help `?` for Datum Plan and Datum Plot is suggested as a task in their own repos.
+
+### 2026-10-28: Session 5 (site.json)
+- Added `docs/site.json` (hub FAMILY §10) from the user's draft, checked against the roadmap and CHANGELOG. Corrected: not every value cites a public source (our compilation and price estimates are our own), so it now says every value names its source; datasheets and results are printed, not exported; bar charts, cost per volume and Copy Picture added; versions written with three numbers (also in the roadmap here).
+- New test `site_json_is_current`; CLAUDE.md and the release flow now include site.json. 17 engine tests pass.
+- Noticed: README and CHANGELOG 0.1.0 say "copy to Excel", a product name that FAMILY §13 keeps out of public text; not changed yet.
 
 ---
 

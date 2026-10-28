@@ -31,4 +31,5 @@ Checks before pushing:
 Releasing:
 1. Bump the version in `src-tauri/Cargo.toml` and `crates/core/Cargo.toml`.
 2. Add a CHANGELOG section (`## x.y.z — date`, a one-line summary, bold sections in plain language).
+   Update `docs/site.json` (highlights and roadmap; the family site and the Datum network read it) together with the roadmap in `docs/MEMORY.md` §3. Public text never names, compares with, or says we copy or replace a commercial product (hub FAMILY §13).
 3. Push the tag `vX.Y.Z`, or run `release.yml` with workflow_dispatch when tag pushes are blocked. The workflow creates the tag and publishes the installer and `SHA256SUMS.txt`.

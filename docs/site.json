@@ -1,0 +1,27 @@
+{
+  "$schema": "Datum family app summary, read by the Datum hub site (github.com/Edgar-Mendonca/Datum) and by Help › Roadmap in the app.",
+  "id": "atlas",
+  "name": "Datum Atlas",
+  "accent": "#6C4AB6",
+  "logo": "docs/brand/datum-atlas-icon.svg",
+  "tagline": "Choose the right material: property charts, selection and referenced data, in one app for Windows.",
+  "for": "Design and materials engineers, and students.",
+  "highlights": [
+    "100 materials from every family. Every value names its source, and values are being checked against published datasheets one by one, starting with the metals.",
+    "Property charts of any two properties, with family envelopes, zoom, pan and guide lines, and bar charts of one property.",
+    "22 design goals that set the axes, the selection line and the limits in one pick, and explain why.",
+    "Selection by limits, index lines, boxes and families; results ranked, with the reason every other material fails.",
+    "SI or imperial units everywhere; derived properties such as specific stiffness, cost per volume and thermal diffusivity.",
+    "Add your own materials; print charts, datasheets and results, export charts as SVG or PNG, or copy them as a picture."
+  ],
+  "screenshots": ["docs/images/chart.png", "docs/images/results.png", "docs/images/browse.png", "docs/images/datasheet.png"],
+  "roadmap": [
+    { "v": "0.1.2", "title": "Lines and charts", "when": "Next", "items": ["Several selection lines per chart.", "Results to a spreadsheet; keyboard control.", "More values checked against published datasheets (the rest of the metals, then polymers)."] },
+    { "v": "0.2.0", "title": "Indices", "when": "Soon", "items": ["An index builder with about 40 indices.", "Expression axes and formula properties."] },
+    { "v": "0.3.0", "title": "Compare and report", "when": "Soon", "items": ["Compare materials with radar charts.", "A selection report.", "About 250 materials, more values checked."] },
+    { "v": "0.3.1", "title": "Your own data", "when": "Later", "items": ["Several databases; CSV and spreadsheet import with column mapping.", "Label placement, style presets, polygon selection."] },
+    { "v": "0.4.0", "title": "Eco audit", "when": "Later", "items": ["Energy and CO₂ across a product's life."] },
+    { "v": "0.5.0", "title": "Process selection", "when": "Later", "items": ["Choose manufacturing processes alongside materials."] },
+    { "v": "1.0.0", "title": "Stable", "when": "Goal", "items": ["About 1,000 materials, a user guide and a signed installer."] }
+  ]
+}

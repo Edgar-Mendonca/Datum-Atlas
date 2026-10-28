@@ -313,3 +313,18 @@ fn bar_charts_group_by_family_and_sort() {
     assert!(metals.windows(2).all(|w| w[0].c[1] <= w[1].c[1] && w[0].c[0] < w[1].c[0]));
     assert!(out.bands.windows(2).all(|w| w[0].to < w[1].from));
 }
+
+#[test]
+fn site_json_is_current() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let s: serde_json::Value = serde_json::from_str(include_str!("../../../docs/site.json")).unwrap();
+    for k in ["id", "name", "accent", "logo", "tagline", "for"] { assert!(s[k].as_str().is_some_and(|v| !v.is_empty()), "site.json: {k}"); }
+    for f in s["screenshots"].as_array().unwrap().iter().chain([&s["logo"]]) { assert!(root.join(f.as_str().unwrap()).exists(), "site.json: {f} missing"); }
+    let ver = |v: &str| v.split('.').map(|n| n.parse::<u32>().unwrap()).collect::<Vec<_>>();
+    let road = s["roadmap"].as_array().unwrap();
+    for r in road {
+        assert_eq!(ver(r["v"].as_str().unwrap()).len(), 3, "site.json: versions have three numbers");
+        assert!(["Next", "Soon", "Later", "Goal"].contains(&r["when"].as_str().unwrap()), "site.json: when");
+    }
+    assert!(ver(road[0]["v"].as_str().unwrap()) > ver(env!("CARGO_PKG_VERSION")), "site.json: the roadmap still starts at a released version; update it with the release");
+}
