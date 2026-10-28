@@ -140,7 +140,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never aggregator sites (MatWeb, MakeItFrom, Total Materia, Wikipedia); a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
 | 0.1.1 | The check used the figures quoted by web search from each datasheet (the build machine cannot open web pages); a second pass that opens each document is planned | Recorded so nobody mistakes it for a table-level check. |
 | 0.1.1 | `docs/site.json` (about, steps, highlights, roadmap) is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
-| 0.1.2 | Hardening (FAMILY §11) ships inside 0.1.2 with the new features, built first | The user's answer to PLAN-0.1.2 Q8. |
+| 0.2.0 | **One big update instead of small splits**: 0.1.2 and the old 0.2/0.3/0.3.1 become one release, 0.2.0 ([PLAN-0.2.0.md](PLAN-0.2.0.md)); eco audit and process selection become 0.3.0. Hardening is still built first. Fixes between big updates still go out as small releases. | The user, 2026-10-28: Atlas is far behind the other Datum apps; "we are capable of doing a big build". |
+| 0.1.2 | Hardening (FAMILY §11) ships with the new features, built first | The user's answer to PLAN-0.1.2 Q8. |
 | 0.1.1 | Derived properties are computed by the engine at load, not stored | One source of truth; they follow corrections automatically. |
 | 0.1.0 | Logo: violet log–log axes, a dotted selection line between two family envelopes (the upper one with a violet bubble), the amber diamond at the line's end | The user asked for a better violet logo; it keeps FAMILY §5. |
 
@@ -155,12 +156,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | — | Plan | CLAUDE.md, this file, PLAN-0.1 with questions | ✅ |
 | **0.1.0** | Data, charts, selection | Shell, updater, File page, Violet design and logo; 100 referenced materials; Browse; Datasheet; property charts (bubbles, family envelopes, hover, click, zoom, pan, guides, legend); limits, line, box and family stages; Results with reasons and ranking; Add Material + user database; `.datlas`; print; SVG/PNG export; whole UI laid out | ✅ |
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
-| 0.1.2 | Lines and charts ([PLAN-0.1.2.md](PLAN-0.1.2.md)) | Several selection lines per chart, results to a spreadsheet, keyboard, more values checked (rest of the metals, then polymers). Proposed: also two-constraint goals, best-material labels, one roadmap from `site.json`, and the family **hardening standard** (FAMILY §11) with a fix for losing your own materials when `My materials.datdb` is damaged; charts side by side moved to 0.1.3. Waiting for the user's choices. | 🔜 |
-| 0.2.0 | Indices | Index builder (~40 indices); expression axes; formula properties (GridCraft) | ⬜ |
-| 0.3.0 | Compare and report | Compare + radar; selection report; ~250 materials, more values checked | ⬜ |
-| 0.3.1 | Own data | Several databases, spreadsheet/CSV import with mapping; label placement; style presets; polygon stage | ⬜ |
-| 0.4.0 | Eco audit | Energy and CO₂ across a product's life | ⬜ |
-| 0.5.0 | Process selection | Manufacturing processes alongside materials | ⬜ |
+| 0.2.0 | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Proposed: hardening first; several lines, bands, two-constraint goals, keyboard, polygon, weighted ranking; index library (~40) and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to spreadsheet; ~250 materials, durability ratings, more values checked; several databases, import/export. Waiting for the user's go. | 🔜 |
+| 0.3.0 | Eco and process | Eco audit (energy and CO₂ across a product's life, greener substitutes); process selection | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
 
 ---
@@ -242,11 +239,21 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-10-28: Session 9 (answer Q8)
 - The user: hardening goes into 0.1.2 together with the new features (PLAN-0.1.2 §7). Questions 1–7 are still open.
 
+### 2026-10-28: Session 10 (the big update)
+- The user asked for one big update instead of small splits, because Atlas is behind the other apps (Plan 0.4.1, Plot 0.2.20).
+- Wrote [PLAN-0.2.0.md](PLAN-0.2.0.md):
+  - 28 items in 7 groups (sturdy, selection, indices and formulas, charts, compare and report, data, the app);
+  - the order of work;
+  - size: ~6–7k lines plus 150 materials, over several sessions;
+  - 4 questions.
+- Checked what can be copied from Datum Plan: `formula.rs`, `hardening.rs`, calamine and rust_xlsxwriter, `deny.toml`, SECURITY.md and CONTRIBUTING.md.
+- PLAN-0.1.2 is marked as replaced. The roadmap is now 0.2.0 (big), 0.3.0 (eco and process), 1.0.0. `site.json` waits for the go.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** the user answers [PLAN-0.1.2.md](PLAN-0.1.2.md) §6 and reviews 0.1.1 on Windows; then build 0.1.2.
+**Next:** the user confirms the big update in [PLAN-0.2.0.md](PLAN-0.2.0.md) §6; then build 0.2.0, hardening first.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

@@ -1,6 +1,6 @@
 # Datum Atlas 0.1.2 and after: plan
 
-Status: **waiting for the user's choices** (§6). Written 2026-10-28, after 0.1.1 was released, at the user's request: "plan the next updates on the app based on the roadmap". Nothing is built until the user answers.
+Status: **replaced by [PLAN-0.2.0.md](PLAN-0.2.0.md)** (2026-10-28: the user wants one big update rather than small splits). Kept for the diagnosis and the hardening findings. Written 2026-10-28, after 0.1.1 was released, at the user's request: "plan the next updates on the app based on the roadmap". Nothing is built until the user answers.
 
 This file follows the family pattern: request → where we are → proposal → size → questions.
 
