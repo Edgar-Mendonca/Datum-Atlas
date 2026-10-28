@@ -174,3 +174,7 @@ About 1,200 lines in all, a third of them tests. If that is too big for one smal
 6. **Indices:** split 0.2 into 0.2.0 (library and builder), 0.2.1 (expressions and formula properties), 0.2.2 (weighted ranking)?
 7. **0.1.1 on Windows:** before 0.1.2, could you try Copy Picture, printing, and the update from 0.1.0, and send screenshots of anything wrong? Fixes would go first, as 0.1.2 or a quick 0.1.1-fix release before it.
 8. **Hardening:** ship it inside 0.1.2 with the features (proposed), or alone as 0.1.2 first, so your materials are safe sooner? The features would then be 0.1.3 and charts side by side 0.1.4.
+
+## 7. Answers
+
+- **Q8 (2026-10-28):** hardening ships **inside 0.1.2** with the new features, built first. Questions 1–7 are still open.

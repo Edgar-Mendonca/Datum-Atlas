@@ -140,6 +140,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never aggregator sites (MatWeb, MakeItFrom, Total Materia, Wikipedia); a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
 | 0.1.1 | The check used the figures quoted by web search from each datasheet (the build machine cannot open web pages); a second pass that opens each document is planned | Recorded so nobody mistakes it for a table-level check. |
 | 0.1.1 | `docs/site.json` (about, steps, highlights, roadmap) is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
+| 0.1.2 | Hardening (FAMILY §11) ships inside 0.1.2 with the new features, built first | The user's answer to PLAN-0.1.2 Q8. |
 | 0.1.1 | Derived properties are computed by the engine at load, not stored | One source of truth; they follow corrections automatically. |
 | 0.1.0 | Logo: violet log–log axes, a dotted selection line between two family envelopes (the upper one with a violet bubble), the amber diamond at the line's end | The user asked for a better violet logo; it keeps FAMILY §5. |
 
@@ -237,6 +238,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Found: a damaged `My materials.datdb` is read as empty with `.ok()`, and the next Add Material writes over it, so the user's materials are lost. The fix is the first hardening item.
 - Found: every shell command uses `lock().unwrap()`, so one panic makes every later command fail.
 - `site.json` roadmap: 0.1.2 lists the hardening.
+
+### 2026-10-28: Session 9 (answer Q8)
+- The user: hardening goes into 0.1.2 together with the new features (PLAN-0.1.2 §7). Questions 1–7 are still open.
 
 ---
 
