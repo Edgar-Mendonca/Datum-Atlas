@@ -69,7 +69,7 @@ pub fn index_name(c: &Chart, n: f64) -> String {
 /// The y value (stored units) at x where a line of slope n on the chart has index `value`: the
 /// inverse of `index_at`. None when the value cannot be on this chart (zero or below on log axes).
 pub fn y_for(c: &Chart, n: f64, value: f64, x: f64) -> Option<f64> {
-    if !(c.log_x && c.log_y) { return Some(value + n * t(x, c.log_x)?).filter(|v| v.is_finite()).and_then(|v| if c.log_y { Some(10f64.powf(v)) } else { Some(v) }); }
+    if !(c.log_x && c.log_y) { return Some(value + n * t(x, c.log_x)?).filter(|v| v.is_finite()).map(|v| if c.log_y { 10f64.powf(v) } else { v }); }
     let (lx, lv) = (t(x, true)?, t(value, true)?);
     let ly = if n.abs() < 1e-9 { lv } else if n > 0.0 { n * (lv + lx) } else { -n * (lv - lx) };
     Some(10f64.powf(ly)).filter(|v| v.is_finite() && *v > 0.0)

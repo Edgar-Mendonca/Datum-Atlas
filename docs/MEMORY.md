@@ -284,7 +284,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` â†’ CHANGELOG `## x.y.z â
   - a Ranking section in Stages (line or weighted);
   - ? help topics `sels` and `ranking`;
   - the second chart in the goal's Why card; printed captions for every line.
-- 30 engine tests; 9 new UI checks, all passing.
+- 28 engine tests; 9 new UI checks, all passing.
 
 ---
 
