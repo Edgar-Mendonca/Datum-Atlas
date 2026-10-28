@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod update;
 
-use datum_atlas_core::{chart, db::{self, Db}, doc::{Doc, Op}, goals, select, templates, Database, Material, Project, Source, FORMAT};
+use datum_atlas_core::{chart, db::{self, Db}, doc::{write_atomic, Doc, Op}, goals, select, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
@@ -50,9 +50,17 @@ struct App {
     db: Db,
     user: Database,
     db_rev: u64,
+    /// What happened to the user's database file at start (damaged and set aside, values left out).
+    user_note: Option<String>,
+    /// False when the file exists but could not be read or set aside: it is then never written over.
+    user_ok: bool,
 }
 
 struct St(Mutex<App>);
+impl St {
+    /// The open project. A command that panicked must not lock every later one out, so a poisoned lock is reused.
+    fn lock(&self) -> std::sync::MutexGuard<'_, App> { self.0.lock().unwrap_or_else(|e| e.into_inner()) }
+}
 type R<T> = Result<T, String>;
 
 /// What the window gets after every change: the project, each chart laid out, and the results.
@@ -88,12 +96,12 @@ fn dir(app: &AppHandle, data: bool) -> Option<PathBuf> {
 
 #[tauri::command]
 fn state(st: State<St>) -> Value {
-    out(&st.0.lock().unwrap())
+    out(&st.lock())
 }
 
 #[tauri::command]
 fn apply(st: State<St>, op: Op) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     // A design goal needs the database to place its line.
     let op = match op { Op::Goal { chart, goal } => goals::apply(&a.db, &a.doc.p, chart, &goal)?, o => o };
     a.doc.apply(op)?;
@@ -103,7 +111,7 @@ fn apply(st: State<St>, op: Op) -> R<Value> {
 
 #[tauri::command]
 fn history(st: State<St>, redo: bool) -> Value {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     if redo { a.doc.redo() } else { a.doc.undo() }
     a.rev += 1;
     out(&a)
@@ -131,7 +139,7 @@ fn fresh(db: &Db, opts: &Options, template: Option<&str>) -> R<Project> {
 
 #[tauri::command]
 fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     a.doc = Doc::new(fresh(&a.db, &a.opts, template.as_deref())?);
     a.rev += 1;
     Ok(out(&a))
@@ -142,23 +150,41 @@ fn new_project(st: State<St>, template: Option<String>) -> R<Value> {
 /// Everything the window shows about materials: the list, the sources, the property list and the family tree.
 #[tauri::command]
 fn database(st: State<St>) -> Value {
-    let a = st.0.lock().unwrap();
-    json!({ "materials": a.db.materials, "sources": a.db.sources, "userCount": a.db.user_count, "props": db::props_out(), "tree": db::tree(&a.db.materials), "rev": a.db_rev, "userPath": "" })
+    let a = st.lock();
+    json!({ "materials": a.db.materials, "sources": a.db.sources, "userCount": a.db.user_count, "props": db::props_out(), "tree": db::tree(&a.db.materials), "rev": a.db_rev, "userPath": "", "userNote": a.user_note })
 }
 
 fn user_file(app: &AppHandle) -> Option<PathBuf> {
     dir(app, true).map(|d| d.join("My materials.datdb"))
 }
 
-fn load_user(app: &AppHandle) -> Database {
-    user_file(app).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok())
-        .unwrap_or(Database { format: FORMAT, name: "My materials".into(), ..Default::default() })
+/// The user's database, a note for the window, and whether the file may be written. A damaged file
+/// is renamed aside (never written over); a file that cannot be read at all is left alone and locked.
+fn load_user(app: &AppHandle) -> (Database, Option<String>, bool) {
+    let empty = Database { format: FORMAT, name: "My materials".into(), ..Default::default() };
+    let Some(f) = user_file(app).filter(|f| f.exists()) else { return (empty, None, true) };
+    let text = match std::fs::read(&f) {
+        Ok(b) => String::from_utf8_lossy(&b).into_owned(),
+        Err(e) => return (empty, Some(format!("Your materials file could not be read ({e}). It was left as it is, and adding or deleting your own materials is off until it can be read: {}", f.display())), false),
+    };
+    match db::read_user(&text).map_err(|e| e.trim_end_matches('.').to_string()) {
+        Ok((d, notes)) if notes.is_empty() => (d, None, true),
+        Ok((d, notes)) => (d, Some(format!("Some values in your materials could not be used and were left out:\n{}", notes.iter().take(8).cloned().collect::<Vec<_>>().join("\n"))), true),
+        Err(e) => {
+            let aside = f.with_file_name(format!("My materials (damaged {}).datdb", chrono::Local::now().format("%Y-%m-%d %H%M%S")));
+            match std::fs::rename(&f, &aside) {
+                Ok(()) => (empty, Some(format!("Your materials file was damaged ({e}). It was kept, unchanged, as {}. Your own materials start empty.", aside.display())), true),
+                Err(r) => (empty, Some(format!("Your materials file was damaged ({e}) and could not be set aside ({r}). It is left as it is, and adding your own materials is off: {}", f.display())), false),
+            }
+        }
+    }
 }
 
 fn save_user(app: &AppHandle, a: &mut App) -> R<()> {
+    if !a.user_ok { return Err("Your materials file could not be read, so it is not written over. Close Datum Atlas, check the file, and start again.".into()); }
     let f = user_file(app).ok_or("The app's data folder is not available.")?;
     let text = serde_json::to_string_pretty(&a.user).map_err(|e| e.to_string())?;
-    std::fs::write(&f, text).map_err(|e| format!("Could not save {}: {e}", f.display()))?;
+    write_atomic(&f, text.as_bytes())?;
     a.db = Db::new(db::builtin(), Some(&a.user));
     a.db_rev += 1;
     a.rev += 1;
@@ -169,7 +195,7 @@ fn save_user(app: &AppHandle, a: &mut App) -> R<()> {
 /// (new ones the user typed) are added too; unused user sources are dropped.
 #[tauri::command]
 fn save_material(app: AppHandle, st: State<St>, mut material: Material, sources: Vec<Source>) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     if material.id.is_empty() || !material.id.starts_with("u-") {
         let n = (1..).find(|k| !a.user.materials.iter().any(|m| m.id == format!("u-{k}"))).unwrap_or(1);
         material.id = format!("u-{n}");
@@ -192,7 +218,7 @@ fn save_material(app: AppHandle, st: State<St>, mut material: Material, sources:
 
 #[tauri::command]
 fn delete_material(app: AppHandle, st: State<St>, id: String) -> R<Value> {
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     let n = a.user.materials.len();
     a.user.materials.retain(|m| m.id != id);
     if n == a.user.materials.len() {
@@ -211,7 +237,7 @@ async fn open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Opti
     let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Datum Atlas project", &["datlas"])) else { return Ok(None) };
     let d = Doc::open(&path)?;
     remember(&app, &path);
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     a.doc = d;
     a.rev += 1;
     Ok(Some(out(&a)))
@@ -220,7 +246,7 @@ async fn open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Opti
 #[tauri::command]
 async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value>> {
     let (known, name) = {
-        let a = st.0.lock().unwrap();
+        let a = st.lock();
         (a.doc.path.clone().filter(|_| !as_new), a.doc.p.name.clone())
     };
     let path = match known {
@@ -230,7 +256,7 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
             None => return Ok(None),
         },
     };
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     if a.doc.path.is_none() || as_new {
         if let Some(stem) = path.file_stem() {
             a.doc.p.name = stem.to_string_lossy().into_owned();
@@ -252,7 +278,7 @@ async fn save_file(app: AppHandle, name: String, data: String) -> R<Option<Strin
         Some((_, b64)) => base64_decode(b64)?,
         None => data.into_bytes(),
     };
-    std::fs::write(&path, bytes).map_err(|e| format!("Could not save {}: {e}", path.display()))?;
+    write_atomic(&path, &bytes)?;
     Ok(Some(path.display().to_string()))
 }
 
@@ -318,15 +344,15 @@ fn options_file(app: &AppHandle) -> Option<PathBuf> {
 
 #[tauri::command]
 fn options(st: State<St>) -> Options {
-    st.0.lock().unwrap().opts.clone()
+    st.lock().opts.clone()
 }
 
 #[tauri::command]
 fn set_options(app: AppHandle, st: State<St>, opts: Options) -> Value {
     if let Some(f) = options_file(&app) {
-        let _ = std::fs::write(f, serde_json::to_string(&opts).unwrap_or_default());
+        let _ = write_atomic(&f, serde_json::to_string(&opts).unwrap_or_default().as_bytes());
     }
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     a.opts = opts;
     out(&a)
 }
@@ -347,11 +373,11 @@ fn clear_recovery(app: &AppHandle) {
 
 #[tauri::command]
 fn autosave(app: AppHandle, st: State<St>) {
-    let a = st.0.lock().unwrap();
+    let a = st.lock();
     if let (true, Some((file, meta))) = (a.doc.dirty, recovery_files(&app)) {
         let info = Recovery { name: a.doc.p.name.clone(), path: a.doc.path.as_ref().map(|p| p.display().to_string()), saved: chrono::Local::now().format("%d-%b-%y %H:%M").to_string() };
-        let _ = std::fs::write(file, a.doc.json());
-        let _ = std::fs::write(meta, serde_json::to_string(&info).unwrap_or_default());
+        let _ = write_atomic(&file, a.doc.json().as_bytes());
+        let _ = write_atomic(&meta, serde_json::to_string(&info).unwrap_or_default().as_bytes());
     }
 }
 
@@ -374,7 +400,7 @@ fn recover(app: AppHandle, st: State<St>, keep: bool) -> R<Option<Value>> {
     let mut d = Doc::open(&file)?;
     d.path = info.and_then(|i| i.path).map(PathBuf::from);
     d.dirty = true;
-    let mut a = st.0.lock().unwrap();
+    let mut a = st.lock();
     a.doc = d;
     a.rev += 1;
     Ok(Some(out(&a)))
@@ -394,7 +420,7 @@ fn remember(app: &AppHandle, path: &Path) {
     v.insert(0, p);
     v.truncate(15);
     if let Some(f) = options_file(app).map(|f| f.with_file_name("recent.json")) {
-        let _ = std::fs::write(f, serde_json::to_string(&v).unwrap());
+        let _ = write_atomic(&f, serde_json::to_string(&v).unwrap_or_default().as_bytes());
     }
 }
 
@@ -414,7 +440,7 @@ fn recent(app: AppHandle) -> Vec<Recent> {
 /// A .datlas path passed on the command line (double-clicked in Explorer), or the last project.
 #[tauri::command]
 fn startup_file(app: AppHandle, st: State<St>) -> Option<String> {
-    let last = || if st.0.lock().unwrap().opts.open_last { recent_paths(&app).into_iter().find(|p| Path::new(p).exists()) } else { None };
+    let last = || if st.lock().opts.open_last { recent_paths(&app).into_iter().find(|p| Path::new(p).exists()) } else { None };
     std::env::args().skip(1).find(|a| a.to_lowercase().ends_with(".datlas")).or_else(last)
 }
 
@@ -444,7 +470,7 @@ fn quit(app: AppHandle) {
 
 #[tauri::command]
 async fn check_update(st: State<'_, St>) -> R<update::Info> {
-    let beta = st.0.lock().unwrap().opts.beta;
+    let beta = st.lock().opts.beta;
     tauri::async_runtime::spawn_blocking(move || update::check(beta)).await.map_err(|e| e.to_string())?
 }
 
@@ -459,15 +485,15 @@ fn main() {
         .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
             let opts: Options = options_file(app.handle()).and_then(|f| std::fs::read_to_string(f).ok()).and_then(|t| serde_json::from_str(&t).ok()).unwrap_or_default();
-            let user = load_user(app.handle());
+            let (user, user_note, user_ok) = load_user(app.handle());
             let db = Db::new(db::builtin(), Some(&user));
             let p = fresh(&db, &opts, None).unwrap_or_default();
-            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1 })));
+            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok })));
             Ok(())
         })
         .on_window_event(|w, e| {
             if let WindowEvent::CloseRequested { api, .. } = e {
-                if w.state::<St>().0.lock().unwrap().doc.dirty {
+                if w.state::<St>().lock().doc.dirty {
                     api.prevent_close();
                     let _ = w.emit("close-requested", ());
                 } else {

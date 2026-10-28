@@ -124,6 +124,11 @@ pub fn search<'a>(mats: &'a [Material], q: &str) -> Vec<&'a Material> {
     }).collect()
 }
 
+/// Kinds of source the built-in data may cite: open, public or free only (the user's rule).
+pub const OPEN_KINDS: &[&str] = &["handbook", "government", "open-dataset", "datasheet", "university", "textbook-typical", "estimate"];
+/// Proprietary or licensed materials databases and aggregator sites: never cited, never used to check.
+const BARRED: &[&str] = &["matweb", "makeitfrom", "totalmateria", "total materia", "granta", "edupack", "matmatch", "materialhub", "suppliersonline", "azom", "wikipedia", "knovel", "springermaterials", "matdat"];
+
 /// Everything wrong with a database: unknown properties, values without a known source, low > high,
 /// non-positive values on log properties, ratings not in the scale, duplicate ids or designations,
 /// and values marked checked that have no value or cite only our own compilation or an estimate.
@@ -134,6 +139,9 @@ pub fn check(db: &Database, extra_sources: &[Source]) -> Vec<String> {
     let (mut ids, mut des) = (HashSet::new(), HashSet::new());
     for s in &db.sources {
         if s.title.trim().is_empty() { errs.push(format!("source {}: no title", s.id)); }
+        if !OPEN_KINDS.contains(&s.kind.as_str()) { errs.push(format!("source {}: kind {:?} is not an open, public or free kind", s.id, s.kind)); }
+        let text = format!("{} {} {} {}", s.title, s.author, s.publisher, s.url).to_lowercase();
+        if let Some(b) = BARRED.iter().find(|b| text.contains(*b)) { errs.push(format!("source {}: {b:?} is a proprietary database or an aggregator, never a source", s.id)); }
     }
     for m in &db.materials {
         let at = |e: String| format!("{} ({}): {e}", m.name, m.id);
@@ -179,6 +187,37 @@ pub fn check_user(m: &Material, sources: &[Source]) -> Result<(), String> {
         Some(e) => Err(e.split_once(": ").map(|(_, e)| e.to_string()).unwrap_or(e).replace("source \"\" not found", "give a source (a book, datasheet, test report or your own measurement)")),
         None => Ok(()),
     }
+}
+
+/// Reads a user database (`.datdb`). A file that cannot be read as one is an error, never an empty
+/// database (so it is never written over). Values the engine cannot use (unknown properties, low >
+/// high, not a number, zero or below on a log property, a rating not on the scale) are dropped and
+/// listed, so one bad value never loses a material.
+pub fn read_user(text: &str) -> Result<(Database, Vec<String>), String> {
+    let mut d: Database = serde_json::from_str(text.trim_start_matches('\u{FEFF}')).map_err(|e| format!("This is not a Datum Atlas database ({e})."))?;
+    if d.format > FORMAT { return Err("It was saved by a newer Datum Atlas; update the app to open it.".into()); }
+    d.format = FORMAT;
+    let mut notes = vec![];
+    d.materials.retain(|m| { let ok = !m.id.trim().is_empty() && !m.name.trim().is_empty(); if !ok { notes.push(format!("A material without an id or name ({:?}) was left out.", m.name)) } ok });
+    for m in &mut d.materials {
+        if !FAMILIES.contains(&m.family.first().map(String::as_str).unwrap_or("")) { notes.push(format!("{}: unknown family {:?}, kept under Metals", m.name, m.family)); m.family = vec!["Metals".into()]; }
+        let name = m.name.clone();
+        m.props.retain(|k, v| {
+            let ok = prop(k).is_some_and(|p| match (p.kind, &*v) {
+                ("range", Val::Range(lo, hi, _) | Val::RangeT(lo, hi, _, _)) => lo.is_finite() && hi.is_finite() && lo <= hi && (!p.log || *lo > 0.0),
+                ("flag", Val::Flag(..)) => true,
+                ("rating", Val::Rating(r, _)) => RATINGS.contains(&r.as_str()),
+                _ => false,
+            }) && k.as_str() != "user";
+            if !ok { notes.push(format!("{name}: the value of {k} could not be used and was left out")) }
+            ok
+        });
+        for v in m.props.values_mut() {
+            if let Val::RangeT(lo, hi, s, t) = v { if !(*lo <= *t && *t <= *hi) { *v = Val::Range(*lo, *hi, std::mem::take(s)); } }
+        }
+        m.checked.retain(|k| m.props.contains_key(k));
+    }
+    Ok((d, notes))
 }
 
 /// The property list for the window, each with its imperial unit: `imperial: [unit, factor, offset]`.

@@ -74,6 +74,7 @@ flowchart LR
 | `crates/core/src/select.rs` | `run(db, project)` → `Results` (stage counts, rows with reasons, index, rank, × best, `lines` with index name and value; `index_name` writes E½/ρ, σy⅔/ρ). |
 | `crates/core/src/doc.rs` | `Op`, `Doc` (undo 200, open/save). |
 | `crates/core/src/templates.rs` | Design problems built from goals: blank, beam, tie, panel, spring, hot, tough. |
+| `crates/core/src/hardening.rs` | FAMILY §11 tests: failed edits change nothing (incl. a failing `Batch` and goal), random projects and random edits never panic and keep their invariants (finite geometry, counts add up, every failure has a reason), random user databases, damaged `.datlas`/`.datdb` files (cut, garbled, deep nesting), a damaged `.datdb` is an error never empty, atomic save, speed gate (1,000 materials × 20 charts: ~200 ms release, ~1.2 s debug). |
 | `crates/core/src/tests.rs` | Data checks, bad-data detection, unit round trips, bubbles in log space, hulls contain their bubbles (6 axis pairs × family/class), missing values, index lines for slopes 1/2/3 above/below, limits (missing, flag, whole range, flags), combined stages, edits/undo/round trip/templates, user materials, tree and search; derived ranges; every goal (line, ranking by its hand-computed index, limits, Explore); index names; bar charts; checked values cite linked datasheets. |
 | `crates/core/examples/bridge.rs` | The engine over stdin/stdout JSON lines for the UI tests. |
 | `data/*.json`, `data/sources.json` | The built-in database (100 materials, 25 sources: 9 general + 16 datasheets), `status: draft`; 15 metals have `checked` lists (51 values). |
@@ -250,6 +251,25 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Checked what can be copied from Datum Plan: `formula.rs`, `hardening.rs`, calamine and rust_xlsxwriter, `deny.toml`, SECURITY.md and CONTRIBUTING.md.
 - PLAN-0.1.2 is marked as replaced. The roadmap is now 0.2.0 (big), 0.3.0 (eco and process), 1.0.0. `site.json` waits for the go.
 
+### 2026-10-28: Session 11 (0.2.0 stage A: hardening)
+- **Engine:**
+  - `db::read_user`: a damaged file is an error, never empty; unusable values are dropped and listed.
+  - `doc::write_atomic`: saves go through a temporary file and a rename.
+  - `hardening.rs`: 8 tests.
+  - `db::check` refuses any built-in source whose kind is not open, public or free (`OPEN_KINDS`), or that names a proprietary database or aggregator (`BARRED`).
+  - Unknown goal ids are now an error (before: silently treated as Explore).
+- **Shell:**
+  - poisoned-lock recovery (`St::lock`);
+  - a damaged `My materials.datdb` is renamed `My materials (damaged <date>).datdb` and the window shows a dialog;
+  - a file that cannot be read locks your own materials against writing;
+  - every file write is atomic.
+  - Checked in the real app under Xvfb with a damaged file.
+- **Repo:**
+  - `deny.toml` (BSL-1.0 allowed for the clipboard crates), checked locally: advisories, bans, licences and sources ok;
+  - CI jobs `deny` and `platforms` (Windows, macOS);
+  - `SECURITY.md`, `CONTRIBUTING.md` (with the open-sources-only data rule).
+- All checks pass (25 engine tests, UI tests).
+
 ---
 
 ## 5. Known limits and next steps
@@ -259,7 +279,6 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
 **Known limits:**
-- A damaged `My materials.datdb` is read as empty and overwritten by the next Add Material (fix planned first in 0.1.2).
 - Built-in values are drafts with document-level references, except 51 metal values checked against datasheets (from search-quoted figures; a pass that opens each document is planned). Polymers, ceramics, composites, foams and natural materials are next, one family per release.
 - Hull labels can overlap where families meet (label placement in 0.3.1). Envelopes are convex per group, not concave.
 - Copy Picture is not yet tried on a real Windows clipboard.

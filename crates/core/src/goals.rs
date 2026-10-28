@@ -97,6 +97,7 @@ pub fn apply(db: &Db, p: &Project, chart: u32, id: &str) -> Result<Op, String> {
     let mut st = p.stages.clone();
     st.limits.retain(|l| !l.goal);
     let Some(g) = get(id) else {
+        if !id.is_empty() { return Err(format!("There is no design goal “{id}”.")); }
         c.goal.clear();
         c.select = None;
         return Ok(Op::Batch(vec![Op::SetChart { chart: Box::new(c) }, Op::SetStages { stages: st }]));

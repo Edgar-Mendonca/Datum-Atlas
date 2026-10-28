@@ -60,7 +60,8 @@ const App = () => {
   onMount(async () => {
     try {
       const o = await invoke<Options>("options"); setOpts(o); setThemeRaw(o.theme || "auto"); applyTheme();
-      await loadDb();
+      const d = await loadDb();
+      if (d.userNote) openDialog(() => <Dialog title="Your materials"><p class="pre">{d.userNote}</p></Dialog>);
       setGoals(await invoke<Goal[]>("goal_list"));
       setOut(await invoke<Out>("state"));
       const start = await invoke<string | null>("startup_file");

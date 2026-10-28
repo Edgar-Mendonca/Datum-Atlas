@@ -693,3 +693,4 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .tbl.dsheet .chk.ok { margin-left: 4px; font-weight: 700; }
 .goalpick select { min-width: 250px; max-width: 290px; }
 .cbar .axpick select { max-width: 165px; }
+.pre { white-space: pre-line; }

@@ -32,9 +32,11 @@ fn checks_catch_bad_values() {
     m.props.insert("rho".into(), Val::Range(0.0, 2.0, "atlas-typ".into()));
     m.props.insert("bogus".into(), Val::Flag(true, "atlas-typ".into()));
     m.checked = vec!["kic".into(), "price".into(), "cv".into()];
+    d.sources.push(Source { id: "x1".into(), title: "Some property site".into(), url: "https://www.matweb.com/x".into(), kind: "datasheet".into(), ..Default::default() });
+    d.sources.push(Source { id: "x2".into(), title: "A licensed book".into(), kind: "licensed".into(), ..Default::default() });
     d.materials.push(d.materials[1].clone());
     let errs = db::check(&d, &[]).join("\n");
-    for want in ["low 300 > high 200", "kic: marked checked but cites \"atlas-typ\"", "price: marked checked but cites", "cv: marked checked but has no value", "source \"nowhere\" not found", "must be above zero", "unknown property bogus", "duplicate id", "duplicate designation"] {
+    for want in ["low 300 > high 200", "kic: marked checked but cites \"atlas-typ\"", "price: marked checked but cites", "cv: marked checked but has no value", "is a proprietary database or an aggregator", "is not an open, public or free kind", "source \"nowhere\" not found", "must be above zero", "unknown property bogus", "duplicate id", "duplicate designation"] {
         assert!(errs.contains(want), "missing {want:?} in\n{errs}");
     }
 }

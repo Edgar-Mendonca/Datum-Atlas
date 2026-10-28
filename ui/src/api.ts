@@ -16,7 +16,7 @@ export interface Material {
 export interface Source { id: string; title: string; author: string; publisher: string; year: string; url: string; licence: string; kind: string; note: string }
 export interface Prop { key: string; name: string; sym: string; group: string; unit: string; kind: "range" | "flag" | "rating"; log: boolean; about: string; imperial: [string, number, number] | null }
 export interface Node { path: string; name: string; depth: number; count: number }
-export interface Db { materials: Material[]; sources: Source[]; userCount: number; props: Prop[]; tree: Node[]; rev: number }
+export interface Db { materials: Material[]; sources: Source[]; userCount: number; props: Prop[]; tree: Node[]; rev: number; /** What happened to your materials file at start (damaged and kept aside, values left out). */ userNote?: string | null }
 
 export type ChartSel = { Line: { slope: number; x: number; y: number; above: boolean } } | { Box: { x0: number; x1: number; y0: number; y1: number } };
 export interface Chart { id: number; name: string; x: string; y: string; logX: boolean; logY: boolean; hull: string; labels: boolean; hidden: string[]; guides: number[]; select: ChartSel | null; goal: string; kind: string }

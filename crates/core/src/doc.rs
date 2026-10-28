@@ -76,7 +76,7 @@ impl Doc {
         Ok(d)
     }
     pub fn save(&mut self, path: &Path) -> Result<(), String> {
-        std::fs::write(path, self.json()).map_err(|e| format!("Could not save {}: {e}", path.display()))?;
+        write_atomic(path, self.json().as_bytes())?;
         self.path = Some(path.into());
         self.dirty = false;
         Ok(())
@@ -146,4 +146,13 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
         }
     }
     Ok(())
+}
+
+/// Writes a file through a temporary file beside it and a rename, so a crash or a full disk
+/// mid-save leaves the old file whole.
+pub fn write_atomic(path: &Path, bytes: &[u8]) -> Result<(), String> {
+    let tmp = path.with_extension(format!("{}.tmp", path.extension().and_then(|e| e.to_str()).unwrap_or("")));
+    let err = |e: std::io::Error| format!("Could not save {}: {e}", path.display());
+    std::fs::write(&tmp, bytes).map_err(err)?;
+    std::fs::rename(&tmp, path).map_err(|e| { let _ = std::fs::remove_file(&tmp); err(e) })
 }
