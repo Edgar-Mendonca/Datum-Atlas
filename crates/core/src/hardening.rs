@@ -19,6 +19,8 @@ fn data() -> Db { Db::new(db::builtin(), None) }
 /// Everything the window would ask of a project: every chart laid out and the results. Checks the
 /// invariants that must hold whatever the project.
 fn exercise(d: &Db, p: &Project, at: &str) {
+    let fd = d.with_formulas(&p.formulas);
+    let d = &fd;
     for c in &p.charts {
         let o = chart::build(d, c);
         for b in &o.bubbles {
@@ -39,8 +41,15 @@ fn exercise(d: &Db, p: &Project, at: &str) {
 
 /// A project with random charts (bubble and bar, any axes, odd lines and boxes) and random stages.
 fn random_project(r: &mut Rng) -> Project {
-    let keys: Vec<&str> = PROPS.iter().map(|p| p.key).collect();
     let mut p = Project::new("R");
+    // Formulas of every kind, some that do not parse, and one that uses another.
+    for _ in 0..r.below(3) {
+        let (name, expr) = *r.pick(&[("Spring", "[sy]^2/[E]"), ("Odd", "[tmin]^0.5"), ("Zero", "1/([E]-[E])"), ("Broken", "[E]/"), ("Chain", "[Spring]*2"), ("Big", "exp([rho])"), ("Neg", "-[E]")]);
+        if !p.formulas.iter().any(|f| f.name == name) { p.formulas.push(Formula { name: name.into(), expr: expr.into(), unit: String::new(), log: r.below(2) == 0 }); }
+    }
+    let mut keys: Vec<String> = PROPS.iter().map(|p| p.key.to_string()).collect();
+    keys.extend(p.formulas.iter().map(Formula::key));
+    let keys: Vec<&str> = keys.iter().map(String::as_str).collect();
     for _ in 0..1 + r.below(4) {
         let sels = (0..r.below(4)).map(|_| match r.below(3) {
             0 => ChartSel::Line { slope: r.num(), x: r.num(), y: r.num(), above: r.below(2) == 0 },
@@ -115,7 +124,8 @@ fn random_projects_never_panic() {
         let mut doc = Doc::new(p);
         let chart = doc.p.charts[0].id;
         let g = r.pick(goals::GOALS).id;
-        let op = goals::apply(&d, &doc.p, chart, g).unwrap_or_else(|e| panic!("round {round}: goal {g}: {e}"));
+        // A goal may be refused (no data for its properties yet); refused is fine, a panic is not.
+        let Ok(op) = goals::apply(&d, &doc.p, chart, g) else { continue };
         doc.apply(op).unwrap_or_else(|e| panic!("round {round}: goal {g}: {e}"));
         exercise(&d, &doc.p, &format!("round {round} after goal {g}"));
     }

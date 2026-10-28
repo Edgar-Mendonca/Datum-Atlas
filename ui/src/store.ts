@@ -1,7 +1,7 @@
 // Window state: the open project (with its charts laid out and its results), the database, the view
 // shown, the material in the datasheet, the open chart, menus, dialogs and toasts.
 import { createSignal, batch, JSX } from "solid-js";
-import { invoke, Out, Options, Db, Material, Chart, ChartOut, ChartSel, Goal, Val, fmt } from "./api";
+import { invoke, Out, Options, Db, Material, Chart, ChartOut, ChartSel, Goal, Prop, Val, fmt } from "./api";
 
 export const [out, setOutRaw] = createSignal<Out | null>(null);
 export const [tick, setTick] = createSignal(0);
@@ -17,7 +17,11 @@ export const setOut = (o: Out | null | undefined) => {
   if (reload) loadDb().catch(() => {});
 };
 export const mat = (id: string): Material | undefined => db().materials.find(m => m.id === id);
-export const propOf = (key: string) => db().props.find(p => p.key === key);
+/** The project's formula properties as properties ("f:name"). */
+export const formulaProps = (): Prop[] => (out()?.project.formulas ?? []).map(f => ({ key: `f:${f.name}`, name: f.name, sym: f.name, group: "Your formulas", unit: f.unit, kind: "range", log: f.log, about: f.expr, imperial: null }));
+export const propOf = (key: string) => db().props.find(p => p.key === key) ?? formulaProps().find(p => p.key === key);
+/** Properties with values to chart, rank or limit by: the built-in ones that have data, then your formulas. */
+export const chartProps = () => [...db().props.filter(q => q.kind === "range" && db().materials.some(m => m.props[q.key])), ...formulaProps()];
 export const srcOf = (id: string) => db().sources.find(s => s.id === id);
 /** The design goals (engine table), loaded once. */
 export const [goals, setGoals] = createSignal<Goal[]>([]);

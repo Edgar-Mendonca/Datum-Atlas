@@ -10,6 +10,7 @@ import { feature } from "./features";
 import { soon } from "./roadmap";
 import { tool, setTool, copyChart, activeLine } from "./chart";
 import { helpCard, HELP } from "./help";
+import { editFormulas } from "./formula";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Atlas";
 const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
@@ -117,13 +118,13 @@ export const Ribbon = () => (
       <G l="Goal"><B big i="goal" l="Design Goal" dd={e => openMenu(e, goalMenu())} /></G>
       <G l="Stages"><B big i="filter" l="Limit" title="Minimum and maximum values, yes/no and ratings" run={C.addLimit} /><B big i="index" l="Line" title="A selection line of a slope: a performance index" run={() => C.line(2)} dd={e => openMenu(e, lineMenu())} />
         <B big i="box" l="Box" title="Drag a box on the chart" run={() => { show("charts"); setTool("box"); }} on={tool() === "box"} /><B big i="tree" l="Families" title="Leave families or classes out" run={() => show("stages")} /><B big i="poly" l="Shape" title="Click the corners of a shape on the chart; the materials inside pass" run={() => { show("charts"); setTool("poly"); }} on={tool() === "poly"} /><S><B i="index" l="Add Line" title="Another selection line on the chart (two facing lines make a band)" run={C.addLine} /><B i="del" l="Clear Selections" run={C.clearSel} off={!sels().length} /><B i="list" l="All Stages" run={() => show("stages")} /></S></G>
-      <G l="Index"><N big i="builder" l="Index Builder" id="C6" /><S><N i="list" l="Index Library" id="C7" /><B i="setup" l="Design Problems" run={() => show("setup")} /></S></G>
+      <G l="Index"><B big i="builder" l="Index Builder" title="Function, constraint and objective give the performance index" run={() => show("index")} /><S><B i="list" l="Index Library" run={() => show("index")} /><B i="fx" l="Formula Property" run={() => editFormulas()} /><B i="setup" l="Design Problems" run={() => show("setup")} /></S></G>
       <G l="Results"><B big i="results" l="Results" run={() => show("results")} /><S><N i="compare" l="Compare" id="D2" /><N i="eco" l="Greener Substitutes" id="E3" /></S></G>
     </Show>
     <Show when={tab() === "chart"}>
       <G l="Chart"><B big i="atlas" l="New Chart" run={() => C.newChart()} dd={e => openMenu(e, chartMenu())} /><S><B i="list" l="Open Chart" dd={e => openMenu(e, chartsMenu())} /><B i="del" l="Delete Chart" run={C.delChart} /><B i="bar" l="Bar Chart" on={chart()?.kind === "bar"} run={() => setChart(c => { c.kind = c.kind === "bar" ? "bubble" : "bar"; c.sels = []; c.goal = ""; })} /></S></G>
       <G l="Axes"><S><B i="log" l="Log X" on={!!chart()?.logX} run={() => setChart(c => { c.logX = !c.logX; c.sels = []; })} /><B i="log" l="Log Y" on={!!chart()?.logY} run={() => setChart(c => { c.logY = !c.logY; c.sels = []; })} /><B i="swap" l="Swap Axes" run={() => setChart(c => { [c.x, c.y, c.logX, c.logY] = [c.y, c.x, c.logY, c.logX]; c.sels = []; })} /></S>
-        <S><N i="fx" l="Expression Axis" id="B8" /><B i="fit" l="Fit" run={C.fit} /></S></G>
+        <S><B i="fx" l="Expression Axis" title="Plot a formula of properties on the Y axis" run={() => editFormulas("y")} /><B i="fit" l="Fit" run={C.fit} /></S></G>
       <G l="Tools"><B big i="pan" l="Pan" on={tool() === "pan"} run={() => setTool("pan")} /><B big i="index" l="Line" on={tool() === "line"} run={() => setTool("line")} dd={e => openMenu(e, lineMenu())} /><B big i="box" l="Box" on={tool() === "box"} run={() => setTool("box")} /><B big i="poly" l="Shape" on={tool() === "poly"} run={() => setTool("poly")} /></G>
       <G l="Show"><B big i="hull" l="Envelopes" dd={e => openMenu(e, hullMenu())} /><S><B i="tag" l="Labels" on={!!chart()?.labels} run={() => setChart(c => { c.labels = !c.labels; })} /><B i="index" l="Guide Lines" on={!!chart()?.guides.length} run={() => setChart(c => { c.guides = c.guides.length ? [] : [1, 2, 3]; })} /><N i="tag" l="Smart Labels" id="B9" /></S></G>
       <G l="Share"><B big i="export" l="Export" run={() => C.exportChart("svg")} dd={e => openMenu(e, [{ label: "SVG vector", icon: "export", run: () => C.exportChart("svg") }, { label: "PNG picture", run: () => C.exportChart("png") }, { label: "PDF (Print › Save as PDF)", icon: "print", run: C.print }])} /><S><B i="copy" l="Copy Picture" title="Paste into a document or a slide" run={copyChart} /><B i="print" l="Print" run={C.print} /></S></G>
@@ -136,7 +137,7 @@ export const Ribbon = () => (
     <Show when={tab() === "data"}>
       <G l="Materials"><B big i="tree" l="Browse" run={() => show("browse")} /><B big i="datasheet" l="Datasheet" run={C.sheet} /><B big i="material" l="Add Material" run={C.addMaterial} /></G>
       <G l="Databases"><B big i="db" l="Data" run={() => show("data")} /><B big i="source" l="Sources" run={() => show("sources")} /><S><N i="import" l="Import Spreadsheet / CSV" id="A8" /><N i="export" l="Export Database" id="A8" /><N i="db" l="Open Database" id="A9" /></S></G>
-      <G l="Properties"><S><N i="fx" l="Formula Property" id="A6" /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} run={() => setUnits(imperial() ? "si" : "imperial")} /><N i="image" l="Pictures" id="A10" /></S></G>
+      <G l="Properties"><S><B i="fx" l="Formula Property" title="A property of your own: a formula of other properties" run={() => editFormulas()} /><B i="units" l={imperial() ? "Imperial Units" : "SI Units"} run={() => setUnits(imperial() ? "si" : "imperial")} /><N i="image" l="Pictures" id="A10" /></S></G>
     </Show>
     <Show when={tab() === "report"}>
       <G l="Compare"><N big i="compare" l="Compare" id="D2" /><N big i="radar" l="Radar Chart" id="D3" /></G>

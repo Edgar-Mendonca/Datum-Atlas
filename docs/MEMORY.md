@@ -87,6 +87,8 @@ flowchart LR
 | `ui/src/browse.tsx` | `Tree`, `Browse` (grid engine `selection.ts`, sort, columns menu, Ctrl+C via Rust), `Datasheet` (groups, numbered references). |
 | `ui/src/stages.tsx` | `StagesPage` (limits, chart selections, family tree), `StagePanel`, `ResultsPage`, `addLimit`. |
 | `ui/src/material.tsx` | Add/Edit Material window with the "What you need" panel; `deleteMaterial`. |
+| `crates/core/src/formula.rs` | Formulas of properties on ranges: `parse` (with names resolved), `key_of`, `refs`, `eval` (interval arithmetic), `show`. |
+| `ui/src/formula.tsx` | The formula-properties window (`editFormulas(axis?)`). |
 | `ui/src/help.tsx` | `HELP` (18 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
 | `ui/src/pages.tsx` | Setup (requirements, goal list, design problems), `goalCard` (Why), Sources page (kinds, licences, cites), Data (your materials, families, sources), `Later` pages for Compare, Index builder, Report; `MiniChart`. |
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
@@ -285,6 +287,22 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - ? help topics `sels` and `ranking`;
   - the second chart in the goal's Why card; printed captions for every line.
 - 28 engine tests; 9 new UI checks, all passing.
+
+### 2026-10-28: Session 11, continued (0.2.0 stage C: indices and formulas)
+- **Engine:**
+  - `formula.rs`: a parser on Datum Plan's pattern (+ − * / ^, brackets, sqrt ln log10 exp abs min max, properties in brackets by key, name or symbol), interval evaluation (a missing input, a division by a range holding zero or a root of a negative gives a gap), `show`.
+  - `Project.formulas` (`Formula { name, expr, unit, log }`, key `f:<name>`); `Op::SetFormulas` checks names and syntax in order; `normalize` drops formulas that do not parse.
+  - `Db::with_formulas` works them into every material (the shell and bridge do it before laying out charts and results); `Db::info` and `pname` give names and units of built-in and formula keys.
+  - Limits, weights and index names work on formulas.
+  - Index library: 22 more entries in the goal table (`library: true`, 47 in all), some with the formula properties they need (`formulas`), added on apply.
+  - Waiting for data: `fatigue-light` (fatigue strength) and `conductor-light` (resistivity); the goal test lists them.
+- **Window:**
+  - `formula.tsx` (the formula window; also Chart › Expression Axis and Data › Formula Property);
+  - the Index page (builder: function → constraint → objective; library with search; Plot on a new chart / Use the open chart);
+  - formula properties in every property list (`chartProps`, `formulaProps`, `propOf`);
+  - `selected` on options so a list shows a value whose option arrives late;
+  - help topics `formula` and `index`.
+- 30 engine tests and the new UI checks pass.
 
 ---
 

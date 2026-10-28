@@ -167,11 +167,34 @@ pub struct Project {
     pub next_id: u32,
     /// Window settings saved with the file (page setup, open chart…).
     pub ui: serde_json::Value,
+    /// Your own properties: formulas of other properties, usable in charts, limits and ranking.
+    pub formulas: Vec<Formula>,
+}
+
+/// A property of your own: a formula of other properties (`[E]^0.5/[rho]`), saved with the
+/// project. Its key is "f:" + its name.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, rename_all = "camelCase")]
+pub struct Formula {
+    pub name: String,
+    pub expr: String,
+    pub unit: String,
+    /// Plot it on a log axis by default.
+    pub log: bool,
+}
+
+impl Formula {
+    pub fn key(&self) -> String { format!("f:{}", self.name) }
+}
+
+/// The name of a property key: a built-in property's name, or a formula's name.
+pub fn pname(k: &str) -> String {
+    prop(k).map_or_else(|| k.strip_prefix("f:").unwrap_or("?").to_string(), |p| p.name.to_string())
 }
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}) }
+        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![] }
     }
 }
 
@@ -301,15 +324,25 @@ impl Project {
     pub fn normalize(&mut self) {
         let top = self.charts.iter().map(|c| c.id).max().unwrap_or(0);
         self.next_id = self.next_id.max(top + 1);
-        self.stages.limits.retain(|l| prop(&l.prop).is_some());
+        // Formulas that do not parse (a damaged or hand-edited file) are left out, in order, so a
+        // formula may only use the ones before it.
+        let mut extra: Vec<(String, String)> = vec![];
+        self.formulas.retain(|f| {
+            let ok = !f.name.trim().is_empty() && crate::formula::key_of(&f.name, &extra).is_none() && crate::formula::parse(&f.expr, &extra).is_ok();
+            if ok { extra.push((f.key(), f.name.clone())) }
+            ok
+        });
+        let mine: Vec<String> = self.formulas.iter().map(Formula::key).collect();
+        let known = |k: &str| prop(k).is_some() || mine.iter().any(|f| f == k);
+        self.stages.limits.retain(|l| known(&l.prop));
         for c in &mut self.charts {
-            if prop(&c.x).is_none() { c.x = "rho".into(); }
-            if prop(&c.y).is_none() { c.y = "E".into(); }
+            if !known(&c.x) { c.x = "rho".into(); }
+            if !known(&c.y) { c.y = "E".into(); }
             c.guides.retain(|s| s.is_finite());
             if let Some(s) = c.select.take() { if c.sels.is_empty() { c.sels.push(s) } }
             c.sels.retain(ChartSel::valid);
         }
-        self.stages.weights.retain(|w| prop(&w.prop).is_some() && w.w.is_finite() && w.w > 0.0);
+        self.stages.weights.retain(|w| known(&w.prop) && w.w.is_finite() && w.w > 0.0);
     }
     pub fn from_json(text: &str) -> Result<Self, String> {
         let mut p: Project = serde_json::from_str(text).map_err(|e| e.to_string())?;
@@ -324,6 +357,6 @@ impl Project {
 
 /// "Young's modulus vs Density".
 pub fn chart_name(c: &Chart) -> String {
-    if c.kind == "bar" { return prop(&c.y).map_or("?", |p| p.name).into(); }
-    format!("{} vs {}", prop(&c.y).map_or("?", |p| p.name), prop(&c.x).map_or("?", |p| p.name))
+    if c.kind == "bar" { return pname(&c.y); }
+    format!("{} vs {}", pname(&c.y), pname(&c.x))
 }

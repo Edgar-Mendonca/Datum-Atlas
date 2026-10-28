@@ -8,6 +8,7 @@ import { fmt } from "./api";
 import { soon, Chip } from "./roadmap";
 import { editMaterial, deleteMaterial } from "./material";
 import { addLimit } from "./stages";
+import { C } from "./cmds";
 
 type Tpl = { id: string; name: string; desc: string; slope: number | null };
 
@@ -38,9 +39,10 @@ export const SetupPage = () => {
       <section class="osec">
         <h3>Design goal <Help k="goal" /></h3>
         <p class="muted">Pick what the part must do. The chart, the selection line and the suggested limits follow; you can change them afterwards.</p>
-        <div class="goallist"><For each={[...new Set(goals().map(g => g.group))]}>{gr => <div class="ggroup"><h4>{gr}</h4>
-          <For each={goals().filter(g => g.group === gr)}>{g => <button class="goal" classList={{ on: chart()?.goal === g.id }} onClick={() => setGoal(g.id).then(() => show("charts"))} title={g.why}>
+        <div class="goallist"><For each={[...new Set(goals().filter(g => !g.library).map(g => g.group))]}>{gr => <div class="ggroup"><h4>{gr}</h4>
+          <For each={goals().filter(g => g.group === gr && !g.library)}>{g => <button class="goal" classList={{ on: chart()?.goal === g.id }} onClick={() => setGoal(g.id).then(() => show("charts"))} title={g.why}>
             <b>{g.name}</b><span class="idx">{g.index}</span><small>{g.function} · {g.objective}</small></button>}</For></div>}</For></div>
+        <p class="muted">{goals().filter(g => g.library).length} more indices (pressure vessels, flywheels, columns, heat exchangers, conductors…) are in the <button class="lnk" onClick={() => show("index")}>Index library and builder</button>.</p>
       </section>
       <section class="osec">
         <h3>Next steps</h3>
@@ -96,13 +98,50 @@ export const ComparePage = () => (
     <p><button class="btn pri" onClick={() => show("results")}>Results</button></p>
   </Later>
 );
-export const IndexPage = () => (
-  <Later icon="index" title="Index builder" ids={["C6", "C7"]}>
-    <p>Pick the function (tie, beam, panel, column, shaft, spring, pressure vessel…), what to minimise (mass, cost, CO₂) and the constraints; the builder derives the performance index, explains it with the equations, makes the chart and draws the line.</p>
-    <p class="muted">Now: start from a design problem in Setup (light stiff beam, strong tie, panel, springs), or draw a line of slope 1, 2 or 3 on any chart.</p>
-    <p><button class="btn pri" onClick={() => show("setup")}>Design problems</button></p>
-  </Later>
-);
+/** Puts an index (goal or library entry) on a new chart, so the open one is kept. */
+export const plotIndex = async (id: string) => { await C.newChart(); await setGoal(id); show("charts"); };
+
+/** Index: the builder (function → constraint → objective gives the index) and the whole library. */
+export const IndexPage = () => {
+  const [fn, setFn] = createSignal(""), [con, setCon] = createSignal(""), [obj, setObj] = createSignal(""), [q, setQ] = createSignal("");
+  const uniq = (v: string[]) => [...new Set(v)].sort();
+  const fns = () => uniq(goals().map(g => g.function));
+  const cons = () => uniq(goals().filter(g => !fn() || g.function === fn()).map(g => g.constraint));
+  const objs = () => uniq(goals().filter(g => (!fn() || g.function === fn()) && (!con() || g.constraint === con())).map(g => g.objective));
+  const found = () => goals().filter(g => (!fn() || g.function === fn()) && (!con() || g.constraint === con()) && (!obj() || g.objective === obj()));
+  const lib = () => { const t = q().toLowerCase(); return goals().filter(g => !t || `${g.name} ${g.index} ${g.function} ${g.objective} ${g.constraint}`.toLowerCase().includes(t)); };
+  return (
+    <div class="page indexpage">
+      <h1>Performance indices <Help k="index" /></h1>
+      <p class="muted">A performance index says which material property, or mix of properties, makes a part best at its job. It follows from the function of the part, its constraint, the objective and the free variable. On a property chart with log axes an index is a straight line.</p>
+      <section class="panel builder">
+        <h2><Icon n="builder" /> Index builder</h2>
+        <div class="bsteps">
+          <label>1 · Function<select value={fn()} onChange={e => { setFn(e.currentTarget.value); setCon(""); setObj(""); }}><option value="">Any</option><For each={fns()}>{x => <option>{x}</option>}</For></select></label>
+          <label>2 · Constraint<select value={con()} onChange={e => { setCon(e.currentTarget.value); setObj(""); }}><option value="">Any</option><For each={cons()}>{x => <option>{x}</option>}</For></select></label>
+          <label>3 · Objective<select value={obj()} onChange={e => setObj(e.currentTarget.value)}><option value="">Any</option><For each={objs()}>{x => <option>{x}</option>}</For></select></label>
+        </div>
+        <div class="icards"><For each={found().slice(0, 6)}>{g => <div class="icard">
+          <small>{g.function} · {g.constraint} · {g.objective}</small><b>{g.name}</b><span class="bigidx">{g.above || g.slope ? "Maximise" : "Minimise"} <span class="idx">{g.index}</span></span>
+          <p class="small">{g.why}</p>
+          <p class="inline"><button class="btn sm pri" onClick={() => plotIndex(g.id)}>Plot on a new chart</button><button class="btn sm" onClick={() => setGoal(g.id).then(() => show("charts"))}>Use the open chart</button><button class="btn sm" onClick={() => goalCard(g.id)}>Details</button></p></div>}</For></div>
+        <Show when={found().length > 6}><p class="muted">{found().length - 6} more match; narrow the steps above or see the library below.</p></Show>
+      </section>
+      <section class="panel">
+        <h2><Icon n="list" /> Index library <span class="muted small">{goals().length} indices</span></h2>
+        <p class="inline"><input placeholder="Search: beam, cost, σy, conductor…" value={q()} onInput={e => setQ(e.currentTarget.value)} /></p>
+        <table class="tbl"><thead><tr><th>Index</th><th>For</th><th>Function</th><th>Objective</th><th>Chart</th><th /></tr></thead><tbody>
+          <For each={[...new Set(lib().map(g => g.group))]}>{gr => <>
+            <tr class="grp"><td colspan="6">{gr}</td></tr>
+            <For each={lib().filter(g => g.group === gr)}>{g => <tr class="link" onClick={() => goalCard(g.id)}>
+              <td><span class="idx">{g.index}</span></td><td>{g.name}</td><td class="muted">{g.function}</td><td class="muted">{g.objective}</td>
+              <td class="muted small">{propOf(g.y)?.name ?? g.y.replace(/^f:/, "")} vs {propOf(g.x)?.name ?? g.x}{g.also ? " + a second chart" : ""}</td>
+              <td><button class="btn sm" onClick={e => { e.stopPropagation(); plotIndex(g.id); }}>Plot</button></td></tr>}</For></>}</For>
+        </tbody></table>
+      </section>
+    </div>
+  );
+};
 export const ReportPage = () => (
   <Later icon="report" title="Report" ids={["D4"]}>
     <p>One click gives a selection report: the requirements, the stages, the charts, the ranked shortlist and the datasheets.</p>
@@ -115,13 +154,14 @@ export const ReportPage = () => (
 export const goalCard = (id: string) => openDialog(() => {
   const g = goals().find(x => x.id === id)!;
   return (
-    <Dialog title={g.name} extra={<button class="btn" onClick={() => setGoal(g.id)}>Apply to the chart</button>}>
+    <Dialog title={g.name} extra={<><button class="btn" onClick={() => plotIndex(g.id)}>Plot on a new chart</button><button class="btn" onClick={() => setGoal(g.id)}>Apply to the open chart</button></>}>
       <div class="helpcard">
         <p class="bigidx">{g.above || g.slope ? "Maximise" : "Minimise"} <b>{g.index}</b></p>
         <table class="tbl mini"><tbody>
           <tr><td>Function</td><td>{g.function}</td></tr><tr><td>Constraint</td><td>{g.constraint}</td></tr>
           <tr><td>Objective</td><td>{g.objective}</td></tr><tr><td>Free variable</td><td>{g.free}</td></tr>
           <tr><td>Chart</td><td>{propOf(g.y)?.name} against {propOf(g.x)?.name}, {g.slope ? `line of slope ${fmt(g.slope)}` : "horizontal line"}; {g.above ? "above" : "below"} passes</td></tr>
+          <Show when={g.formulas.length}><tr><td>Formula properties</td><td>{g.formulas.map(([n, e, u]) => `${n} = ${e}${u ? ` (${u})` : ""}`).join("; ")}; added to the selection when you plot it</td></tr></Show>
           <Show when={g.also}>{a => <tr><td>Second chart</td><td>{propOf(a().y)?.name} against {propOf(a().x)?.name}, line of slope {fmt(a().slope)} for {a().index}; the goal adds this chart, and the shortlist passes both</td></tr>}</Show>
           <Show when={g.limits.length}><tr><td>Suggested limits</td><td>{g.limits.map(([k, a, b]) => `${propOf(k)?.name}${a !== null ? ` ≥ ${fmt(toShown(k, a))}` : ""}${b !== null ? ` ≤ ${fmt(toShown(k, b))}` : ""} ${unitOf(k)}`).join("; ")}</td></tr></Show>
         </tbody></table>

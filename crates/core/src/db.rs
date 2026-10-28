@@ -1,5 +1,6 @@
 //! The materials database: the built-in data (embedded from `data/*.json`) merged with the user's
 //! own `.datdb`, the family tree, search, and the data checks every value must pass.
+use crate::formula;
 use crate::model::*;
 use serde::Serialize;
 use std::collections::{BTreeMap, HashSet};
@@ -33,11 +34,16 @@ pub struct Db {
     pub materials: Vec<Material>,
     pub sources: Vec<Source>,
     pub user_count: usize,
+    /// The project's own formula properties, worked out into every material (see `with_formulas`).
+    pub formulas: Vec<Formula>,
 }
+
+/// What a chart or a limit needs to know about a property: its name, symbol, unit and scale.
+pub struct Info { pub name: String, pub sym: String, pub unit: String, pub log: bool }
 
 impl Db {
     pub fn new(builtin: Database, user: Option<&Database>) -> Self {
-        let mut d = Db { materials: builtin.materials, sources: builtin.sources, user_count: 0 };
+        let mut d = Db { materials: builtin.materials, sources: builtin.sources, user_count: 0, formulas: vec![] };
         if let Some(u) = user {
             d.sources.extend(u.sources.iter().cloned());
             d.materials.extend(u.materials.iter().cloned().map(|mut m| { m.user = true; m }));
@@ -50,7 +56,33 @@ impl Db {
     pub fn get(&self, id: &str) -> Option<&Material> {
         self.materials.iter().find(|m| m.id == id)
     }
+    /// A built-in property or one of the project's formulas.
+    pub fn info(&self, k: &str) -> Option<Info> {
+        if let Some(p) = prop(k) { return Some(Info { name: p.name.into(), sym: p.sym.into(), unit: p.unit.into(), log: p.log }); }
+        self.formulas.iter().find(|f| f.key() == k).map(|f| Info { name: f.name.clone(), sym: f.name.clone(), unit: f.unit.clone(), log: f.log })
+    }
+    /// This database with the project's formulas worked out into every material (in order, so a
+    /// formula may use the ones before it). A formula that does not parse is left out.
+    pub fn with_formulas(&self, fs: &[Formula]) -> Db {
+        if fs.is_empty() { return self.clone(); }
+        let mut d = self.clone();
+        let mut extra: Vec<(String, String)> = vec![];
+        for f in fs {
+            if let Ok(e) = formula::parse(&f.expr, &extra) {
+                for m in &mut d.materials {
+                    let v = formula::eval(&e, &|k: &str| m.props.get(k).and_then(Val::range));
+                    if let Some((lo, hi)) = v.filter(|v| !f.log || v.0 > 0.0) { m.props.insert(f.key(), Val::Range(lo, hi, FORMULA.into())); }
+                }
+                d.formulas.push(f.clone());
+            }
+            extra.push((f.key(), f.name.clone()));
+        }
+        d
+    }
 }
+
+/// The source id of values worked out from a formula of your own.
+pub const FORMULA: &str = "formula";
 
 pub const DERIVED: &str = "derived";
 

@@ -3,7 +3,7 @@
 // hover, clicks and dragging the selection line or box. `ChartSvg` also draws printed charts.
 import { For, Show, createSignal, onCleanup, onMount } from "solid-js";
 import { Chart, ChartOut, ChartSel, Bubble, Line, famColor, fmt, range, lineOf, boxOf, polyOf, goalId } from "./api";
-import { act, out, failed, cur, setCur, openSheet, openMenu, chartOut, setChart, toast, db, chart, call, opts, conv, unitOf, toShown, goals, setGoal, activeOf, setActiveOf, setSels, P } from "./store";
+import { act, out, failed, cur, setCur, openSheet, openMenu, chartOut, setChart, toast, db, chart, call, opts, conv, unitOf, toShown, goals, setGoal, activeOf, setActiveOf, setSels, P, chartProps, propOf } from "./store";
 import { Icon } from "./ui";
 import { Help } from "./help";
 import { render } from "solid-js/web";
@@ -307,21 +307,22 @@ export const ChartView = (p: { c: Chart }) => {
 
 /** An axis: the property and its log switch. Changing it removes the goal and the selections. */
 const AxisPick = (p: { c: Chart; k: "x" | "y" }) => {
-  const props = () => db().props.filter(q => q.kind === "range" && db().materials.some(m => m.props[q.key]));
+  const props = chartProps;
   return <span class="axpick"><b>{p.k.toUpperCase()}</b>
-    <select value={p.c[p.k]} onChange={e => { const v = e.currentTarget.value, lg = db().props.find(x => x.key === v)?.log ?? true; setChart(c => { c[p.k] = v; if (p.k === "x") c.logX = lg; else c.logY = lg; c.sels = []; c.goal = ""; }); }}>
-      <For each={props()}>{x => <option value={x.key}>{x.name}</option>}</For></select>
+    <select value={p.c[p.k]} onChange={e => { const v = e.currentTarget.value, lg = propOf(v)?.log ?? true; setChart(c => { c[p.k] = v; if (p.k === "x") c.logX = lg; else c.logY = lg; c.sels = []; c.goal = ""; }); }}>
+      <For each={props()}>{x => <option value={x.key} selected={x.key === p.c[p.k]}>{x.name}</option>}</For></select>
     <button class="rb fb" classList={{ on: p.k === "x" ? p.c.logX : p.c.logY }} title="Logarithmic axis" onClick={() => setChart(c => { if (p.k === "x") c.logX = !c.logX; else c.logY = !c.logY; c.sels = []; })}>log</button></span>;
 };
 
 /** The first toolbar row: the design goal, bubbles or bars, and what the chart shows. */
 export const ChartBar = (p: { c: Chart }) => {
-  const groups = () => [...new Set(goals().map(g => g.group))];
+  const groups = () => [...new Set(goals().filter(g => !g.library).map(g => g.group))];
   const goal = () => goals().find(g => g.id === goalId(p.c));
   return (
     <div class="cbar">
       <span class="goalpick"><b>Goal</b><select value={goalId(p.c)} onChange={e => setGoal(e.currentTarget.value)}><option value="">Explore (no goal)</option>
-        <For each={groups()}>{gr => <optgroup label={gr}><For each={goals().filter(g => g.group === gr)}>{g => <option value={g.id}>{g.name} — {g.above || g.slope ? "maximise" : "minimise"} {g.index.replace(/ \(.*\)/, "")}</option>}</For></optgroup>}</For></select><Help k="goal" /></span>
+        <For each={groups()}>{gr => <optgroup label={gr}><For each={goals().filter(g => g.group === gr && !g.library)}>{g => <option value={g.id}>{g.name} — {g.above || g.slope ? "maximise" : "minimise"} {g.index.replace(/ \(.*\)/, "")}</option>}</For></optgroup>}</For></select><Help k="goal" /></span>
+      <Show when={goal()?.library}><span class="muted small">Index: {goal()!.name}</span></Show>
       <Show when={goal()}><button class="btn sm" title={goal()!.why} onClick={() => import("./pages").then(m => m.goalCard(goal()!.id))}>Why {goal()!.index}?</button></Show>
       <span class="sep" />
       <div class="seg"><button classList={{ on: p.c.kind !== "bar" }} title="Two properties, a bubble per material" onClick={() => setChart(c => { c.kind = "bubble"; })}>Bubbles</button>

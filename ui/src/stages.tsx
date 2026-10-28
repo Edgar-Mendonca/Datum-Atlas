@@ -2,7 +2,7 @@
 // chart, and the Results page: what passes, ranked by the index, and why the others fail.
 import { For, Show, createSignal } from "solid-js";
 import { Limit, Stages, Material, Weight, fmt, SEP, famColor, lineOf, goalId } from "./api";
-import { act, out, P, db, cur, setCur, openSheet, show, setChartId, mat, propOf, srcOf, toShown, toStored, unitOf, vtext, goals } from "./store";
+import { act, out, P, db, cur, setCur, openSheet, show, setChartId, mat, propOf, srcOf, toShown, toStored, unitOf, vtext, goals, chartProps, formulaProps } from "./store";
 import { Help } from "./help";
 import { Icon, Check } from "./ui";
 
@@ -19,7 +19,7 @@ const LimitRow = (p: { l: Limit; k: number }) => {
   return (
     <div class="limit">
       <select value={p.l.prop} onChange={e => put({ prop: e.currentTarget.value, min: null, max: null, flag: null, rating: null, goal: false })}>
-        <For each={db().props.filter(x => db().materials.some(m => m.props[x.key]))}>{x => <option value={x.key}>{x.name}</option>}</For></select>
+        <For each={[...db().props.filter(x => db().materials.some(m => m.props[x.key])), ...formulaProps()]}>{x => <option value={x.key} selected={x.key === p.l.prop}>{x.name}</option>}</For></select>
       <Show when={pr()?.kind === "range"}>
         <span class="inline"><input type="number" placeholder="min" value={shownOf(p.l.prop, p.l.min)} onChange={e => put({ min: inStored(p.l.prop, e.currentTarget.value) })} /><span class="muted">to</span>
           <input type="number" placeholder="max" value={shownOf(p.l.prop, p.l.max)} onChange={e => put({ max: inStored(p.l.prop, e.currentTarget.value) })} /><span class="muted unit">{unitOf(p.l.prop)}</span></span>
@@ -74,7 +74,7 @@ export const StagesPage = () => {
 /** How the materials that pass are ordered: by a selection line's index, or by weighted properties. */
 const Ranking = () => {
   const st = () => P().stages, r = () => out()!.results, weighted = () => st().ranking === "weighted";
-  const props = () => db().props.filter(q => q.kind === "range" && db().materials.some(m => m.props[q.key]));
+  const props = chartProps;
   const total = () => st().weights.reduce((a, w) => a + w.w, 0) || 1;
   const setW = (k: number, patch: Partial<Weight>) => setStages(s => { s.weights[k] = { ...s.weights[k], ...patch }; });
   return (
@@ -88,7 +88,7 @@ const Ranking = () => {
         <span class="muted">each property scaled so the best material that passes scores 1, then averaged by weight</span></p>
       <Show when={weighted()}>
         <For each={st().weights}>{(w, k) => <div class="limit">
-          <select value={w.prop} onChange={e => { const v = e.currentTarget.value; setW(k(), { prop: v }); }}><For each={props()}>{x => <option value={x.key}>{x.name}</option>}</For></select>
+          <select value={w.prop} onChange={e => { const v = e.currentTarget.value; setW(k(), { prop: v }); }}><For each={props()}>{x => <option value={x.key} selected={x.key === w.prop}>{x.name}</option>}</For></select>
           <select value={w.high ? "high" : "low"} onChange={e => { const v = e.currentTarget.value === "high"; setW(k(), { high: v }); }}><option value="low">lower is better</option><option value="high">higher is better</option></select>
           <label class="inline">weight <input type="number" min="0" step="1" style={{ width: "60px" }} value={w.w} onChange={e => { const v = +e.currentTarget.value; if (isFinite(v) && v >= 0) setW(k(), { w: v }); }} /></label>
           <span class="muted">{fmt((100 * w.w) / total())} %</span>

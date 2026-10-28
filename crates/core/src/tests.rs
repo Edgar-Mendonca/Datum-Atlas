@@ -273,13 +273,18 @@ fn derived_properties_span_every_combination() {
 #[test]
 fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
     let d = db();
-    assert_eq!(crate::goals::GOALS.len(), 25);
+    assert_eq!(crate::goals::GOALS.iter().filter(|g| !g.library).count(), 25);
+    assert_eq!(crate::goals::GOALS.len(), 47, "25 goals and 22 more indices in the library");
     let mut p = crate::templates::build(&d, Some("blank")).unwrap();
     p.stages.limits.push(Limit { prop: "price".into(), max: Some(50.0), ..Default::default() });
     let cid = p.charts[0].id;
+    // Indices whose properties have no values in the database yet (to be filled with open data).
+    let waiting = ["fatigue-light", "conductor-light"];
     for g in crate::goals::GOALS {
         let mut doc = Doc::new(p.clone());
-        doc.apply(crate::goals::apply(&d, &doc.p, cid, g.id).unwrap()).unwrap();
+        let op = crate::goals::apply(&d, &doc.p, cid, g.id);
+        if waiting.contains(&g.id) { assert!(op.is_err(), "{} now has data: take it off the waiting list", g.id); continue; }
+        doc.apply(op.unwrap_or_else(|e| panic!("{}: {e}", g.id))).unwrap();
         let c = &doc.p.charts[0];
         assert_eq!((c.x.as_str(), c.y.as_str(), c.goal.as_str()), (g.x, g.y, g.id));
         // A second constraint adds its chart with its own line; the shortlist passes both.
@@ -288,7 +293,9 @@ fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
             let c2 = &doc.p.charts[1];
             assert_eq!((c2.x.as_str(), c2.y.as_str(), c2.goal.clone(), c2.sels.len()), (a.x, a.y, format!("{}/2", g.id), 1));
         }
-        let r = run(&d, &doc.p);
+        let fd = d.with_formulas(&doc.p.formulas);
+        assert_eq!(doc.p.formulas.len(), g.formulas.len(), "{}: the formulas it needs", g.id);
+        let r = run(&fd, &doc.p);
         assert!(r.pass > 0, "{}: nothing passes", g.id);
         // Your own limit stays; the goal's are added and marked.
         assert!(doc.p.stages.limits.iter().any(|l| l.prop == "price" && !l.goal));
@@ -296,7 +303,7 @@ fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
         // The ranking follows the index computed by hand from the geometric means.
         let gm = |m: &Material, k: &str| { let (a, b) = m.props[k].range().unwrap(); (a * b).sqrt() };
         let ranked: Vec<_> = r.rows.iter().filter(|x| x.pass).take(3).collect();
-        let idx = |id: &str| { let m = d.get(id).unwrap(); if g.slope == 0.0 { gm(m, g.y) } else { gm(m, g.y).powf(1.0 / g.slope) / gm(m, g.x) } };
+        let idx = |id: &str| { let m = fd.get(id).unwrap(); let n = g.slope; if n == 0.0 { gm(m, g.y) } else if n > 0.0 { gm(m, g.y).powf(1.0 / n) / gm(m, g.x) } else { gm(m, g.y).powf(-1.0 / n) * gm(m, g.x) } };
         for w in ranked.windows(2) {
             let (a, b) = (idx(&w[0].id), idx(&w[1].id));
             assert!(if g.above { a >= b * (1.0 - 1e-9) } else { a <= b * (1.0 + 1e-9) }, "{}: {} then {}", g.id, w[0].name, w[1].name);
@@ -420,4 +427,53 @@ fn a_line_passes_through_the_index_value_typed() {
     let id = doc.p.add_chart(Chart { sels: vec![ChartSel::Line { slope: 2.0, x: 3000.0, y: 50.0, above: true }], ..Default::default() });
     assert!(doc.apply(Op::PassThrough { chart: id, k: 0, value: -1.0 }).is_err());
     assert!(doc.apply(Op::PassThrough { chart: id, k: 3, value: 1.0 }).is_err());
+}
+
+#[test]
+fn formulas_work_on_ranges() {
+    use crate::formula::{eval, parse, show};
+    let get = |k: &str| match k { "E" => Some((4.0, 9.0)), "rho" => Some((2.0, 4.0)), "tmin" => Some((-5.0, 3.0)), _ => None };
+    let ev = |t: &str| eval(&parse(t, &[]).unwrap(), &get);
+    assert_eq!(ev("[E]^0.5/[rho]"), Some((0.5, 1.5)));
+    assert_eq!(ev("[Young's modulus] * 2 + 1"), Some((9.0, 19.0)));
+    assert_eq!(ev("[ρ] - [E]"), Some((-7.0, 0.0)));
+    assert_eq!(ev("[tmin]^2"), Some((0.0, 25.0)), "an even power of a range across zero starts at zero");
+    assert_eq!(ev("sqrt([tmin])"), None, "the root of a negative value is a gap");
+    assert_eq!(ev("1/[tmin]"), None, "dividing by a range that holds zero is a gap");
+    assert_eq!(ev("[G]"), None, "a missing value is a gap, never zero");
+    assert_eq!(ev("max([E], 2*[rho])"), Some((4.0, 9.0)));
+    assert_eq!(ev("-[E] + 2e1"), Some((11.0, 16.0)));
+    assert_eq!(show(&parse("[E]^0.5/[rho]", &[]).unwrap()), "E^0.5/ρ");
+    for bad in ["[E", "[nothing]", "foo([E])", "sqrt()", "[E] +", "(", "[E] [rho]", "max([E])", "1..2"] {
+        assert!(parse(bad, &[]).is_err(), "{bad} should not parse");
+    }
+    assert!(parse(&"(".repeat(500), &[]).is_err(), "deep nesting is refused, not a stack overflow");
+}
+
+#[test]
+fn formula_properties_chart_limit_and_rank() {
+    let d = db();
+    let mut doc = Doc::new(Project::new("T"));
+    let f = |n: &str, e: &str| Formula { name: n.into(), expr: e.into(), unit: String::new(), log: true };
+    // Names must be new and formulas must parse; a later formula may use an earlier one.
+    assert!(doc.apply(Op::SetFormulas { formulas: vec![f("Density", "[E]")] }).is_err());
+    assert!(doc.apply(Op::SetFormulas { formulas: vec![f("Bad", "[E]/")] }).is_err());
+    doc.apply(Op::SetFormulas { formulas: vec![f("Spring", "[sy]^2/[E]"), f("Spring per mass", "[Spring]/[rho]")] }).unwrap();
+    let id = doc.p.add_chart(Chart { x: "rho".into(), y: "f:Spring".into(), sels: vec![ChartSel::Line { slope: 1.0, x: 1000.0, y: 1.0, above: true }], ..Default::default() });
+    doc.p.stages.limits.push(Limit { prop: "f:Spring per mass".into(), min: Some(0.05), ..Default::default() });
+    doc.p.normalize();
+    let fd = d.with_formulas(&doc.p.formulas);
+    let o = crate::chart::build(&fd, doc.p.chart(id).unwrap());
+    assert_eq!(o.y.name, "Spring");
+    assert!(o.bubbles.len() > 50, "{}", o.bubbles.len());
+    let steel = fd.get("steel-1045").unwrap();
+    let (sy, e) = (steel.props["sy"].range().unwrap(), steel.props["E"].range().unwrap());
+    assert_eq!(steel.props["f:Spring"].range(), Some((sy.0 * sy.0 / e.1, sy.1 * sy.1 / e.0)));
+    let r = run(&fd, &doc.p);
+    assert_eq!(r.index_name, "Spring/ρ");
+    assert!(r.rows.iter().any(|x| !x.pass && x.reasons.iter().any(|s| s.starts_with("Spring per mass") && s.contains(" < 0.05"))), "a limit on a formula fails with its value");
+    assert!(r.rows.iter().any(|x| x.pass), "and some materials pass it");
+    // Removing a formula sends its chart axis back to the default and drops its limit.
+    doc.apply(Op::SetFormulas { formulas: vec![] }).unwrap();
+    assert_eq!((doc.p.charts[0].y.as_str(), doc.p.stages.limits.len()), ("E", 0));
 }

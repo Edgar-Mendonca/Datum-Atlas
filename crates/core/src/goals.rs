@@ -32,6 +32,10 @@ pub struct Goal {
     /// A second constraint needs a second chart: its axes, line and index. The goal adds that
     /// chart (marked with the goal's id and "/2") and the shortlist is what passes both.
     pub also: Option<Also>,
+    /// Formula properties the index needs on an axis (name, formula, unit); applying it adds them.
+    pub formulas: &'static [(&'static str, &'static str, &'static str)],
+    /// In the index library only (not in the Goal list beside the chart).
+    pub library: bool,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -51,14 +55,21 @@ const STRONG: &[(&str, Option<f64>, Option<f64>)] = &[("kic", Some(15.0), None)]
 #[allow(clippy::too_many_arguments)]
 const fn g(id: &'static str, group: &'static str, name: &'static str, index: &'static str, x: &'static str, y: &'static str, slope: f64, above: bool,
     function: &'static str, constraint: &'static str, objective: &'static str, free: &'static str, why: &'static str, limits: &'static [(&'static str, Option<f64>, Option<f64>)]) -> Goal {
-    Goal { id, group, name, index, x, y, slope, above, function, constraint, objective, free, why, limits, also: None }
+    Goal { id, group, name, index, x, y, slope, above, function, constraint, objective, free, why, limits, also: None, formulas: &[], library: false }
+}
+
+/// An index of the library (Index page and builder), with the formula properties it needs.
+#[allow(clippy::too_many_arguments)]
+const fn lib(id: &'static str, group: &'static str, name: &'static str, index: &'static str, x: &'static str, y: &'static str, slope: f64, above: bool,
+    function: &'static str, constraint: &'static str, objective: &'static str, free: &'static str, why: &'static str, formulas: &'static [(&'static str, &'static str, &'static str)]) -> Goal {
+    Goal { id, group, name, index, x, y, slope, above, function, constraint, objective, free, why, limits: &[], also: None, formulas, library: true }
 }
 
 /// A goal with a second constraint on a second chart.
 #[allow(clippy::too_many_arguments)]
 const fn g2(id: &'static str, name: &'static str, index: &'static str, x: &'static str, y: &'static str, slope: f64, also: Also,
     function: &'static str, constraint: &'static str, why: &'static str, limits: &'static [(&'static str, Option<f64>, Option<f64>)]) -> Goal {
-    Goal { id, group: "Two constraints", name, index, x, y, slope, above: true, function, constraint, objective: "Minimum mass", free: "Size of the section", why, limits, also: Some(also) }
+    Goal { id, group: "Two constraints", name, index, x, y, slope, above: true, function, constraint, objective: "Minimum mass", free: "Size of the section", why, limits, also: Some(also), formulas: &[], library: false }
 }
 
 pub const GOALS: &[Goal] = &[
@@ -118,6 +129,51 @@ pub const GOALS: &[Goal] = &[
       Also { x: "rho", y: "kic", slope: 1.0, above: true, index: "KIc/ρ", name: "Toughness of the light tie" },
       "Tie rod or skin in tension", "Stiffness fixed; a given crack must not grow",
       "Stiffness gives E/ρ and a crack that must not grow gives KIc/ρ. The tie must pass both lines: stiffness on the modulus–density chart, toughness on the toughness–density chart.", &[]),
+    // ---- the index library: more functions, objectives and constraints ----
+    lib("shaft-strong", "Minimum mass", "Light, strong shaft (torsion)", "σy⅔/ρ", "rho", "sy", 1.5, true, "Solid shaft in torsion", "Length and torque fixed, no yielding", "Minimum mass", "Diameter",
+      "The torque a shaft carries before yielding is ∝ σy·d³ ∝ σy·A^(3/2), so A ∝ σy^(−⅔) and the mass ∝ ρ/σy^⅔. Maximise σy⅔/ρ: slope 1.5 on the strength–density chart.", &[]),
+    lib("vessel-light", "Minimum mass", "Light pressure vessel", "σy/ρ", "rho", "sy", 1.0, true, "Thin-walled pressure vessel", "Pressure and size fixed, no yielding", "Minimum mass", "Wall thickness",
+      "The wall stress pR/t must stay below σy, so t = pR/σy and the mass of the wall ∝ R²t·ρ ∝ ρ/σy. Maximise σy/ρ: slope 1.", &[]),
+    lib("flywheel", "Minimum mass", "Flywheel storing the most energy", "σy/ρ", "rho", "sy", 1.0, true, "Flywheel or spinning disc", "Must not burst", "Maximum kinetic energy per mass", "Speed",
+      "The energy stored is ∝ ρω²r², and so is the largest stress. The energy per kilogram at the bursting speed is ∝ σy/ρ. Maximise σy/ρ: slope 1.", &[]),
+    lib("column-crush", "Minimum mass", "Light short column (crushing)", "σc/ρ", "rho", "sc", 1.0, true, "Short column in compression", "Load fixed, no crushing", "Minimum mass", "Cross-section area",
+      "A short column fails by crushing when F/A reaches σc, so A = F/σc and the mass ∝ ρ/σc. Maximise σc/ρ: slope 1 on compressive strength against density.", &[]),
+    lib("plate-buckle", "Minimum mass", "Light plate in compression (buckling)", "E⅓/ρ", "rho", "E", 3.0, true, "Plate loaded in its plane", "Load fixed, no buckling", "Minimum mass", "Thickness",
+      "A plate buckles at a load ∝ Et³, so t ∝ E^(−⅓) and the mass ∝ ρ/E^⅓, the same index as the stiff panel. Maximise E⅓/ρ: slope 3.", &[]),
+    lib("spring-light", "Minimum mass", "Light spring", "σy²/(Eρ)", "rho", "f:Elastic energy per volume", 1.0, true, "Spring", "Store a given energy without yielding", "Minimum mass", "Size of the spring",
+      "The energy per volume up to yield is σy²/2E, so the volume needed ∝ E/σy² and the mass ∝ ρE/σy². Plot σy²/E (a formula property) against density: maximise σy²/(Eρ), a line of slope 1.", &[("Elastic energy per volume", "[sy]^2/[E]", "kJ/m³")]),
+    lib("diaphragm", "Elastic design", "Elastic diaphragm (largest deflection)", "σy^1.5/E", "E", "sy", 2.0 / 3.0, true, "Diaphragm or membrane", "Must deflect far without yielding", "Maximum deflection", "The material",
+      "A thin diaphragm deflects with the cube of the stress over the modulus, at a fixed thickness its largest elastic deflection is ∝ σy^(3/2)/E. A line of slope ⅔ on the strength–modulus chart.", &[]),
+    lib("seal", "Elastic design", "Soft elastic seal", "E (minimum)", "rho", "E", 0.0, false, "Seal or gasket", "Must conform to rough surfaces", "Maximum conformity", "The material",
+      "A seal presses into the surface roughness with a contact pressure ∝ E; the softer it is, the better it seals at a given clamping force. The lowest modulus wins: a horizontal line, below passes.", &[]),
+    lib("tie-stiff-cheap", "Minimum cost", "Cheap, stiff tie rod", "E/(Cₘρ)", "cv", "E", 1.0, true, "Tie rod in tension", "Length and stiffness fixed", "Minimum material cost", "Cross-section area",
+      "As for the light stiff tie, with the price per volume Cₘρ in place of density. Maximise E/(Cₘρ): slope 1.", &[]),
+    lib("beam-strong-cheap", "Minimum cost", "Cheap, strong beam", "σy⅔/(Cₘρ)", "cv", "sy", 1.5, true, "Beam in bending", "Length and load fixed, no yielding", "Minimum material cost", "Size of the section",
+      "As for the light strong beam, with the price per volume Cₘρ in place of density. Maximise σy⅔/(Cₘρ): slope 1.5.", &[]),
+    lib("panel-strong-cheap", "Minimum cost", "Cheap, strong panel", "σy½/(Cₘρ)", "cv", "sy", 2.0, true, "Panel in bending", "Length, width and load fixed, no yielding", "Minimum material cost", "Thickness",
+      "As for the light strong panel, with the price per volume Cₘρ in place of density. Maximise σy½/(Cₘρ): slope 2.", &[]),
+    lib("tie-stiff-carbon", "Minimum carbon", "Low-carbon stiff tie rod", "E/(CO₂·ρ)", "co2v", "E", 1.0, true, "Tie rod in tension", "Length and stiffness fixed", "Minimum CO₂ from making the material", "Cross-section area",
+      "As for the light stiff tie, with the CO₂ per volume in place of density. Maximise E/(CO₂·ρ): slope 1.", &[]),
+    lib("beam-strong-carbon", "Minimum carbon", "Low-carbon strong beam", "σy⅔/(CO₂·ρ)", "co2v", "sy", 1.5, true, "Beam in bending", "Length and load fixed, no yielding", "Minimum CO₂ from making the material", "Size of the section",
+      "As for the light strong beam, with the CO₂ per volume in place of density. Maximise σy⅔/(CO₂·ρ): slope 1.5.", &[]),
+    lib("panel-stiff-carbon", "Minimum carbon", "Low-carbon stiff panel", "E⅓/(CO₂·ρ)", "co2v", "E", 3.0, true, "Panel in bending", "Length, width and stiffness fixed", "Minimum CO₂ from making the material", "Thickness",
+      "As for the light stiff panel, with the CO₂ per volume in place of density. Maximise E⅓/(CO₂·ρ): slope 3.", &[]),
+    lib("beam-stiff-energy", "Minimum energy", "Low-energy stiff beam", "E½/(Hₘρ)", "eev", "E", 2.0, true, "Beam in bending", "Length and bending stiffness fixed", "Minimum energy to make the material", "Size of the section",
+      "The embodied energy is mass × energy per kilogram, so ρ becomes Hₘρ, the energy per volume. Maximise E½/(Hₘρ): slope 2.", &[]),
+    lib("tie-strong-energy", "Minimum energy", "Low-energy strong tie rod", "σy/(Hₘρ)", "eev", "sy", 1.0, true, "Tie rod in tension", "Length and load fixed, no yielding", "Minimum energy to make the material", "Cross-section area",
+      "As for the light strong tie, with the energy per volume Hₘρ in place of density. Maximise σy/(Hₘρ): slope 1.", &[]),
+    lib("fatigue-light", "Damage tolerance", "Light part under cyclic load", "σe/ρ", "rho", "fat", 1.0, true, "Tie or link under repeated load", "Must survive 10⁷ cycles", "Minimum mass", "Cross-section area",
+      "Under a load that repeats many times the stress must stay below the fatigue strength σe, so A = F/σe and the mass ∝ ρ/σe. Maximise σe/ρ: slope 1.", &[]),
+    lib("heat-exchanger", "Thermal", "Heat-exchanger tube", "σy·λ", "sy", "lam", -1.0, true, "Tube carrying a hot fluid under pressure", "Must hold the pressure", "Maximum heat flow", "Wall thickness",
+      "The heat flow through the wall is ∝ λ/t and the pressure sets t ∝ 1/σy, so the heat flow ∝ λσy. On conductivity against strength the index is a line of slope −1, above passes.", &[]),
+    lib("diffusivity-fast", "Thermal", "Heats through quickly", "a (maximum)", "rho", "diff", 0.0, true, "Part that must reach temperature fast", "Shape fixed", "Shortest heating time", "The material",
+      "The time for heat to soak through a thickness x is ∝ x²/a, where a = λ/(ρcₚ) is the thermal diffusivity. The highest diffusivity heats through fastest: a horizontal line, above passes.", &[]),
+    lib("diffusivity-slow", "Thermal", "Heats through slowly", "a (minimum)", "rho", "diff", 0.0, false, "Wall that must keep heat out for a while", "Thickness fixed", "Longest time before the far side warms", "The material",
+      "The time for heat to soak through is ∝ x²/a, so the lowest thermal diffusivity keeps heat out longest: a horizontal line, below passes.", &[]),
+    lib("heat-storage", "Thermal", "Stores the most heat per volume", "ρcₚ (maximum)", "rho", "f:Heat capacity per volume", 0.0, true, "Thermal store", "Volume fixed", "Maximum heat stored per degree", "The material",
+      "The heat stored per degree in a fixed volume is ρcₚ, the heat capacity per volume (a formula property). The highest wins: a horizontal line, above passes.", &[("Heat capacity per volume", "[rho]*[cp]/1000", "kJ/(m³·K)")]),
+    lib("conductor-light", "Electrical", "Light electrical conductor", "ρe·ρ (minimum)", "rho", "res", -1.0, false, "Cable or busbar", "Length and resistance fixed", "Minimum mass", "Cross-section area",
+      "The resistance is ρeL/A, so A ∝ ρe and the mass ∝ ρeρ. Minimise ρe·ρ: a line of slope −1 on resistivity against density, below passes.", &[]),
 ];
 
 pub fn get(id: &str) -> Option<&'static Goal> {
@@ -160,13 +216,22 @@ pub fn apply(db: &Db, p: &Project, chart: u32, id: &str) -> Result<Op, String> {
         ops.push(Op::SetStages { stages: st });
         return Ok(Op::Batch(ops));
     };
+    // Formula properties the index needs are added to the project (kept if already there).
+    let mut fs = p.formulas.clone();
+    for (name, expr, unit) in g.formulas {
+        if !fs.iter().any(|f| f.name == *name) { fs.push(Formula { name: (*name).into(), expr: (*expr).into(), unit: (*unit).into(), log: true }); }
+    }
+    let fdb = db.with_formulas(&fs);
+    let db = &fdb;
+    if fs != p.formulas { ops.insert(0, Op::SetFormulas { formulas: fs }); }
     let (lx, ly) = (log_of(g.x), log_of(g.y));
     c.kind = "bubble".into();
     (c.x, c.y, c.log_x, c.log_y) = (g.x.into(), g.y.into(), lx, ly);
     c.goal = g.id.into();
     c.name = g.name.into();
     c.sels = vec![place(db, g.x, g.y, lx, ly, g.slope, g.above).ok_or("No material has both values for this goal.")?];
-    ops.insert(0, Op::SetChart { chart: Box::new(c) });
+    let at = ops.iter().position(|o| !matches!(o, Op::SetFormulas { .. })).unwrap_or(ops.len());
+    ops.insert(at, Op::SetChart { chart: Box::new(c) });
     if let Some(a) = &g.also {
         let (ax, ay) = (log_of(a.x), log_of(a.y));
         let sel = place(db, a.x, a.y, ax, ay, a.slope, a.above).ok_or("No material has both values for this goal.")?;

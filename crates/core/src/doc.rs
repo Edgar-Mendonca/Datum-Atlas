@@ -17,6 +17,9 @@ pub enum Op {
     /// Moves line `k` of a chart (keeping its slope) so its index has the value typed.
     PassThrough { chart: u32, k: usize, value: f64 },
     SetStages { stages: Stages },
+    /// Replaces the project's formula properties. Charts, limits and weights on a formula that
+    /// is gone go back to the defaults.
+    SetFormulas { formulas: Vec<Formula> },
     Name { name: String },
     Notes { text: String },
     /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
@@ -132,6 +135,18 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 }
             }
             p.stages = stages;
+        }
+        Op::SetFormulas { formulas } => {
+            let mut extra: Vec<(String, String)> = vec![];
+            for f in &formulas {
+                let name = f.name.trim();
+                if name.is_empty() { return Err("Give the formula a name.".into()); }
+                if name.contains(['[', ']']) || name.len() > 60 { return Err(format!("“{name}”: a name of up to 60 characters, without [ or ].")); }
+                if crate::formula::key_of(name, &extra).is_some() { return Err(format!("“{name}” is already the name of a property; choose another.")); }
+                crate::formula::parse(&f.expr, &extra).map_err(|e| format!("{name}: {e}"))?;
+                extra.push((f.key(), name.to_string()));
+            }
+            p.formulas = formulas.into_iter().map(|f| Formula { name: f.name.trim().into(), ..f }).collect();
         }
         Op::Name { name } => {
             let name = name.trim().to_string();

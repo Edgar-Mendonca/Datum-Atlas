@@ -80,10 +80,12 @@ struct Out<'a> {
 
 fn out(a: &App) -> Value {
     let d = &a.doc;
-    let charts = d.p.charts.iter().map(|c| chart::build(&a.db, c)).collect();
+    // The project's formula properties are worked out into every material first.
+    let db = a.db.with_formulas(&d.p.formulas);
+    let charts = d.p.charts.iter().map(|c| chart::build(&db, c)).collect();
     serde_json::to_value(Out {
         project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
-        charts, results: select::run(&a.db, &d.p), db_rev: a.db_rev,
+        charts, results: select::run(&db, &d.p), db_rev: a.db_rev,
     })
     .unwrap_or_default()
 }

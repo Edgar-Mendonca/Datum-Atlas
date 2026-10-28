@@ -82,7 +82,7 @@ fn bars(db: &Db, c: &Chart) -> ChartOut {
         if c.hidden.iter().any(|h| h == fam) { continue; }
         let mut mine: Vec<(&Material, Pair, Pair)> = vec![];
         for m in db.materials.iter().filter(|m| m.family.first().map(String::as_str) == Some(*fam)) {
-            let name = prop(&c.y).map_or(c.y.as_str(), |p| p.name).to_lowercase();
+            let name = pname(&c.y).to_lowercase();
             match m.props.get(&c.y).and_then(Val::range) {
                 Some(r) => match span(r.0, r.1, c.log_y) { Some(sp) => mine.push((m, r, sp)), None => missing.push((m.id.clone(), format!("{name} is not above zero, so it cannot go on a log axis"))) },
                 None => missing.push((m.id.clone(), format!("no {name}"))),
@@ -102,12 +102,12 @@ fn bars(db: &Db, c: &Chart) -> ChartOut {
     let (lo, hi) = if lo > hi { (0.0, 1.0) } else { (lo, hi) };
     let w = (hi - lo).max(if c.log_y { 1.0 } else { hi.abs().max(1.0) * 0.1 });
     let x = Axis { key: "family".into(), name: "Materials, by family".into(), sym: String::new(), unit: String::new(), log: false, lim: [-1.0, slot.max(1.0)] };
-    ChartOut { id: c.id, x, y: axis(&c.y, c.log_y, [lo - w * 0.06, hi + w * 0.06]), families, bubbles, hulls: vec![], missing, bands }
+    ChartOut { id: c.id, x, y: axis(db, &c.y, c.log_y, [lo - w * 0.06, hi + w * 0.06]), families, bubbles, hulls: vec![], missing, bands }
 }
 
-fn axis(key: &str, log: bool, lim: [f64; 2]) -> Axis {
-    let p = prop(key);
-    Axis { key: key.into(), name: p.map_or(key, |p| p.name).into(), sym: p.map_or("", |p| p.sym).into(), unit: p.map_or("", |p| p.unit).into(), log, lim }
+fn axis(db: &Db, key: &str, log: bool, lim: [f64; 2]) -> Axis {
+    let p = db.info(key);
+    Axis { key: key.into(), name: p.as_ref().map_or(key.to_string(), |p| p.name.clone()), sym: p.as_ref().map_or(String::new(), |p| p.sym.clone()), unit: p.map_or(String::new(), |p| p.unit), log, lim }
 }
 
 /// Lays out a chart. Families hidden on the chart are left out (not listed as missing).
@@ -119,7 +119,7 @@ pub fn build(db: &Db, c: &Chart) -> ChartOut {
         let fam = m.family.first().cloned().unwrap_or_default();
         if c.hidden.contains(&fam) { continue; }
         let get = |k: &str, log: bool| -> Result<(Pair, Pair), String> {
-            let p = prop(k).map_or(k, |p| p.name).to_lowercase();
+            let p = pname(k).to_lowercase();
             let (lo, hi) = m.props.get(k).and_then(Val::range).ok_or_else(|| format!("no {p}"))?;
             Ok(((lo, hi), span(lo, hi, log).ok_or_else(|| format!("{p} is not above zero, so it cannot go on a log axis"))?))
         };
@@ -167,5 +167,5 @@ pub fn build(db: &Db, c: &Chart) -> ChartOut {
             }
         }
     }
-    ChartOut { id: c.id, x: axis(&c.x, c.log_x, lx), y: axis(&c.y, c.log_y, ly), families, bubbles, hulls, missing, bands: vec![] }
+    ChartOut { id: c.id, x: axis(db, &c.x, c.log_x, lx), y: axis(db, &c.y, c.log_y, ly), families, bubbles, hulls, missing, bands: vec![] }
 }

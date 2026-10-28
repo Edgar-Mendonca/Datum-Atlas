@@ -25,7 +25,9 @@ export interface Chart { id: number; name: string; x: string; y: string; logX: b
 export interface Weight { prop: string; w: number; high: boolean }
 export interface Limit { prop: string; min: number | null; max: number | null; flag: boolean | null; rating: string | null; goal: boolean }
 export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number; rankLine: number; ranking: string; weights: Weight[] }
-export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any }
+/** A property of your own: a formula of other properties, saved with the project; its key is "f:" + name. */
+export interface Formula { name: string; expr: string; unit: string; log: boolean }
+export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[] }
 
 export interface Bubble { id: string; name: string; fam: number; class: string; c: [number, number]; r: [number, number]; x: [number, number]; y: [number, number] }
 export interface Hull { name: string; fam: number; pts: [number, number][]; at: [number, number]; label: boolean; ids: string[] }
@@ -38,6 +40,10 @@ export interface Goal {
   id: string; group: string; name: string; index: string; x: string; y: string; slope: number; above: boolean;
   function: string; constraint: string; objective: string; free: string; why: string; limits: [string, number | null, number | null][];
   also: { x: string; y: string; slope: number; above: boolean; index: string; name: string } | null;
+  /** Formula properties the index needs: [name, formula, unit]. */
+  formulas: [string, string, string][];
+  /** In the index library only, not in the Goal list. */
+  library: boolean;
 }
 export interface Options { theme: string; autosave: number; beta: boolean; openLast: boolean; labels: boolean; guides: boolean; dpi: number; units: string; paper: string; landscape: boolean; company: string; logo: string }
 

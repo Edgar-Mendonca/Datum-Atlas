@@ -1,7 +1,7 @@
 //! Selection: limit, chart and tree stages combined (a material passes when it passes every active
 //! stage), each failure with its reason, and the ranking of the materials that pass by the
 //! performance index of a chart's selection line.
-use crate::db::{Db, SEP};
+use crate::db::{Db, Info, SEP};
 use crate::geometry::{in_polygon, mean, span, t};
 use crate::model::*;
 use crate::units::{fmt, range};
@@ -59,11 +59,14 @@ pub struct LineVal {
 
 /// The index a line of slope n on axes (x, y) selects: Y^(1/n)/X for n > 0, Y^(1/|n|)·X for n < 0.
 pub fn index_name(c: &Chart, n: f64) -> String {
-    let (x, y) = (prop(&c.x).map_or("X", |p| p.sym), prop(&c.y).map_or("Y", |p| p.sym));
+    let sym = |k: &str| prop(k).map_or_else(|| k.strip_prefix("f:").unwrap_or("?").to_string(), |p| p.sym.to_string());
+    let (x, y) = (sym(&c.x), sym(&c.y));
     if !(c.log_x && c.log_y) { return format!("{y} − {}·{x}", fmt(n)); }
-    let pow = |k: f64| [(1.0, ""), (2.0, "½"), (3.0, "⅓"), (4.0, "¼"), (1.5, "⅔"), (0.5, "²"), (1.0 / 3.0, "³")].iter().find(|(v, _)| (v - k).abs() < 1e-9).map_or_else(|| format!("^(1/{})", fmt(k)), |(_, s)| s.to_string());
-    let x = if x.chars().count() > 2 { format!("({x})") } else { x.into() };
-    if n.abs() < 1e-9 { y.into() } else if n > 0.0 { format!("{y}{}/{x}", pow(n)) } else { format!("{y}{}·{x}", pow(-n)) }
+    let pow = |k: f64| [(1.0, ""), (2.0, "½"), (3.0, "⅓"), (4.0, "¼"), (1.5, "⅔"), (0.5, "²"), (1.0 / 3.0, "³"), (2.0 / 3.0, "^1.5")].iter().find(|(v, _)| (v - k).abs() < 1e-9).map_or_else(|| format!("^(1/{})", fmt(k)), |(_, s)| s.to_string());
+    // A long symbol (a formula's name) is bracketed when a power follows it or it divides.
+    let x = if x.chars().count() > 2 { format!("({x})") } else { x };
+    let y = |p: String| if y.chars().count() > 3 && !p.is_empty() { format!("({y}){p}") } else { format!("{y}{p}") };
+    if n.abs() < 1e-9 { y(String::new()) } else if n > 0.0 { format!("{}/{x}", y(pow(n))) } else { format!("{}·{x}", y(pow(-n))) }
 }
 
 /// The y value (stored units) at x where a line of slope n on the chart has index `value`: the
@@ -82,26 +85,26 @@ fn index_at(c: &Chart, n: f64, cx: f64, cy: f64) -> f64 {
     10f64.powf(l)
 }
 
-fn label(p: &Property, lo: f64, hi: f64) -> String {
+fn label(p: &Info, lo: f64, hi: f64) -> String {
     format!("{} {} {}", p.name, range(lo, hi), p.unit).trim_end().into()
 }
 
 /// Checks one limit; Ok(None) passes, Ok(Some(note)) passes with a note, Err(reason) fails.
-fn limit(m: &Material, l: &Limit, st: &Stages) -> Result<Option<String>, String> {
-    let Some(p) = prop(&l.prop) else { return Ok(None) };
+fn limit(db: &Db, m: &Material, l: &Limit, st: &Stages) -> Result<Option<String>, String> {
+    let Some(p) = db.info(&l.prop) else { return Ok(None) };
     let Some(v) = m.props.get(&l.prop) else {
         let why = format!("no data for {}", p.name.to_lowercase());
         return if st.missing == "flag" { Ok(Some(format!("{why} (kept)"))) } else { Err(why) };
     };
     match v {
         Val::Range(lo, hi, _) | Val::RangeT(lo, hi, _, _) => {
-            let x = if let Val::RangeT(_, _, _, t) = v { *t } else { mean(*lo, *hi, p.log) };
+            let x = if let Val::RangeT(_, _, _, t) = v { *t } else { mean(*lo, *hi, p.log && *lo > 0.0) };
             let all = st.rule == "all";
             if let Some(min) = l.min {
-                if (all && *lo < min) || (!all && x < min) { return Err(format!("{} {} {}", label(p, *lo, *hi), if all && x >= min { "is partly below" } else { "<" }, format!("{} {}", fmt(min), p.unit).trim_end())); }
+                if (all && *lo < min) || (!all && x < min) { return Err(format!("{} {} {}", label(&p, *lo, *hi), if all && x >= min { "is partly below" } else { "<" }, format!("{} {}", fmt(min), p.unit).trim_end())); }
             }
             if let Some(max) = l.max {
-                if (all && *hi > max) || (!all && x > max) { return Err(format!("{} {} {}", label(p, *lo, *hi), if all && x <= max { "is partly above" } else { ">" }, format!("{} {}", fmt(max), p.unit).trim_end())); }
+                if (all && *hi > max) || (!all && x > max) { return Err(format!("{} {} {}", label(&p, *lo, *hi), if all && x <= max { "is partly above" } else { ">" }, format!("{} {}", fmt(max), p.unit).trim_end())); }
             }
             Ok(None)
         }
@@ -116,7 +119,7 @@ fn limit(m: &Material, l: &Limit, st: &Stages) -> Result<Option<String>, String>
 /// The material's point on a chart in axis space, or why it has none.
 fn point(m: &Material, c: &Chart) -> Result<[f64; 2], String> {
     let get = |k: &str, log: bool| {
-        let name = prop(k).map_or(k, |p| p.name).to_lowercase();
+        let name = pname(k).to_lowercase();
         let (lo, hi) = m.props.get(k).and_then(Val::range).ok_or_else(|| format!("not on the chart “{}”: no {name}", chart_name(c)))?;
         span(lo, hi, log).map(|s| s.0).ok_or_else(|| format!("not on the chart “{}”: {name} is not above zero", chart_name(c)))
     };
@@ -144,16 +147,16 @@ fn on_chart(c: &Chart, s: &ChartSel, p: [f64; 2]) -> Result<(), String> {
 
 /// A material's value of a property for ranking: its typical value, else the mean of its range
 /// (geometric for log properties).
-fn mid(m: &Material, key: &str) -> Option<f64> {
-    let p = prop(key)?;
-    match m.props.get(key)? { Val::RangeT(_, _, _, t) => Some(*t), Val::Range(lo, hi, _) => Some(mean(*lo, *hi, p.log)), _ => None }.filter(|v| v.is_finite())
+fn mid(db: &Db, m: &Material, key: &str) -> Option<f64> {
+    let p = db.info(key)?;
+    match m.props.get(key)? { Val::RangeT(_, _, _, t) => Some(*t), Val::Range(lo, hi, _) => Some(mean(*lo, *hi, p.log && *lo > 0.0)), _ => None }.filter(|v| v.is_finite())
 }
 
 /// Weighted scores (0–1) of the rows that pass: each property scaled so the best passing material
 /// scores 1 (a ratio for log properties, low to high for linear ones), then averaged by weight.
 fn weighted(db: &Db, rows: &[Row], ws: &[Weight]) -> Vec<Option<f64>> {
     let total: f64 = ws.iter().map(|w| w.w).sum();
-    let cols: Vec<Vec<Option<f64>>> = ws.iter().map(|w| rows.iter().map(|r| db.get(&r.id).and_then(|m| mid(m, &w.prop))).collect()).collect();
+    let cols: Vec<Vec<Option<f64>>> = ws.iter().map(|w| rows.iter().map(|r| db.get(&r.id).and_then(|m| mid(db, m, &w.prop))).collect()).collect();
     let score = |i: usize| -> Option<f64> {
         if total <= 0.0 { return None; }
         let mut s = 0.0;
@@ -161,7 +164,7 @@ fn weighted(db: &Db, rows: &[Row], ws: &[Weight]) -> Vec<Option<f64>> {
             let v = col[i]?;
             let pass: Vec<f64> = col.iter().zip(rows).filter(|(_, r)| r.pass).filter_map(|(v, _)| *v).collect();
             let (lo, hi) = pass.iter().fold((f64::MAX, f64::MIN), |a, &v| (a.0.min(v), a.1.max(v)));
-            let log = prop(&w.prop).is_some_and(|p| p.log) && lo > 0.0 && v > 0.0;
+            let log = db.info(&w.prop).is_some_and(|p| p.log) && lo > 0.0 && v > 0.0;
             let n = if log { if w.high { v / hi } else { lo / v } } else if hi > lo { if w.high { (v - lo) / (hi - lo) } else { (hi - v) / (hi - lo) } } else { 1.0 };
             s += w.w * n.clamp(0.0, 1.0);
         }
@@ -173,7 +176,7 @@ fn weighted(db: &Db, rows: &[Row], ws: &[Weight]) -> Vec<Option<f64>> {
 /// "Weighted: 60 % Density (low), 40 % Price (low)".
 fn weights_name(ws: &[Weight]) -> String {
     let total: f64 = ws.iter().map(|w| w.w).sum();
-    let parts: Vec<String> = ws.iter().map(|w| format!("{} % {} ({})", fmt(100.0 * w.w / total), prop(&w.prop).map_or(w.prop.as_str(), |p| p.name), if w.high { "high" } else { "low" })).collect();
+    let parts: Vec<String> = ws.iter().map(|w| format!("{} % {} ({})", fmt(100.0 * w.w / total), pname(&w.prop), if w.high { "high" } else { "low" })).collect();
     format!("Weighted: {}", parts.join(", "))
 }
 
@@ -194,7 +197,7 @@ pub fn run(db: &Db, pr: &Project) -> Results {
         let (mut fails, mut notes, mut k) = (vec![], vec![], 0);
         if !st.limits.is_empty() {
             let mut ok = true;
-            for l in &st.limits { match limit(m, l, st) { Ok(Some(n)) => notes.push(n), Ok(None) => {} Err(e) => { ok = false; fails.push(e) } } }
+            for l in &st.limits { match limit(db, m, l, st) { Ok(Some(n)) => notes.push(n), Ok(None) => {} Err(e) => { ok = false; fails.push(e) } } }
             if ok { stages[k].pass += 1; }
             k += 1;
         }

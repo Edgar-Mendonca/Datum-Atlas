@@ -6,7 +6,7 @@ import { For, Show, Switch, Match, JSX, createSignal, onCleanup } from "solid-js
 import { Portal } from "solid-js/web";
 import { createStore } from "solid-js/store";
 import { famColor, fmt } from "./api";
-import { out, opts, P, act, view, chart, cur, toast, call, db, mat } from "./store";
+import { out, opts, P, act, view, chart, cur, toast, call, mat , propOf } from "./store";
 import { ChartSvg, Win } from "./chart";
 import { Datasheet } from "./browse";
 import { Pick, Check, Seg } from "./ui";
@@ -70,7 +70,7 @@ const ResultsPrint = () => {
       <Show when={P().notes}><p style={{ "white-space": "pre-wrap" }}>{P().notes}</p></Show>
       <p>{r().pass} of {r().total} materials pass{r().indexName ? `, ranked by ${r().indexName}` : ""}.</p>
       <ul><For each={r().stages}>{s => <li>{s.name}: {s.pass} pass</li>}</For></ul>
-      <Show when={P().stages.limits.length}><p><b>Limits: </b>{P().stages.limits.map(l => { const q = db().props.find(x => x.key === l.prop); return `${q?.name}${l.min !== null ? ` ≥ ${fmt(l.min)}` : ""}${l.max !== null ? ` ≤ ${fmt(l.max)}` : ""}${l.flag !== null ? `: ${l.flag ? "yes" : "no"}` : ""} ${q?.unit ?? ""}`; }).join("; ")}</p></Show>
+      <Show when={P().stages.limits.length}><p><b>Limits: </b>{P().stages.limits.map(l => { const q = propOf(l.prop); return `${q?.name}${l.min !== null ? ` ≥ ${fmt(l.min)}` : ""}${l.max !== null ? ` ≤ ${fmt(l.max)}` : ""}${l.flag !== null ? `: ${l.flag ? "yes" : "no"}` : ""} ${q?.unit ?? ""}`; }).join("; ")}</p></Show>
       <table class="ptable"><thead><tr><th>Rank</th><th>Material</th><th>Family</th><Show when={r().indexName}><th>{r().indexName}</th><th>× best</th></Show></tr></thead>
         <tbody><For each={r().rows.filter(x => x.pass)}>{x => <tr><td>{x.rank}</td><td>{x.name}</td><td>{x.family}</td><Show when={r().indexName}><td class="r">{fmt(x.index)}</td><td class="r">{x.ratio !== null ? fmt(x.ratio) : ""}</td></Show></tr>}</For></tbody></table>
     </div>
