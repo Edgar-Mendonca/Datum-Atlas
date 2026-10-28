@@ -266,7 +266,8 @@ fn a_large_selection_stays_fast() {
     // 1,000 materials (the built-in ones repeated) and a project of 20 charts with lines and limits.
     let mut big = db::builtin();
     let base = big.materials.clone();
-    for k in 1..10 { big.materials.extend(base.iter().map(|m| Material { id: format!("{}-{k}", m.id), des: Default::default(), ..m.clone() })); }
+    for k in 1.. { if big.materials.len() >= 1000 { break } big.materials.extend(base.iter().map(|m| Material { id: format!("{}-{k}", m.id), des: Default::default(), ..m.clone() })); }
+    big.materials.truncate(1000);
     let d = Db::new(big, None);
     let mut p = Project::new("Big");
     let pairs = [("rho", "E"), ("rho", "sy"), ("sy", "kic"), ("alpha", "lam"), ("price", "co2")];

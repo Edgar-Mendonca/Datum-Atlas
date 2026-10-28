@@ -130,7 +130,7 @@ pub const PROPS: &[Property] = &[
     r("acids", "Durability: weak acids", "Durability", "Resistance to weak acids."),
     r("alkalis", "Durability: weak alkalis", "Durability", "Resistance to weak alkalis."),
     r("uv", "Durability: UV light", "Durability", "Resistance to sunlight and UV."),
-    r("flam", "Flammability", "Durability", "How readily it burns."),
+    r("flam", "Fire resistance", "Durability", "How well it resists burning: Excellent does not burn, Poor burns readily."),
     r("cast", "Castability", "Processing", "How well it casts."),
     r("mach", "Machinability", "Processing", "How easily it is machined."),
     r("weld", "Weldability", "Processing", "How well it welds."),

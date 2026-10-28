@@ -4,7 +4,7 @@
 import { For, Show, createSignal } from "solid-js";
 import { createStore } from "solid-js/store";
 import { Material, Source, Val, Out } from "./api";
-import { db, call, setOut, toast, openDialog, closeDialog, openSheet, toShown, toStored, unitOf } from "./store";
+import { db, call, setOut, toast, openDialog, closeDialog, openSheet, toShown, toStored, unitOf, loadDb } from "./store";
 import { Help } from "./help";
 import { Dialog } from "./ui";
 
@@ -56,7 +56,10 @@ export const editMaterial = (base?: Material, copy = false) => openDialog(() => 
     if (!o) return false;
     setOut(o);
     toast(`${material.name} is saved in your database.`, true);
-    setTimeout(() => { const m = o && db().materials.filter(x => x.user && x.name === material.name).pop(); if (m) openSheet(m.id); }, 150);
+    // Open its datasheet once the database has reloaded (it can take a moment with many materials).
+    const d = await loadDb();
+    const m = d.materials.filter(x => x.user && x.name === material.name).pop();
+    if (m) openSheet(m.id);
   };
   const classes = () => [...new Set(db().materials.filter(m => m.family[0] === f.fam && m.family.length > 1).map(m => m.family.slice(1).join(" › ")))];
   return (

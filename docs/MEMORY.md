@@ -77,7 +77,7 @@ flowchart LR
 | `crates/core/src/hardening.rs` | FAMILY §11 tests: failed edits change nothing (incl. a failing `Batch` and goal), random projects and random edits never panic and keep their invariants (finite geometry, counts add up, every failure has a reason), random user databases, damaged `.datlas`/`.datdb` files (cut, garbled, deep nesting), a damaged `.datdb` is an error never empty, atomic save, speed gate (1,000 materials × 20 charts: ~200 ms release, ~1.2 s debug). |
 | `crates/core/src/tests.rs` | Data checks, bad-data detection, unit round trips, bubbles in log space, hulls contain their bubbles (6 axis pairs × family/class), missing values, index lines for slopes 1/2/3 above/below, limits (missing, flag, whole range, flags), combined stages, edits/undo/round trip/templates, user materials, tree and search; derived ranges; every goal (line, ranking by its hand-computed index, limits, Explore); index names; bar charts; checked values cite linked datasheets. |
 | `crates/core/examples/bridge.rs` | The engine over stdin/stdout JSON lines for the UI tests. |
-| `data/*.json`, `data/sources.json` | The built-in database (100 materials, 25 sources: 9 general + 16 datasheets), `status: draft`; 15 metals have `checked` lists (51 values). |
+| `data/*.json`, `data/sources.json` | The built-in database (252 materials, 25 sources: 9 general + 16 datasheets), `status: draft`; 15 metals have `checked` lists (51 values); durability ratings on every material. |
 | `src-tauri/src/main.rs` | Commands in the diagram; options (theme, autosave, beta, openLast, labels, guides, dpi, units, paper, landscape, company, logo); user database file; recovery; recent files; `open_url` only for this repo. |
 | `src-tauri/src/update.rs` | Datum Plan's updater with `REPO = Edgar-Mendonca/Datum-Atlas`. |
 | `ui/index.html` | Icon sprite (Plan/Plot icons recoloured violet + atlas, bar, box, compare, datasheet, db, eco, eye, hull, index, material, pan, poly, process, radar, swap, tree, units). |
@@ -322,6 +322,21 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - "+ compare" in Results, Compare on the card beside the chart;
   - To a spreadsheet and CSV buttons; ribbon Compare, Radar and Report are live.
 - 32 engine tests; UI checks for each of these pass.
+
+### 2026-10-28: Session 11, continued (0.2.0 stage F, data)
+- **252 materials** (+152): 105 metals, 53 polymers, 16 elastomers, 30 ceramics and glasses, 15 composites, 12 foams, 21 natural materials.
+  - New metal classes: tool steels, precious and refractory metals.
+  - New polymer classes: filled and bio-based.
+  - Also thermoplastic elastomers, carbon, wood products, and other composites.
+- **Sources (open rule):**
+  - MIL-HDBK-5 for aerospace alloys, MIL-HDBK-17 for laminates, the Wood Handbook for woods, NIST for some ceramics, NPL tables for pure metals, USGS for pure-metal prices, ICE for CO₂ and energy;
+  - otherwise our labelled compilation of typical ranges. All draft.
+- Fatigue strength and electrical resistivity added to the metals: the "Light part under cyclic load" and "Light electrical conductor" indices now have data (waiting list empty).
+- Durability ratings for every material: fresh water, weak acids, weak alkalis, UV, and fire resistance (renamed from flammability, so Excellent means it does not burn). Our compilation; class defaults with per-material overrides.
+- Expansion left out (a gap, value in the notes) where it is near zero or negative and cannot sit on a log axis: glass-ceramic, high-modulus CFRP, carbon-carbon, CF/PEEK.
+- The data was appended by a one-off script (scratchpad), so the 0.1.1 datasheet checks stay.
+- Fixed: after saving your own material the datasheet opened only if the database reloaded within 150 ms; it now waits for the reload.
+- The speed test builds exactly 1,000 materials (~200 ms release).
 
 ---
 

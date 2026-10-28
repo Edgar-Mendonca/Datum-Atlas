@@ -279,7 +279,7 @@ fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
     p.stages.limits.push(Limit { prop: "price".into(), max: Some(50.0), ..Default::default() });
     let cid = p.charts[0].id;
     // Indices whose properties have no values in the database yet (to be filled with open data).
-    let waiting = ["fatigue-light", "conductor-light"];
+    let waiting: [&str; 0] = [];
     for g in crate::goals::GOALS {
         let mut doc = Doc::new(p.clone());
         let op = crate::goals::apply(&d, &doc.p, cid, g.id);

@@ -138,7 +138,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.fill('.amform input[placeholder^="e.g. Supplier"]', "Test report 7");
   await shot("07-addmat");
   await p.click(".dlg footer .btn.pri");
-  await p.waitForTimeout(600);
+  await p.waitForSelector(".sheetpage h1", { timeout: 8000 }).catch(() => {});
   const h1 = await p.textContent(".sheetpage h1").catch(() => "");
   check("the material is saved and its datasheet opens", h1.startsWith("Test alloy X") && (await p.textContent(".refs")).includes("Test report 7"), h1 + " | " + await p.textContent("#toast").catch(() => ""));
   await p.click('.side button[title="Charts"]');
