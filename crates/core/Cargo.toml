@@ -1,6 +1,6 @@
 [package]
 name = "datum-atlas-core"
-version = "0.2.0"
+version = "0.2.1"
 edition = "2021"
 description = "Datum Atlas engine: materials, units, property charts (bubbles and hulls), selection stages and .datlas files."
 license = "MIT"

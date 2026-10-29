@@ -596,7 +596,7 @@ dependencies = [
 
 [[package]]
 name = "datum-atlas"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "chrono",
  "datum-atlas-core",
@@ -612,7 +612,7 @@ dependencies = [
 
 [[package]]
 name = "datum-atlas-core"
-version = "0.2.0"
+version = "0.2.1"
 dependencies = [
  "calamine",
  "rust_xlsxwriter",

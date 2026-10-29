@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 — 2026-10-29
+
+The publisher name for the whole Datum family.
+
+**Windows**
+- Windows now lists the publisher as Datum.
+
 ## 0.2.0 — 2026-10-28
 
 The big update: sturdier files, several selections and weighted ranking, a library of performance indices and your own formulas, compare and a selection report, about 250 materials, and your own databases with spreadsheet import.
