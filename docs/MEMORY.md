@@ -168,7 +168,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
 | **0.2.0** | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Hardening (safe writes, damaged files set aside, fuzz tests, cargo deny, Windows/macOS CI); several lines, bands, polygons, two-chart goals, keyboard, weighted ranking; 25 goals + 47-index library and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to xlsx/CSV; 252 materials from open sources, durability ratings, 73 values checked; several databases, spreadsheet/CSV import and export; roadmap read from site.json | ✅ |
 | **0.2.1** | Publisher | Windows publisher "Datum" for the whole family (hub FAMILY §9); copyright unchanged | ✅ |
-| 0.3.0 | Eco and process | Eco audit (energy and CO₂ across a product's life, greener substitutes); process selection | 🔜 |
+| 0.3.0 | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | One big update: eco data for every material and public life-cycle factors; eco audit (bill of materials, five life phases, design options, break-even); greener substitutes and eco goals; ~40 processes from public sources, processing ratings; process selection, material–process matrix, cost against batch size. Questions open. | 🔜 |
 | 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
 
 ---
@@ -389,11 +389,14 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - `bundle.publisher` is now "Datum" (hub FAMILY §9, the whole family); `copyright` stays "© 2026 Edgar Mendonca". No other place in the repo writes the publisher name; this repo has no FAMILY.md copy.
 - Version 0.2.1, CHANGELOG, `VERSION_NOW`; released through `release.yml`.
 
+### 2026-10-30: Session 13 (plan for 0.3.0)
+- `docs/PLAN-0.3.0.md`: eco and process as one big update (28 items in 7 groups), with six questions. Found while planning: CO₂ and energy exist for 188 of 252 materials; castability, machinability and weldability are defined but hold no values yet.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** plan 0.3.0 (eco audit and process selection) with a `docs/PLAN-0.3.0.md` and questions first.
+**Next:** answers to [PLAN-0.3.0.md](PLAN-0.3.0.md) §6, then build 0.3.0 in stages A–G.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
