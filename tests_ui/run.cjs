@@ -30,7 +30,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -416,6 +416,27 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(400);
   const gd = await p.textContent(".dlg").catch(() => "");
   check("greener substitutes say their basis", gd.includes("Greener substitutes") && gd.includes("Basis"), gd.slice(0, 300));
+  await p.keyboard.press("Escape");
+  // Process selection: a cast aluminium part; reasons for the others; the cost chart; records.
+  await p.click('.ribbon button[title^="Which processes can make"]');
+  await p.waitForTimeout(300);
+  check("Process Selection opens its page", !!(await p.$(".procpage")));
+  await p.selectOption(".procpage .panel:first-child select", "al-a356-t6");
+  await p.waitForTimeout(250);
+  await p.selectOption(".procpage select.pshape", "3d-hollow");
+  await p.waitForTimeout(250);
+  const why = await p.textContent(".proctable");
+  check("processes that cannot make the part say why", why.includes("does not work") && why.includes("cannot make"), why.slice(0, 300));
+  check("the cost chart draws a curve per process", (await p.$$eval(".procpage svg polyline", e => e.length)) >= 2);
+  check("the cheapest process is named by batch size", /Cheapest:.+ parts/.test(await p.textContent(".procpage")));
+  check("joins and finishes are listed", (await p.textContent(".procpage")).includes("Anodising"));
+  await shot("11-process");
+  await p.click('.ribbon button[title="Every process record"]');
+  await p.waitForTimeout(250);
+  check("the process list shows every record", (await p.$$(".page table.tbl tbody tr")).length >= 50);
+  await p.click('.page button.lnk:has-text("Die casting")');
+  await p.waitForTimeout(200);
+  check("a process record opens", (await p.textContent(".dlg")).includes("Economic batch"));
   await p.keyboard.press("Escape");
 
   // 8. Every view prints; the chart prints as a vector page.

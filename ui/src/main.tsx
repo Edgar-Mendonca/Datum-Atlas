@@ -22,6 +22,7 @@ import { SetupPage, DataPage, SourcesPage, IndexPage } from "./pages";
 import { ReportPage } from "./report";
 import { ComparePage } from "./compare";
 import { EcoPage } from "./eco";
+import { ProcessesPage, ProcessPage } from "./process";
 import { Goal } from "./api";
 import { Menu, Toast, Dialog, Icon } from "./ui";
 import * as D from "./dialogs";
@@ -29,7 +30,7 @@ import * as D from "./dialogs";
 /** The sidebar: Setup first, then the materials, the selection, and the outputs (FAMILY §6). */
 const SIDE: ([View, string, string] | "-")[] = [
   ["setup", "setup", "Setup"], "-", ["browse", "tree", "Browse"], ["datasheet", "datasheet", "Datasheet"], ["charts", "atlas", "Charts"], "-",
-  ["stages", "filter", "Stages"], ["results", "results", "Results"], ["compare", "compare", "Compare"], ["index", "builder", "Index"], "-", ["eco", "eco", "Eco"], ["report", "report", "Report"], ["data", "db", "Data"], ["sources", "source", "Sources"],
+  ["stages", "filter", "Stages"], ["results", "results", "Results"], ["compare", "compare", "Compare"], ["index", "builder", "Index"], "-", ["eco", "eco", "Eco"], ["process", "process", "Process"], ["report", "report", "Report"], ["data", "db", "Data"], ["sources", "source", "Sources"],
 ];
 
 /** The charts shown side by side: the page of n charts that holds the open one, in project order. */
@@ -116,6 +117,8 @@ const App = () => {
               <Match when={view() === "results"}><ResultsPage /></Match>
               <Match when={view() === "compare"}><ComparePage /></Match>
               <Match when={view() === "eco"}><EcoPage /></Match>
+              <Match when={view() === "process"}><ProcessPage /></Match>
+              <Match when={view() === "processes"}><ProcessesPage /></Match>
               <Match when={view() === "index"}><IndexPage /></Match>
               <Match when={view() === "report"}><ReportPage /></Match>
               <Match when={view() === "data"}><DataPage /></Match>

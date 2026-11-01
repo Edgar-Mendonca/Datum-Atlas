@@ -779,3 +779,7 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 @media (max-width: 1100px) { .ecogrid { grid-template-columns: 1fr; } }
 .hscroll { overflow-x: auto; }
 .ecogrid { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
+.proctable tr.fail td { color: var(--muted); }
+.proctable td:last-child { white-space: normal; }
+.matrix td.c { text-align: center; color: var(--blue); }
+.procpage .legend { gap: 10px; font-size: 11px; color: var(--text2); }

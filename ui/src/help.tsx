@@ -6,6 +6,14 @@ import { Dialog } from "./ui";
 
 type Topic = { t: string; what: string; how?: string[]; tip?: string };
 export const HELP: Record<string, Topic> = {
+  processes: { t: "Processes", what: "The manufacturing processes Datum Atlas knows: shaping (casting, moulding, forming, composites), machining, additive manufacturing, joining and finishing, each with what it can make and what it costs.",
+    how: ["Click a process for its record: materials, part mass, section, shapes, tolerance, roughness, economic batch and indicative costs."], tip: "Typical ranges, not a supplier's quote." },
+  process: { t: "Process selection", what: "Which processes can make your part from your material, stage by stage like material selection, and why each other process cannot.",
+    how: ["Choose the material (or press Use … for the one selected on a chart), then the part's mass, thinnest section and shape.", "Add the tolerance and surface roughness it needs, and how many parts you will make.", "Processes that pass every stage come first, cheapest first; the others say what stops them."] },
+  cost: { t: "Cost per part", what: "What one part costs at each batch size: material (with what is wasted) + tooling shared over the batch + the machine's hourly cost divided by its rate.",
+    how: ["Tooling makes small batches dear: the curves fall as the batch grows, then level off at the material and running cost.", "Where the curves cross, the cheapest process changes; the line below the chart says which is cheapest for which batch sizes.", "The dashed line is your batch size; the band is the range from the low and high costs."],
+    tip: "Default costs are indicative and in US dollars; type the material price you pay for a closer figure." },
+  joinfinish: { t: "Joining and finishing", what: "Ways to join your material to itself or to another, and finishes that suit it.", how: ["Pick the second material to see joins that work both.", "Pick what the finish is for (corrosion, wear, decoration…) to narrow the list."] },
   eco: { t: "Eco audit", what: "Energy and CO₂ of a product through its life: making its materials, manufacture, transport, use and end of life. It shows which phase matters most, so you know where a change helps.",
     how: ["Start an audit, or press Eco audit on a datasheet to add that material.", "List the parts: material, finished mass, how many, the process, and what happens at the end.", "Add the transport legs and how the product is used, and its life in years.", "Add a second option (Copy, then change one thing) to compare designs."],
     tip: "Every figure is a range from the values' own ranges. A material without a value is listed in the notes, never counted as zero." },

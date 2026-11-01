@@ -34,6 +34,8 @@ fn exercise(d: &Db, p: &Project, at: &str) {
     let a = crate::eco::audit(d, &p.eco);
     assert!(a.options.iter().all(|o| o.phases.iter().chain([&o.total, &o.net]).all(|v| v.mj.iter().chain(&v.co2).all(|x| x.is_finite()) && v.mj[0] <= v.mj[1] && v.co2[0] <= v.co2[1])), "{at}: an eco figure is not a finite range");
     if let Some(m) = d.materials.first() { let _ = crate::eco::substitutes(d, p, &m.id, 0.2); }
+    let po = crate::process::select(d, p);
+    assert!(po.rows.iter().filter_map(|r| r.cost).all(|c| c[0].is_finite() && c[1].is_finite() && c[0] <= c[1]), "{at}: a process cost is not a finite range");
     assert!(r.stages.iter().all(|s| s.pass <= r.total), "{at}: a stage passes more than all materials");
     assert_eq!(r.rows.iter().filter(|x| x.pass).count(), r.pass, "{at}: pass count differs from the rows");
     for x in &r.rows {
@@ -87,6 +89,8 @@ fn random_project(r: &mut Rng) -> Project {
         use_: Use { kind: r.pick(&["static", "mobile", "none", "?"]).to_string(), kw: r.num(), hours: r.num(), days: r.num(), km: r.num(), vehicle: r.pick(&["car-electric", "aircraft", "?"]).to_string() },
         years: r.num(), ..Default::default()
     }).collect();
+    p.process = crate::process::ProcSel { material: r.pick(&["steel-1020", "pp", "?", ""]).to_string(), mass: r.num(), section: r.num(), shape: r.pick(&["3d-hollow", "?", ""]).to_string(),
+        tol: r.num(), rough: r.num(), batch: r.num(), price: r.num(), join: r.pick(&["al-6061-t6", ""]).to_string(), purpose: r.pick(&["wear", "?"]).to_string() };
     p.normalize();
     p
 }

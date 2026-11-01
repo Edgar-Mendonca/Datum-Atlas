@@ -24,6 +24,8 @@ pub enum Op {
     Compare { ids: Vec<String>, radar: Vec<String> },
     /// Replaces the eco audit (options, parts, transport, use, end of life, grid).
     Eco { eco: crate::eco::Eco },
+    /// Replaces the part for process selection.
+    Process { sel: crate::process::ProcSel },
     Name { name: String },
     Notes { text: String },
     /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
@@ -167,6 +169,13 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 if o.parts.iter().any(|p| p.recycled > 100.0) { return Err("Recycled content is a percentage, up to 100.".into()); }
             }
             p.eco = eco;
+        }
+        Op::Process { sel } => {
+            let nums = [sel.mass, sel.section, sel.tol, sel.rough, sel.batch, sel.price];
+            if nums.iter().any(|v| !(v.is_finite() && *v >= 0.0)) || sel.mass <= 0.0 || sel.section <= 0.0 || sel.batch < 1.0 {
+                return Err("Mass, section and batch are numbers above zero (a batch of at least one); tolerance, roughness and price zero or more.".into());
+            }
+            p.process = sel;
         }
         Op::Name { name } => {
             let name = name.trim().to_string();

@@ -3,7 +3,7 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod update;
 
-use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, eco, export, goals, select, sheet, templates, Database, Material, Project, Source, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, eco, export, process, goals, select, sheet, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{path::{Path, PathBuf}, sync::Mutex};
@@ -91,6 +91,7 @@ struct Out<'a> {
     results: select::Results,
     compare: compare::Compare,
     eco: eco::Audit,
+    process: process::Out,
     db_rev: u64,
 }
 
@@ -101,7 +102,7 @@ fn out(a: &App) -> Value {
     let charts = d.p.charts.iter().map(|c| chart::build(&db, c)).collect();
     serde_json::to_value(Out {
         project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
-        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), db_rev: a.db_rev,
+        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), process: process::select(&db, &d.p), db_rev: a.db_rev,
     })
     .unwrap_or_default()
 }
@@ -150,6 +151,10 @@ fn substitutes(st: State<St>, id: String, tol: f64) -> Value {
     let a = st.lock();
     serde_json::to_value(eco::substitutes(&a.db.with_formulas(&a.doc.p.formulas), &a.doc.p, &id, tol)).unwrap_or_default()
 }
+
+/// The process records (shaping, machining, additive, joining, finishing).
+#[tauri::command]
+fn processes() -> Value { serde_json::to_value(process::processes()).unwrap_or_default() }
 
 #[tauri::command]
 fn goal_list() -> &'static [goals::Goal] {
@@ -647,7 +652,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
         ])
         .run(tauri::generate_context!())

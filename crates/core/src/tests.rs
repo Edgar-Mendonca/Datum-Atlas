@@ -662,3 +662,56 @@ fn greener_substitutes_do_the_same_job_with_less_co2() {
     assert!(s.rows.windows(2).all(|w| w[0].co2 <= w[1].co2) && s.rows.iter().all(|r| r.co2 < 1.0 && r.index.unwrap() >= 0.5));
     assert!(crate::eco::substitutes(&d, &doc.p, "nothing", 0.1).rows.is_empty());
 }
+
+#[test]
+fn process_data_passes_every_check() {
+    let errs = crate::process::check(&db::builtin().sources);
+    assert!(errs.is_empty(), "{}", errs.join("\n"));
+    let ps = crate::process::processes();
+    assert!(ps.len() >= 40, "{} processes", ps.len());
+    for g in ["Shaping", "Machining", "Additive", "Joining", "Finishing"] { assert!(ps.iter().any(|p| p.group == g), "no {g}"); }
+    // Every material can be made by some process, and every metal and polymer has processing ratings.
+    for m in &db::builtin().materials {
+        assert!(ps.iter().any(|p| crate::process::SELECTABLE.contains(&p.group.as_str()) && crate::process::suits(p, m)), "nothing makes {}", m.name);
+        if ["Metals", "Polymers"].contains(&m.family[0].as_str()) { for k in ["cast", "mach", "weld"] { assert!(m.props.contains_key(k), "{}: no {k}", m.name); } }
+    }
+}
+
+#[test]
+fn process_selection_says_why_each_process_fails() {
+    use crate::process::*;
+    let d = db();
+    let mut p = Project::new("t");
+    p.process = ProcSel { material: "al-a356-t6".into(), mass: 2.0, section: 4.0, shape: "3d-hollow".into(), tol: 0.5, rough: 0.0, batch: 20_000.0, ..Default::default() };
+    let o = select(&d, &p);
+    let row = |id: &str| o.rows.iter().find(|r| r.id == id).unwrap();
+    assert!(row("die-cast").reasons.iter().any(|r| r.contains("cannot make")), "die casting makes no hollow parts here");
+    assert!(row("injection-mould").reasons.iter().any(|r| r.contains("does not work")));
+    assert!(row("sand-cast").reasons.iter().any(|r| r.contains("tolerance")));
+    assert!(row("investment-cast").pass && row("perm-mould").pass);
+    assert_eq!(o.pass, o.rows.iter().filter(|r| r.pass).count());
+    assert!(o.rows.iter().take_while(|r| r.pass).count() == o.pass, "passing processes come first");
+    // The cost model: material + tooling shared + overhead; tooling fades as the batch grows.
+    let die = processes().iter().find(|x| x.id == "die-cast").unwrap();
+    let a = cost(die, 1.0, [2.0, 2.0], 10.0);
+    let b = cost(die, 1.0, [2.0, 2.0], 1e6);
+    assert!((a[0] - (2.0 / 0.95 + die.tooling[0] / 10.0 + die.overhead[0] / die.rate[1])).abs() < 1e-9);
+    assert!(b[1] < a[0] && a[0] <= a[1]);
+    let sand = row("sand-cast");
+    assert!(sand.curve.is_empty() && sand.cost.is_none(), "no cost for a process that cannot make the part");
+    let inv = row("investment-cast");
+    assert_eq!(inv.curve.len(), batches().len());
+    assert!(o.cheapest.iter().all(|(_, id)| o.rows.iter().any(|r| &r.id == id && !r.curve.is_empty())));
+    // Joining aluminium to steel, and finishes that protect aluminium from corrosion.
+    p.process.join = "steel-1020".into();
+    p.process.purpose = "corrosion".into();
+    let o = select(&d, &p);
+    assert!(o.joins.contains(&"adhesive".to_string()) && o.joins.contains(&"friction-stir".to_string()) && !o.joins.contains(&"soldering".to_string()));
+    assert!(o.finishes.contains(&"anodise".to_string()) && !o.finishes.contains(&"galvanise".to_string()));
+    // A bad part is refused; a damaged one is mended.
+    let mut doc = Doc::new(Project::new("t"));
+    assert!(doc.apply(Op::Process { sel: ProcSel { mass: -1.0, ..Default::default() } }).is_err());
+    let mut q = ProcSel { mass: f64::NAN, batch: 0.0, shape: "blob".into(), ..Default::default() };
+    q.normalize();
+    assert_eq!((q.mass, q.batch, q.shape.as_str()), (1.0, 1.0, ""));
+}

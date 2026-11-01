@@ -29,7 +29,7 @@ export interface Limit { prop: string; min: number | null; max: number | null; f
 export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number; rankLine: number; ranking: string; weights: Weight[] }
 /** A property of your own: a formula of other properties, saved with the project; its key is "f:" + name. */
 export interface Formula { name: string; expr: string; unit: string; log: boolean }
-export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[]; compare: string[]; radar: string[]; eco: Eco }
+export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[]; compare: string[]; radar: string[]; eco: Eco; process: ProcSel }
 
 /** The eco audit (crates/core eco.rs): design options, each with parts, transport, use and years. */
 export type R2 = [number, number];
@@ -42,6 +42,11 @@ export interface EcoOut { name: string; mass: number; phases: Val2[]; total: Val
 export interface Audit { options: EcoOut[]; breakeven: { a: number; b: number; mjYears: number | null; co2Years: number | null }[]; grid: string }
 export interface Factor { id: string; name: string; mj: R2; co2: R2; kwh: R2 | null; src: string; note: string }
 export interface EcoData { gridMj: R2; gridMjNote: string; processes: Factor[]; machining: Factor; transport: Factor[]; vehicles: Factor[]; grid: Factor[]; eol: { collect: R2; burnEff: R2; downcycle: R2; src: string; note: string } }
+/** Process selection (crates/core process.rs). */
+export interface ProcSel { material: string; mass: number; section: number; shape: string; tol: number; rough: number; batch: number; price: number; join: string; purpose: string }
+export interface Process { id: string; name: string; group: string; kind: string; fam: string[]; mass: R2; section: R2; shapes: string[]; tol: R2; rough: R2; batch: R2; tooling: R2; rate: R2; overhead: R2; scrap: R2; eco: string; permanent: boolean; watertight: boolean; purposes: string[]; note: string; src: string }
+export interface ProcRow { id: string; name: string; group: string; kind: string; pass: boolean; reasons: string[]; cost: R2 | null; curve: [number, number, number][] }
+export interface ProcOut { rows: ProcRow[]; stages: [string, number][]; pass: number; cheapest: [number, string][]; price: R2 | null; matrix: { mats: [string, string][]; procs: [string, string][]; ok: boolean[][] }; joins: string[]; finishes: string[]; notes: string[] }
 export interface Subs { of: string; basis: string; note: string; rows: { id: string; name: string; family: string; co2: number; index: number | null; gives: [string, number][] }[] }
 
 export interface Bubble { id: string; name: string; fam: number; class: string; c: [number, number]; r: [number, number]; x: [number, number]; y: [number, number] }
@@ -52,7 +57,7 @@ export interface Row { id: string; name: string; family: string; pass: boolean; 
 export interface Results { total: number; pass: number; stages: { kind: string; name: string; chart: number; pass: number }[]; rows: Row[]; indexName: string; rankChart: number; rankLine: number; lines: { chart: number; k: number; name: string; value: number }[] }
 /** Compare: per property each material's typical value, which is highest and lowest, and the radar positions (0–1 across the database). */
 export interface Compare { ids: string[]; rows: { key: string; vals: (number | null)[]; hi: number | null; lo: number | null; spread: number | null }[]; radar: { keys: string[]; vals: (number | null)[][] } }
-export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; compare: Compare; eco: Audit; dbRev: number }
+export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; compare: Compare; eco: Audit; process: ProcOut; dbRev: number }
 /** Colours of the materials compared (and their radar outlines). */
 export const CMP_COLORS = ["#6C4AB6", "#E69F00", "#009E73", "#D55E00", "#0072B2", "#CC79A7"];
 export interface Goal {
