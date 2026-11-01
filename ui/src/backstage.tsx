@@ -52,6 +52,8 @@ const Home = () => {
           <button class="tile" onClick={() => { setBackstage(null); show("browse"); }}><div class="pic"><svg class="ic"><use href="#i-tree" /></svg></div><b>Material Library</b><span>Every material by family, with its values; sort, search and copy to a spreadsheet.</span></button>
           <button class="tile" onClick={() => { setBackstage(null); editMaterial(); }}><div class="pic"><svg class="ic"><use href="#i-material" /></svg></div><b>Add a material</b><span>Your own material, with a source for each value.</span></button>
           <button class="tile" onClick={() => { setBackstage(null); show("sources"); }}><div class="pic"><svg class="ic"><use href="#i-source" /></svg></div><b>Sources</b><span>Where every value comes from: open and public sources only.</span></button>
+          <button class="tile" onClick={() => { setBackstage(null); show("eco"); }}><div class="pic"><svg class="ic"><use href="#i-eco" /></svg></div><b>Eco audit</b><span>Energy and CO₂ through a product's life, and greener substitutes.</span></button>
+          <button class="tile" onClick={() => { setBackstage(null); show("process"); }}><div class="pic"><svg class="ic"><use href="#i-process" /></svg></div><b>Process selection</b><span>Which processes can make your part, and the cost against batch size.</span></button>
           <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Atlas will do, and when.</span></button>
           <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Atlas selection (.datlas).</span></button>
         </div>

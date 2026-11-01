@@ -24,6 +24,9 @@ export const gettingStarted = () => openDialog(() => (
       <ul><li><b>Results</b> lists what passes, ranked by the index, with “× best” against the leader, and says why each other material fails.</li>
         <li>Several indices at once? Rank by a <b>weighted</b> score instead of one line.</li>
         <li>Put the best few side by side in <b>Compare</b>, open their datasheets, check their references, and make the <b>Report</b>: requirements, charts, shortlist, comparison and datasheets in one document.</li></ul>
+      <h4>5 · Check its life and how to make it</h4>
+      <ul><li>The <b>Eco audit</b> adds up energy and CO₂ from making the material to the end of the product's life, and names the phase that matters most. <b>Greener substitutes</b> finds materials that do the same job with less CO₂.</li>
+        <li><b>Process selection</b> keeps the processes that can make your part from your material, says why the others cannot, and draws the cost per part against batch size.</li></ul>
       <p class="muted">Start from File › Home: “Light, stiff beam” sets up steps 2–4 for you. Planned features are shown dimmed; Help › Roadmap says when each arrives.</p>
     </div>
   </Dialog>
@@ -42,6 +45,11 @@ const GLOSSARY: [string, [string, string][]][] = [
     ["Stage", "One step of the selection: limits, a chart selection, or families left out. A material passes when it passes every stage."],
     ["Limit", "A minimum or maximum value (or yes/no, or a lowest rating) that a material must meet."],
     ["× best", "A material's index divided by the best material's: 1 for the best, 0.5 for half as good."],
+    ["Life phases", "Material, manufacture, transport, use and end of life: the eco audit adds up energy and CO₂ in each."],
+    ["Break-even", "The years of use after which a design that costs more to make, but less to use, has caught up with another."],
+    ["Economic batch size", "The range of part numbers a process suits: below it the tooling is too dear per part; above it, other processes are faster."],
+    ["Tooling cost", "The cost of dies, moulds and fixtures for a process, shared over the batch."],
+    ["Tolerance and roughness", "How close to size a process can make a part (± mm), and how smooth its surface is (Ra, µm)."],
     ["Band", "Two facing selection lines on one chart: the materials between them pass."],
     ["Weighted ranking", "Ranking by several properties at once, each scaled from worst to best and given a weight."],
     ["Index library", "Performance indices for common designs, each with its function, constraint, objective and free variable. Plot one, or build your own."],
@@ -65,6 +73,9 @@ const GLOSSARY: [string, [string, string][]][] = [
     ["Typical value", "The value most often met inside the range (geometric mean when not given)."],
     ["No data", "A property not known for a material. Shown as a gap, never as zero. A limit on it can fail the material or keep it, marked."],
     ["Reference", "Where a value comes from: each value points to a source, listed on the datasheet."],
+    ["Recycled fraction", "The share of today's supply of a material that is recycled; recycled material usually takes far less energy to make."],
+    ["Heat of combustion", "The heat released by burning one kilogram. Burning a material at the end of its life wins back part of it."],
+    ["Downcycling", "Reusing a material as a lower-grade one: crushed concrete as fill, chipped wood as board, ground rubber as crumb."],
     ["Database", "A file of materials (.datdb). Your own materials are one; others from colleagues can be opened beside the built-in data."],
     ["Durability rating", "How well a material stands water, acids, alkalis, sunlight (UV) and fire, from Unacceptable to Excellent."],
     ["Draft value", "A built-in value compiled from the named source but not yet checked against its exact table or page."],

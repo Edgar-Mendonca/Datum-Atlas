@@ -7,12 +7,12 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the Ashby method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.2.1** (released 2026-10-29: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.2.1). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md) |
+| **Current version** | **0.3.0** (released 2026-11-01: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.0). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
 | **Stack** | Rust engine (`crates/core`) + Rust shell (`src-tauri`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. Own SVG chart engine (geometry in Rust). Chart.js later for bar/radar, GridCraft later for expressions. **No Python.** |
-| **Code size** | About 7,800 lines: core 3,180 (35 tests, incl. hardening), shell 790, UI 3,440 TSX/TS + CSS, UI tests 415 (72 checks); data: 252 materials, 36 sources, 73 values checked |
+| **Code size** | About 9,100 lines: core 3,970 (42 tests, incl. hardening), shell 810, UI 3,860 TSX/TS + CSS, UI tests 470 (86 checks); data: 252 materials, 44 sources, 73 values checked, 55 processes, eco factors |
 
 ---
 
@@ -94,6 +94,10 @@ flowchart LR
 | `ui/src/compare.tsx`, `ui/src/report.tsx` | The Compare page with the radar, and the selection report (screen and print). |
 | `crates/core/src/sheet.rs` | Spreadsheets in and out of a database: `read`, `from_text`, `guess`, `range`, `to_database`, `of_database`, `bytes`. |
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
+| `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
+| `crates/core/src/process.rs` | Processes (`data/processes.json`), `suits`, `ProcSel` in the project, `select` (stages with reasons, `cost` and curves, cheapest by batch, shortlist matrix, joins, finishes), `check`. |
+| `ui/src/eco.tsx`, `ui/src/process.tsx` | The Eco page (options, parts, transport, use, bars, break-even chart, `greener` dialog, `exportEco`), the Process selection and Processes pages (`procCard`, cost chart). |
+| `data/eco.json`, `data/processes.json` | Eco factors (processes, machining, transport, vehicles, grids, end of life) and the 55 process records, each with its source. |
 | `ui/src/help.tsx` | `HELP` (26 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
 | `ui/src/pages.tsx` | Setup (requirements, goal list, design problems), `goalCard` (Why), Sources page (kinds, licences, cites), Data (your materials, families, sources), `Later` pages for Compare, Index builder, Report; `MiniChart`. |
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
@@ -154,6 +158,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | Derived properties are computed by the engine at load, not stored | One source of truth; they follow corrections automatically. |
 | 0.1.0 | Logo: violet log–log axes, a dotted selection line between two family envelopes (the upper one with a violet bubble), the amber diamond at the line's end | The user asked for a better violet logo; it keeps FAMILY §5. |
 | 2026-10-29 | Windows publisher "Datum" for every Datum app (hub FAMILY §9); copyright stays "© 2026 Edgar Mendonca" | One family name in Windows Apps and the installer. |
+| 2026-11-01 | Eco and process values are compiled by class from open sources and labelled drafts; a value no open source supports stays a gap (beryllium, zirconium, leather and bone energy; water use) | The open-sources rule; gaps, never zero. |
+| 2026-11-01 | The eco audit and process selection live in the engine (`eco.rs`, `process.rs`) and in the project file (`eco`, `process`), so they undo, save and go into the report | Engine logic in `crates/core`; older files open with empty ones. |
 
 ---
 
@@ -168,8 +174,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.1.1** | Goals, units, search ([PLAN-0.1.1.md](PLAN-0.1.1.md)) | 22 design goals (axes, line, suggested limits, Why card); derived properties; Home tiles and Sources page; SI/imperial; Tell Me finds goals and materials; bar charts; Copy Picture; label nudging; ? help; 51 metal values checked against datasheets | ✅ |
 | **0.2.0** | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Hardening (safe writes, damaged files set aside, fuzz tests, cargo deny, Windows/macOS CI); several lines, bands, polygons, two-chart goals, keyboard, weighted ranking; 25 goals + 47-index library and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to xlsx/CSV; 252 materials from open sources, durability ratings, 73 values checked; several databases, spreadsheet/CSV import and export; roadmap read from site.json | ✅ |
 | **0.2.1** | Publisher | Windows publisher "Datum" for the whole family (hub FAMILY §9); copyright unchanged | ✅ |
-| 0.3.0 | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | One big update: eco data for every material and public life-cycle factors; eco audit (bill of materials, five life phases, design options, break-even); greener substitutes and eco goals; ~40 processes from public sources, processing ratings; process selection, material–process matrix, cost against batch size. Questions open. | 🔜 |
-| 1.0.0 | Stable | ~1,000 materials, user guide, signed installer | ⬜ |
+| **0.3.0** | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | End-of-life data for every material (recycling energy and CO₂, recycled fraction, heat of combustion, combustion CO₂, downcycle/burn/biodegrade flags), 60 primary-energy gaps filled; `data/eco.json` factors; eco audit (parts, transport, use, years; five phases as ranges; up to four options; break-even; to a spreadsheet); greener substitutes; 5 more eco indices (52); 55 processes, cast/mach/weld ratings; process selection with reasons, cost against batch, shortlist matrix, joins and finishes; report sections | ✅ |
+| 1.0.0 | Stable | ~1,000 materials with pictures, user guide, signed installer | 🔜 |
 
 ---
 
@@ -392,11 +398,19 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-10-30: Session 13 (plan for 0.3.0)
 - `docs/PLAN-0.3.0.md`: eco and process as one big update (28 items in 7 groups), with six questions. Found while planning: CO₂ and energy exist for 188 of 252 materials; castability, machinability and weldability are defined but hold no values yet.
 
+### 2026-11-01: Session 14 (0.3.0: eco and process)
+- Answers to PLAN-0.3.0: "all good, go ahead"; defaults used (§7). Water use not added (no open per-material source).
+- Stage A: 8 new eco properties; generator `gen3/eco.py` (scratchpad, not committed) fills them by class with overrides; primary energy and CO₂ for 60 of 64 gaps (Nuss & Eckelman 2014 for metals, ICE v3, or our labelled estimate); beryllium, zirconium, leather and bone stay gaps. Sources: atlas-eco, atlas-eco-est, nuss-2014, ember-2024, desnz-2024, doe-bandwidth, mit-gutowski (link checked by search).
+- Stages B and C: `eco.rs` audit and substitutes with tests (hand-worked phases, break-even, gaps, edits refused, damaged files mended) and hardening; Eco page; greener dialog; 5 eco indices.
+- Stages D and E: `gen3/procs.py` and `gen3/ratings.py` (scratchpad) write the 55 processes and the cast/mach/weld ratings; `process.rs` with tests; Process selection and Processes pages. Drilling removed (a feature, not a way to make a part).
+- Stage F: report sections 6 Eco audit and 7 Manufacture; eco audit to a spreadsheet (`export_results` with `what: "eco"`); Home tiles; Getting Started step 5; Glossary terms; ? cards (eco, ecoParts, ecoTransport, ecoUse, ecoOptions, greener, processes, process, cost, joinfinish).
+- Checks: clippy, cargo test (42), check:ui, test:ui (86 checks), cargo deny, the real app under Xvfb. Released 0.3.0.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** answers to [PLAN-0.3.0.md](PLAN-0.3.0.md) §6, then build 0.3.0 in stages A–G.
+**Next:** plan 1.0.0 (about 1,000 materials with pictures, user guide, signed installer) with a `docs/PLAN-1.0.0.md` and questions first; and more values checked against their sources.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
@@ -404,6 +418,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Built-in values are drafts with document-level references, except 73 values checked against datasheets (from search-quoted figures; a pass that opens each document is planned). Still drafts with no primary source found: 1020, 1080, 304, grey iron, AZ91, CoCr F75, lead, tin, tungsten, most polymers.
 - Envelopes are convex per group, not concave.
 - Copy Picture is not yet tried on a real Windows clipboard.
+- Eco and process values are drafts by class (our compilation, labelled), not checked value by value; costs are indicative USD; water use is not in the data.
+- The eco audit and process pages work in SI units only (kg, km, MJ, mm).
 - Import reads the first sheet of a workbook only; the radar places log properties on a log scale, which can surprise.
 - Windows SmartScreen warns on the first install (unsigned).
 

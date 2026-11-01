@@ -8,7 +8,7 @@
   "for": "Design and materials engineers, and students.",
   "about": [
     "Datum Atlas helps you pick a material and show why it is the right one. Choose a design goal, such as a light, stiff beam or a cheap, strong tie, and Atlas sets the property chart, the selection line and the limits for you.",
-    "Every material is a bubble spanning its range of values, grouped by family. Limits, index lines, bands, boxes, drawn shapes and whole families left out narrow the field; the materials that pass are ranked, by one index or by weighted properties, and every one that fails says why. Compare the best side by side and print a report. Every value names its source, and you can add, import and share your own materials."
+    "Every material is a bubble spanning its range of values, grouped by family. Limits, index lines, bands, boxes, drawn shapes and whole families left out narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best side by side, add up their energy and CO₂ through a product's life, find the processes that can make the part and what it costs, and print a report. Every value names its source, and you can add, import and share your own materials."
   ],
   "steps": [
     {
@@ -20,40 +20,35 @@
       "text": "Move the selection line, add limits and boxes, and watch the field narrow."
     },
     {
-      "title": "Rank, compare and report",
-      "text": "See the materials that pass, ranked. Compare the best side by side, then print the selection report or send the results to a spreadsheet."
+      "title": "Rank, check and report",
+      "text": "See the materials that pass, ranked. Compare the best, audit their energy and CO₂, choose how to make the part, and print the selection report."
     }
   ],
   "highlights": [
     "About 250 materials from every family, compiled from open and public sources. Every value names its source; 73 values are checked against published datasheets so far, and gaps stay gaps, never zero.",
-    "Property charts of any two properties or of your own formulas, with family envelopes, zoom, pan, the best materials labelled and labels kept apart; bar charts; up to four charts side by side.",
-    "25 design goals and a library of 47 performance indices, with an index builder; a goal sets the axes, the selection line and the limits in one pick, and explains why.",
+    "Property charts of any two properties or of your own formulas, with family envelopes, the best materials labelled and labels kept apart; bar charts; up to four charts side by side.",
+    "25 design goals and a library of 52 performance indices, including low-carbon and low-energy ones, with an index builder; a goal sets the axes, the selection line and the limits in one pick, and explains why.",
     "Selection by limits, index lines, bands, boxes, drawn shapes and families; results ranked by an index or by weighted properties, with the reason every other material fails.",
-    "Compare up to six materials in a table and a radar chart, and print a selection report with the charts, the shortlist and the datasheets.",
-    "Your own materials and formula properties; import from a spreadsheet or CSV, open a colleague's database, and export results and materials to a spreadsheet. SI or imperial units everywhere."
+    "An eco audit: energy and CO₂ of a product from its materials to the end of its life, for up to four design options, with the largest phase named, the break-even life, and greener substitutes for the same job.",
+    "Process selection from 55 processes: the ones that can make your part from your material, why the others cannot, and the cost per part against batch size; joins and finishes that suit it.",
+    "Compare up to six materials with a radar chart, and print a selection report with the charts, shortlist, eco audit, manufacture and datasheets. Your own materials and databases, spreadsheet and CSV import and export, SI or imperial units."
   ],
   "screenshots": [
     "docs/images/chart.png",
     "docs/images/results.png",
+    "docs/images/eco.png",
+    "docs/images/process.png",
     "docs/images/browse.png",
     "docs/images/datasheet.png"
   ],
   "roadmap": [
     {
-      "v": "0.3.0",
-      "title": "Eco and process",
-      "when": "Next",
-      "items": [
-        "Energy and CO₂ across a product's life, and greener substitutes.",
-        "Choose manufacturing processes alongside materials."
-      ]
-    },
-    {
       "v": "1.0.0",
       "title": "Stable",
-      "when": "Goal",
+      "when": "Next",
       "items": [
-        "About 1,000 materials, a user guide and a signed installer."
+        "About 1,000 materials, with pictures and microstructures.",
+        "A user guide and a signed installer."
       ]
     }
   ]

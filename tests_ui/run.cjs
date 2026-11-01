@@ -291,7 +291,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(500);
   const rep = await p.textContent(".report");
   const nch = (await state()).project.charts.length;
-  check("the report holds the requirements, stages, charts, shortlist, comparison and datasheets", ["1 · Requirements", "2 · Selection stages", "3 · Property charts", "4 · Shortlist", "5 · Comparison", "6 · Datasheets of the candidates", "Sources"].every(h => rep.includes(h)) && (await p.$$eval(".report figure.rfig", e => e.length)) === nch);
+  check("the report holds the requirements, stages, charts, shortlist, comparison and datasheets", ["1 · Requirements", "2 · Selection stages", "3 · Property charts", "4 · Shortlist", "5 · Comparison", "8 · Datasheets of the candidates", "Sources"].every(h => rep.includes(h)) && (await p.$$eval(".report figure.rfig", e => e.length)) === nch);
   await shot("16-report");
 
   // Your own data: import from a CSV with the columns guessed, open another database and close it.
@@ -438,6 +438,10 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(200);
   check("a process record opens", (await p.textContent(".dlg")).includes("Economic batch"));
   await p.keyboard.press("Escape");
+  await p.click('.side button[title="Report"]');
+  await p.waitForTimeout(300);
+  const rep2 = await p.textContent(".report");
+  check("the report adds the eco audit and the manufacture", rep2.includes("6 · Eco audit") && rep2.includes("7 · Manufacture") && rep2.includes("Investment casting"), rep2.slice(0, 200));
 
   // 8. Every view prints; the chart prints as a vector page.
   for (const [v, want] of [["Charts", ".ppage svg.chartsvg"], ["Datasheet", ".pflow .sheetpage"], ["Results", ".pflow .ptable"]]) {

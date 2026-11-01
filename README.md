@@ -35,15 +35,17 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
 4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Features (0.2.0)
+## Features (0.3.0)
 
 - **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
 - **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
-- **25 design goals and 47 performance indices.** A goal sets the axes, draws the selection line of the right slope through the best materials, adds the limits it needs and ranks the results; goals with two constraints set up two charts. “Why?” explains the function, constraint, objective and free variable. An **index builder** makes your own.
+- **25 design goals and 52 performance indices**, low-carbon and low-energy ones among them. A goal sets the axes, draws the selection line of the right slope through the best materials, adds the limits it needs and ranks the results; goals with two constraints set up two charts. “Why?” explains the function, constraint, objective and free variable. An **index builder** makes your own.
 - **Formula properties and axes**: define σy/ρ or any formula of the properties; it is calculated for every material, with its range, and works in charts, limits and tables.
 - **Property charts** of any two properties, log or linear; family envelopes; hover for ranges, click for the datasheet; zoom, pan, guide lines; the best materials labelled with labels that keep apart; classic, publication and mono styles; **up to four charts side by side**. **Bar charts** of one property.
 - **Selection**: limits, several selection lines, bands, boxes, drawn shapes and families left out. Results ranked by an index with “× best”, or by **weighted properties**; every failure explained.
-- **Compare** up to six materials in a table and a **radar chart**, and print a **selection report** with the requirements, charts, shortlist, comparison and datasheets.
+- **Eco audit**: energy and CO₂ of a product from its materials to the end of its life (material, manufacture, transport, use, end of life), as ranges, for up to four design options, with the largest phase named and the break-even life. **Greener substitutes** find materials that do the same job with less CO₂.
+- **Process selection** from 55 processes (casting, moulding, forming, composites, machining, 3D printing): the ones that can make your part from your material, why the others cannot, the **cost per part against batch size**, and joins and finishes that suit it. Castability, machinability and weldability for every metal and polymer.
+- **Compare** up to six materials in a table and a **radar chart**, and print a **selection report** (with the eco audit and the manufacture) with the requirements, charts, shortlist, comparison and datasheets.
 - **Your own data**: add materials by hand, **import from a spreadsheet or CSV**, open a colleague's database beside the built-in data, and save yours as a database, a spreadsheet or CSV. Results go to a spreadsheet too.
 - **SI or imperial units** everywhere; derived properties such as specific stiffness, cost per volume and thermal diffusivity.
 - **Browse** with a family tree and a spreadsheet-like table, **datasheets** with numbered references, and a **Sources** page.
@@ -57,12 +59,15 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 <td><img src="docs/images/datasheet.png" alt="A datasheet with references"></td>
 <td><img src="docs/images/add-material.png" alt="Add a material of your own"></td>
 </tr><tr>
+<td><img src="docs/images/eco.png" alt="Eco audit: energy and CO₂ by life phase for two design options"></td>
+<td><img src="docs/images/process.png" alt="Process selection: the processes that can make a cast aluminium part and the cost per part against batch size"></td>
+</tr><tr>
 <td colspan="2"><img src="docs/images/sources.png" alt="Sources: every source with the materials and values that cite it"></td>
 </tr></table>
 
 ## Coming next
 
-Eco and process (0.3.0): energy and CO₂ across a product's life, greener substitutes, and manufacturing processes chosen alongside materials. Then 1.0.0: about 1,000 materials, a user guide and a signed installer. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+1.0.0: about 1,000 materials with pictures and microstructures, a user guide and a signed installer. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Install
 

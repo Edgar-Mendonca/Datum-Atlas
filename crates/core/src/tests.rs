@@ -383,6 +383,7 @@ fn bands_polygons_and_old_files() {
     let p = Project::from_json(old).unwrap();
     assert_eq!(p.charts[0].sels.len(), 1);
     assert!(!serde_json::to_string(&p).unwrap().contains("\"select\""), "the old field is never written");
+    assert!(p.eco.options.is_empty() && p.process == crate::process::ProcSel::default(), "an older file opens with an empty audit and part");
 }
 
 #[test]
@@ -601,6 +602,9 @@ fn eco_audit_works_out_each_phase() {
     assert_eq!(o.phases[2].mj, [10.0, 16.0], "10 tonne·km by truck at 1 to 1.6 MJ");
     assert!(near(o.phases[3].co2[0], 200.0 * 0.45) && near(o.phases[3].co2[1], 200.0 * 0.5), "200 kWh on the world grid");
     assert!(near(o.phases[4].mj[0], 1.0) && near(o.phases[4].mj[1], 3.0), "landfill handling");
+    let t = crate::export::eco(&a);
+    assert_eq!(t.rows.len(), 5 + 2 + 1, "five phases, two totals, one part");
+    assert!(crate::export::csv(&t).contains("Material") && crate::export::xlsx(&t, "Eco").is_ok());
     assert_eq!(o.dominant, "Use");
     // Recycled content lowers the material phase; recycling at end of life is a credit (negative).
     let mut rec = opt.clone();

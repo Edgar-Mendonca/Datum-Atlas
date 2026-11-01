@@ -6,11 +6,12 @@ import { CMP_COLORS, fmt, goalId, lineOf } from "./api";
 import { out, P, act, db, mat, propOf, vtext, unitOf, srcOf, goals, setBackstage, toShown } from "./store";
 import { ChartSvg } from "./chart";
 import { Radar } from "./compare";
+import { PHASES } from "./eco";
 import { Check } from "./ui";
 import { Help } from "./help";
 
-type Parts = { charts: boolean; shortlist: boolean; compare: boolean; sheets: boolean; n: number };
-const parts = (): Parts => ({ charts: true, shortlist: true, compare: true, sheets: true, n: 3, ...((P().ui?.report ?? {}) as Partial<Parts>) });
+type Parts = { charts: boolean; shortlist: boolean; compare: boolean; eco: boolean; process: boolean; sheets: boolean; n: number };
+const parts = (): Parts => ({ charts: true, shortlist: true, compare: true, eco: true, process: true, sheets: true, n: 3, ...((P().ui?.report ?? {}) as Partial<Parts>) });
 const setPart = (k: keyof Parts, v: boolean | number) => act({ Ui: { key: "report", value: { ...parts(), [k]: v } } }, true);
 const KEYS = ["rho", "price", "E", "sy", "ts", "kic", "elong", "tmax", "lam", "alpha", "co2", "ee", "recyclable"];
 
@@ -50,7 +51,19 @@ export const ReportDoc = (p: { print?: boolean }) => {
         <div class="rcmp"><Radar size={360} print /><table class="ptable"><thead><tr><th>Property</th><For each={out()!.compare.ids}>{(id, m) => <th><i class="dot" style={{ background: CMP_COLORS[m()] }} />{mat(id)?.name}</th>}</For></tr></thead>
           <tbody><For each={out()!.compare.rows.filter(x => KEYS.includes(x.key))}>{row => <tr><td>{propOf(row.key)?.name} <span class="muted">{unitOf(row.key)}</span></td>
             <For each={out()!.compare.ids}>{(id, m) => <td classList={{ hi: row.hi === m(), lo: row.lo === m() }}>{vtext(row.key, mat(id)?.props[row.key])}</td>}</For></tr>}</For></tbody></table></div></Show>
-      <Show when={parts().sheets && candidates().length}><h2>6 · Datasheets of the candidates</h2>
+      <Show when={parts().eco && out()!.eco.options.length}><h2>6 · Eco audit</h2>
+        <p class="small">Energy and CO₂ through the product's life, on the electricity grid “{out()!.eco.grid}”. Middle values, with the range in the table of the Eco page; the end-of-life credit is shown apart.</p>
+        <table class="ptable"><thead><tr><th>Option</th><th class="r">kg</th>{PHASES.map(ph => <th class="r">{ph}, kg CO₂</th>)}<th class="r">Total, kg CO₂</th><th class="r">Total, MJ</th></tr></thead>
+          <tbody><For each={out()!.eco.options}>{o => <tr><td>{o.name}</td><td class="r">{fmt(o.mass)}</td><For each={o.phases}>{v => <td class="r">{fmt((v.co2[0] + v.co2[1]) / 2)}</td>}</For>
+            <td class="r"><b>{fmt((o.total.co2[0] + o.total.co2[1]) / 2)}</b></td><td class="r">{fmt((o.total.mj[0] + o.total.mj[1]) / 2)}</td></tr>}</For></tbody></table>
+        <For each={out()!.eco.options.filter(o => o.dominant)}>{o => <p class="small"><b>{o.name}:</b> {o.dominant} is the largest phase. {o.advice}</p>}</For>
+        <For each={out()!.eco.breakeven.filter(b => b.co2Years !== null)}>{b => <p class="small">{out()!.eco.options[b.b].name} breaks even with {out()!.eco.options[b.a].name} on CO₂ after {fmt(b.co2Years)} years of use.</p>}</For>
+        <Show when={out()!.eco.options.some(o => o.notes.length)}><ul class="small"><For each={out()!.eco.options.flatMap(o => o.notes.map(n => `${o.name}: ${n}`))}>{n => <li>{n}</li>}</For></ul></Show></Show>
+      <Show when={parts().process && pr().process.material && mat(pr().process.material)}><h2>7 · Manufacture</h2>
+        <p class="small">{mat(pr().process.material)!.name}, a part of {fmt(pr().process.mass)} kg, {fmt(pr().process.section)} mm thinnest section{pr().process.shape ? `, ${pr().process.shape.replace("3d-", "3-D ")}` : ""}{pr().process.tol ? `, ± ${fmt(pr().process.tol)} mm` : ""}, {fmt(pr().process.batch)} parts. {out()!.process.pass} processes can make it.</p>
+        <table class="ptable"><thead><tr><th>Process</th><th class="r">USD per part (indicative)</th></tr></thead>
+          <tbody><For each={out()!.process.rows.filter(r => r.pass).slice(0, 8)}>{r => <tr><td>{r.name}</td><td class="r">{r.cost ? `${fmt(Math.sqrt(r.cost[0] * r.cost[1]))} (${fmt(r.cost[0])} – ${fmt(r.cost[1])})` : ""}</td></tr>}</For></tbody></table></Show>
+      <Show when={parts().sheets && candidates().length}><h2>8 · Datasheets of the candidates</h2>
         <For each={candidates()}>{id => { const m = () => mat(id)!; return <Show when={mat(id)}><div class="rsheet"><h3>{m().name}</h3><p class="muted">{m().family.join(" › ")}{Object.keys(m().des).length ? ` · ${Object.entries(m().des).map(([k, v]) => `${k} ${v}`).join(", ")}` : ""}</p>
           <table class="ptable"><tbody><For each={KEYS.filter(k => m().props[k])}>{k => { const v = m().props[k]; return <tr><td>{propOf(k)?.name}</td><td>{vtext(k, v)} {unitOf(k)}</td><td class="muted small">{srcOf(String(v[v.length === 4 ? 2 : v.length - 1]))?.title}{m().checked?.includes(k) ? " ✓" : ""}</td></tr>; }}</For></tbody></table>
           <Show when={m().uses}><p class="small">Uses: {m().uses}</p></Show></div></Show>; }}</For></Show>
@@ -65,7 +78,7 @@ export const ReportPage = () => (
   <div class="page reportpage">
     <div class="ptools"><h1>Selection report <Help k="report" /></h1><span class="grow" />
       <Check label="Charts" value={parts().charts} set={v => setPart("charts", v)} /><Check label="Shortlist" value={parts().shortlist} set={v => setPart("shortlist", v)} />
-      <Check label="Comparison" value={parts().compare} set={v => setPart("compare", v)} /><Check label="Datasheets" value={parts().sheets} set={v => setPart("sheets", v)} />
+      <Check label="Comparison" value={parts().compare} set={v => setPart("compare", v)} /><Check label="Eco audit" value={parts().eco} set={v => setPart("eco", v)} /><Check label="Manufacture" value={parts().process} set={v => setPart("process", v)} /><Check label="Datasheets" value={parts().sheets} set={v => setPart("sheets", v)} />
       <label class="inline">of <input type="number" min="1" max="6" style={{ width: "46px" }} value={parts().n} onChange={e => setPart("n", Math.max(1, Math.min(6, +e.currentTarget.value || 3)))} /> candidates</label>
       <button class="btn pri" onClick={() => setBackstage("print")}>Print / Save as PDF</button></div>
     <div class="rpaper"><ReportDoc /></div>

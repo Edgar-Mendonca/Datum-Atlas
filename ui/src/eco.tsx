@@ -24,6 +24,9 @@ const part = (material: string, name: string): EcoPart => ({ name, material, mas
 const rtext = (r: R2) => Math.abs(r[1] - r[0]) < 1e-9 * Math.max(1, Math.abs(r[1])) ? fmt(r[0]) : `${fmt((r[0] + r[1]) / 2)} (${fmt(r[0])} – ${fmt(r[1])})`;
 const mid = (r: R2) => (r[0] + r[1]) / 2;
 
+/** The audit as a spreadsheet or CSV. */
+export const exportEco = async (fmt: "xlsx" | "csv") => { const path = await call<string | null>("export_results", { fmt, what: "eco" }); if (path) toast(`Saved ${path}`, true); };
+
 /** Starts an audit (or adds a part to the open option) with a material. */
 export const auditMaterial = async (id: string) => {
   const m = mat(id); if (!m) return;
@@ -91,6 +94,7 @@ export const EcoPage = () => {
               <button title="A copy of this option, to change one thing" onClick={() => edit(e => { const c = structuredClone(e.options[k()]); c.name += " (copy)"; e.options.push(c); }).then(() => setOptK(eco().options.length - 1))}>Copy</button></Show></div>
           <label class="inline">Name <input value={o().name} onChange={e => editOpt(x => { x.name = e.currentTarget.value || x.name; })} style={{ width: "160px" }} /></label>
           <button class="btn sm" onClick={() => edit(e => { e.options.splice(k(), 1); }).then(() => setOptK(0))}>Delete option</button>
+          <button class="btn sm" title="Every option, phase and part, as .xlsx" onClick={() => exportEco("xlsx")}>To a spreadsheet</button>
           <span class="grow" />
           <label class="inline">Electricity <select value={eco().grid} onChange={e => edit(x => { x.grid = e.currentTarget.value; })}><For each={d()?.grid ?? []}>{g => <option value={g.id} selected={g.id === eco().grid}>{g.name} ({fmt(mid(g.co2))} kg CO₂/kWh)</option>}</For></select></label>
         </div>

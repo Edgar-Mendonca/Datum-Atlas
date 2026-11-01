@@ -49,6 +49,21 @@ pub fn results(db: &Db, p: &Project) -> Table {
     Table { head, rows }
 }
 
+/// The eco audit as a table: for every option, each life phase, the totals and each part, with the
+/// low and high of CO₂ (kg) and energy (MJ), and the notes.
+pub fn eco(a: &crate::eco::Audit) -> Table {
+    let head = ["Option", "Line", "CO₂ low (kg)", "CO₂ high (kg)", "Energy low (MJ)", "Energy high (MJ)", "Notes"].map(String::from).to_vec();
+    let mut rows = vec![];
+    let line = |o: &str, l: &str, v: &crate::eco::Val2, note: String| vec![Cell::Text(o.into()), Cell::Text(l.into()), Cell::Num(v.co2[0]), Cell::Num(v.co2[1]), Cell::Num(v.mj[0]), Cell::Num(v.mj[1]), Cell::Text(note)];
+    for o in &a.options {
+        for (k, v) in o.phases.iter().enumerate() { rows.push(line(&o.name, crate::eco::PHASES[k], v, if crate::eco::PHASES[k] == o.dominant { "the largest phase".into() } else { String::new() })); }
+        rows.push(line(&o.name, "Total (without end of life)", &o.total, format!("{} kg product", crate::units::fmt(o.mass))));
+        rows.push(line(&o.name, "Net (with end of life)", &o.net, o.notes.join("; ")));
+        for p in &o.parts { rows.push(line(&o.name, &format!("Part: {} ({}), material", p.name, p.material), &p.material_v, String::new())); }
+    }
+    Table { head, rows }
+}
+
 /// CSV with quotes where needed, and a byte-order mark.
 pub fn csv(t: &Table) -> String {
     let q = |s: &str| if s.contains([',', '"', '\n', '\r']) || s.starts_with(['=', '+', '-', '@']) { format!("\"{}\"", s.replace('"', "\"\"")) } else { s.to_string() };

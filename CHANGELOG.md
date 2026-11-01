@@ -1,5 +1,37 @@
 # Changelog
 
+## 0.3.0 — 2026-11-01
+
+Eco and process: an eco audit of a product's whole life, greener substitutes, and process selection with the cost per part against batch size.
+
+**Eco data**
+- Every material now has its end of life: the energy and CO₂ to make it from recycled material, the recycled share of today's supply, its heat of combustion and the CO₂ from burning it, and whether it can be downcycled, burnt for energy or biodegrade.
+- Energy and CO₂ of primary production for 60 more materials, from open datasets or a labelled estimate. Four stay gaps because no open source gives a fair figure.
+- Public factors for transport (sea, rail, road, air), vehicles, electricity in eleven countries and regions, and the energy of the main manufacturing processes, each with its source.
+
+**Eco audit**
+- Describe a product as parts (material, mass, number, process, chips machined away, recycled content, end of life), how it travels and how it is used, for how many years.
+- Energy and CO₂ for each life phase (material, manufacture, transport, use, end of life) as ranges, with a bar chart, the largest phase named and what usually helps. A missing value is listed in the notes, never counted as zero.
+- Up to four design options side by side; copy one to change one thing. A chart of CO₂ against years of use shows where a lighter but energy-hungrier design pays back.
+- The audit goes into the selection report and to a spreadsheet.
+
+**Greener substitutes**
+- From a datasheet, the ribbon or a part of the audit: materials that pass the same stages, with an index nearly as good, and less CO₂ for the same job, with what you give up (price, strength, temperature).
+- Five more low-carbon and low-energy indices in the library (52 in all).
+
+**Processes**
+- 55 processes: casting, moulding, forming, powder, composite and glass forming, machining, cutting, 3D printing, joining and finishing, each with the materials it suits, part mass, section, shapes, tolerance, roughness, economic batch and indicative costs.
+- Castability, machinability and weldability for every metal and polymer.
+
+**Process selection**
+- Describe the part (material, mass, thinnest section, shape, tolerance, roughness, batch size): the processes that can make it come first, and every other one says why it cannot.
+- Cost per part against batch size for each process (material with what is wasted, tooling shared over the batch, running cost), with the cheapest process for each batch size.
+- Which processes suit each shortlisted material, ways to join it to another material, and finishes for what you need (corrosion, wear, decoration…).
+- The chosen part and its processes go into the selection report.
+
+**Help**
+- Home tiles for the eco audit and process selection, Getting Started step 5, new Glossary terms, and a ? card for every new tool.
+
 ## 0.2.1 — 2026-10-29
 
 The publisher name for the whole Datum family.

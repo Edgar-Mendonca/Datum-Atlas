@@ -3,12 +3,13 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.2.1";
+export const VERSION_NOW = "0.3.0";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
   "0.2.0": "The big update: sturdier, indices and formulas, compare and report, 250 materials, your own data",
   "0.2.1": "Windows lists the publisher as Datum",
+  "0.3.0": "Eco and process: eco audit, greener substitutes, process selection and cost",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */
@@ -65,7 +66,7 @@ export const FEATURES: Feature[] = [
   ["D4", "Selection report", "0.2.0", "Requirements, stages, charts, the ranked shortlist and the datasheets in one document."],
   ["E1", "Eco audit", "0.3.0", "Energy and CO₂ through the life of a product: material, manufacture, transport, use and end of life."],
   ["E2", "Eco charts", "0.3.0", "A bar chart per life phase and a comparison of design options."],
-  ["E3", "Greener substitutes", "0.3.0", "Materials like this one, but with less CO₂ or less cost."],
+  ["E3", "Greener substitutes", "0.3.0", "Materials that do the same job with less CO₂, and what you give up."],
   ["F1", "Process records", "0.3.0", "Casting, moulding, machining, forming, joining and additive manufacturing, with size, shape, tolerance, roughness and batch size."],
   ["F2", "Process selection", "0.3.0", "Which processes can make your part from your material, and why others cannot."],
   ["F3", "Cost model", "0.3.0", "Cost per part against batch size for each process."],

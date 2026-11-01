@@ -783,3 +783,4 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .proctable td:last-child { white-space: normal; }
 .matrix td.c { text-align: center; color: var(--blue); }
 .procpage .legend { gap: 10px; font-size: 11px; color: var(--text2); }
+.proctable button.lnk { text-align: left; }

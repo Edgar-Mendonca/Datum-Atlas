@@ -1,6 +1,6 @@
 # Datum Atlas 0.3.0: eco and process, one big update (plan)
 
-Status: **questions open** (§6). Written 2026-10-30. The user: "write the 0.3.0 plan as one big update". Built like 0.2.0: stages, each pushed when its checks pass, one release at the end.
+Status: **built and released as 0.3.0** (§7). Written 2026-10-30. The user: "write the 0.3.0 plan as one big update". Built like 0.2.0: stages, each pushed when its checks pass, one release at the end.
 
 ---
 
@@ -98,3 +98,15 @@ About 5,000 to 6,000 new lines (engine ~2,200 with tests, window ~2,500, UI test
 4. **Processes:** is about 40 the right number, and are the five groups (shaping, machining, joining, additive, finishing) right?
 5. **Data checks:** the network is unchanged, so eco and process values come from what search results quote of public sources, labelled as such. Keep that, or open the environment's network access so the documents themselves can be opened?
 6. **Windows:** anything wrong in 0.2.0 or 0.2.1 on a real PC (printing, Copy Picture, the updater, the new publisher name)? Fixes go first in 0.3.0.
+
+## 7. Answers (2026-11-01)
+
+The user: "all good, go ahead and build 0.3.0". So §2 as written, with the defaults the questions proposed:
+1. **The list:** all of §2.
+2. **Use phase:** simple: electricity used (kW, hours, days) or the product's own mass carried by a vehicle.
+3. **Cost model:** indicative default costs, labelled as such, and a material price you can type.
+4. **Processes:** about 40 selectable plus joining and finishing, in the groups proposed (55 records in all; drilling was dropped as a feature, not a way to make a whole part).
+5. **Data checks:** network unchanged; values compiled from open and public sources and labelled as drafts.
+6. **Windows:** nothing reported.
+
+**Built differently:** water use (§2 item 5) was not added: no open source gives it per material, and a property with almost no values would mislead. It stays a gap for a later release.

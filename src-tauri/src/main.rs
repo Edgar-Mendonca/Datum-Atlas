@@ -394,13 +394,14 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
 
 /// Saves the ranked results with their reasons as a spreadsheet (.xlsx) or CSV.
 #[tauri::command]
-async fn export_results(app: AppHandle, st: State<'_, St>, fmt: String) -> R<Option<String>> {
+async fn export_results(app: AppHandle, st: State<'_, St>, fmt: String, what: Option<String>) -> R<Option<String>> {
+    let eco = what.as_deref() == Some("eco");
     let (name, bytes) = {
         let a = st.lock();
         let db = a.db.with_formulas(&a.doc.p.formulas);
-        let t = export::results(&db, &a.doc.p);
+        let t = if eco { export::eco(&eco::audit(&db, &a.doc.p.eco)) } else { export::results(&db, &a.doc.p) };
         let bytes = if fmt == "csv" { export::csv(&t).into_bytes() } else { export::xlsx(&t, &a.doc.p.name)? };
-        (format!("{} results.{}", a.doc.p.name, if fmt == "csv" { "csv" } else { "xlsx" }), bytes)
+        (format!("{} {}.{}", a.doc.p.name, if eco { "eco audit" } else { "results" }, if fmt == "csv" { "csv" } else { "xlsx" }), bytes)
     };
     let ext = if fmt == "csv" { "csv" } else { "xlsx" };
     let Some(path) = app.dialog().file().add_filter(if fmt == "csv" { "CSV" } else { "Spreadsheet" }, &[ext]).set_file_name(&name).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
