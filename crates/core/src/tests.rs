@@ -274,7 +274,7 @@ fn derived_properties_span_every_combination() {
 fn every_goal_draws_its_line_ranks_by_its_index_and_adds_its_limits() {
     let d = db();
     assert_eq!(crate::goals::GOALS.iter().filter(|g| !g.library).count(), 25);
-    assert_eq!(crate::goals::GOALS.len(), 47, "25 goals and 22 more indices in the library");
+    assert_eq!(crate::goals::GOALS.len(), 52, "25 goals and 27 more indices in the library");
     let mut p = crate::templates::build(&d, Some("blank")).unwrap();
     p.stages.limits.push(Limit { prop: "price".into(), max: Some(50.0), ..Default::default() });
     let cid = p.charts[0].id;

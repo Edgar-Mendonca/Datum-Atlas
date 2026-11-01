@@ -30,7 +30,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -379,10 +379,43 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   }
   check("every ribbon tab fits at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
+  // Eco audit: start one, a part, its phases; a lighter copy and where it breaks even; greener substitutes.
   await p.click('.tabs button:has-text("Report")');
-  await p.click('.ribbon button[title^="Eco Audit"]');
+  await p.click('.ribbon button[title^="Energy and CO₂"]');
   await p.waitForTimeout(200);
-  check("a planned command opens its card", (await p.textContent(".dlg").catch(() => "")).includes("0.3.0") && (await p.textContent(".dlg").catch(() => "")).includes("Eco and process"));
+  check("Eco Audit opens the eco page", !!(await p.$(".ecopage")));
+  await p.click('.ecopage button:has-text("Start an audit")');
+  await p.waitForTimeout(300);
+  await p.click('.ecopage button:has-text("+ Part")');
+  await p.waitForTimeout(300);
+  const prow = '.ecoparts tbody tr:last-child';
+  await p.selectOption(`${prow} td:nth-child(2) select`, "steel-1020");
+  await p.waitForTimeout(250);
+  await p.fill(`${prow} td:nth-child(3) input`, "10"); await p.press(`${prow} td:nth-child(3) input`, "Tab");
+  await p.waitForTimeout(250);
+  const kpi = await p.textContent(".ecokpi");
+  check("the audit totals CO₂ and energy as ranges", /\d/.test(kpi) && kpi.includes("kg CO₂") && kpi.includes("–"), kpi);
+  check("each life phase has its bar", (await p.$$eval(".ecocharts > div:first-child svg rect", e => e.length)) === 5);
+  check("the largest phase is named with what helps", (await p.textContent(".ecodom")).includes("Material"));
+  await p.click('.ecopage label:has-text("Carried in a vehicle") input');
+  await p.waitForTimeout(250);
+  const useNum = '.ecopage .panel:has(h2:has-text("Use")) input[type=number]';
+  await p.fill(useNum, "20000"); await p.press(useNum, "Tab");
+  await p.waitForTimeout(250);
+  await p.click('.otabs button:has-text("Copy")');
+  await p.waitForTimeout(300);
+  await p.selectOption(`${prow} td:nth-child(2) select`, "al-6061-t6");
+  await p.waitForTimeout(250);
+  await p.fill(`${prow} td:nth-child(3) input`, "5"); await p.press(`${prow} td:nth-child(3) input`, "Tab");
+  await p.waitForTimeout(300);
+  const side = await p.textContent(".ecopage").catch(() => "");
+  check("two options break even after some years", /breaks even after [\d.]+ years/.test(side), side.slice(-400));
+  check("the break-even chart draws a line per option", (await p.$$eval(".ecogrid svg line[stroke^='#']", e => e.length)) >= 2);
+  await shot("10-eco");
+  await p.click('.ecoparts button.lnk:has-text("greener?")');
+  await p.waitForTimeout(400);
+  const gd = await p.textContent(".dlg").catch(() => "");
+  check("greener substitutes say their basis", gd.includes("Greener substitutes") && gd.includes("Basis"), gd.slice(0, 300));
   await p.keyboard.press("Escape");
 
   // 8. Every view prints; the chart prints as a vector page.

@@ -2,6 +2,7 @@
 // engine (selection.ts): sort by a heading, select cells, rows or columns, Ctrl+C to Excel.
 // Datasheet: every property of one material, grouped, with its range, unit and reference.
 import { For, Show, createMemo, createSignal } from "solid-js";
+import { greener, auditMaterial } from "./eco";
 import { Material, mid, isRange, SEP, famColor, fmt } from "./api";
 import { Help } from "./help";
 import { vtext, unitOf, toShown, db, node, setNode, query, setQuery, cur, setCur, openSheet, failed, out, propOf, srcOf, mat, call, toast, openMenu, show } from "./store";
@@ -102,6 +103,8 @@ export const Datasheet = (p: { id?: string; print?: boolean }) => {
         <div class="shead"><i class="sw" style={{ background: famColor(famIndex(m())) }} /><div><h1>{m().name} <Show when={!p.print}><Help k="datasheet" /></Show></h1><div class="muted">{m().family.join(" › ")}</div></div><span class="grow" />
           <Show when={!p.print}><span class="inline">
             <button class="btn sm" onClick={() => show("browse")}>Browse</button>
+            <button class="btn sm" title="Materials that do the same job with less CO₂" onClick={() => greener(m().id)}>Greener substitutes</button>
+            <button class="btn sm" title="Add it to the eco audit" onClick={() => auditMaterial(m().id)}>Eco audit</button>
             {m().user ? <button class="btn sm" onClick={() => editMaterial(m())}>Edit</button> : <button class="btn sm" onClick={() => editMaterial(m(), true)}>Copy as my material</button>}</span></Show></div>
         <div class="sfacts">
           <Show when={Object.keys(m().des).length}><div><b>Designations</b><span>{Object.entries(m().des).map(([k, v]) => `${k} ${v}`).join(" · ")}</span></div></Show>
