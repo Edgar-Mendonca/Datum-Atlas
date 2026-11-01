@@ -31,6 +31,9 @@ fn exercise(d: &Db, p: &Project, at: &str) {
     }
     let r = select::run(d, p);
     assert!(r.pass <= r.total && r.rows.len() == r.total, "{at}: counts do not add up");
+    let a = crate::eco::audit(d, &p.eco);
+    assert!(a.options.iter().all(|o| o.phases.iter().chain([&o.total, &o.net]).all(|v| v.mj.iter().chain(&v.co2).all(|x| x.is_finite()) && v.mj[0] <= v.mj[1] && v.co2[0] <= v.co2[1])), "{at}: an eco figure is not a finite range");
+    if let Some(m) = d.materials.first() { let _ = crate::eco::substitutes(d, p, &m.id, 0.2); }
     assert!(r.stages.iter().all(|s| s.pass <= r.total), "{at}: a stage passes more than all materials");
     assert_eq!(r.rows.iter().filter(|x| x.pass).count(), r.pass, "{at}: pass count differs from the rows");
     for x in &r.rows {
@@ -75,6 +78,15 @@ fn random_project(r: &mut Rng) -> Project {
     p.stages.rank_line = r.below(4) as usize;
     p.stages.ranking = r.pick(&["line", "weighted", "?"]).to_string();
     p.stages.weights = (0..r.below(4)).map(|_| Weight { prop: r.pick(&keys).to_string(), w: r.num().abs().min(10.0), high: r.below(2) == 0 }).collect();
+    // An eco audit with odd numbers and choices.
+    use crate::eco::{Leg, Opt, Part, Use};
+    p.eco.options = (0..r.below(3)).map(|_| Opt {
+        parts: (0..r.below(4)).map(|_| Part { material: r.pick(&["steel-1020", "pp", "bone", "oak-l", "?"]).to_string(), mass: r.num(), qty: r.num(), removed: r.num(), recycled: r.num(),
+            process: r.pick(&["cast", "mould", "?"]).to_string(), eol: r.pick(&["recycle", "burn", "downcycle", "landfill", "?"]).to_string(), ..Default::default() }).collect(),
+        legs: vec![Leg { mode: r.pick(&["sea", "air", "?"]).to_string(), km: r.num() }],
+        use_: Use { kind: r.pick(&["static", "mobile", "none", "?"]).to_string(), kw: r.num(), hours: r.num(), days: r.num(), km: r.num(), vehicle: r.pick(&["car-electric", "aircraft", "?"]).to_string() },
+        years: r.num(), ..Default::default()
+    }).collect();
     p.normalize();
     p
 }

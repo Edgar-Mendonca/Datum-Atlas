@@ -565,3 +565,100 @@ fn other_databases_sit_beside_the_built_in_data() {
     assert!(d.sources.iter().any(|s| s.id == "d2:s1"));
     assert!(db::check(&Database { materials: d.materials.iter().filter(|m| !m.origin.is_empty()).cloned().collect(), ..Default::default() }, &d.sources).is_empty());
 }
+
+#[test]
+fn eco_data_passes_every_check() {
+    let d = db::builtin();
+    let errs = crate::eco::check(crate::eco::data(), &d.sources);
+    assert!(errs.is_empty(), "{}", errs.join("\n"));
+    let mut no_eco = vec![];
+    for m in &d.materials {
+        let r = |k: &str| m.props.get(k).and_then(Val::range);
+        if let (Some(e), Some(rc)) = (r("ee"), r("rc_ee")) { assert!(rc.1 <= e.1, "{}: recycling takes more energy than primary", m.name); }
+        if let (Some(c), Some(rc)) = (r("co2"), r("rc_co2")) { assert!(rc.1 <= c.1, "{}: recycling releases more CO₂ than primary", m.name); }
+        if m.props.contains_key("rc_ee") { assert!(m.props.get("recyclable").and_then(Val::flag) == Some(true), "{}: recycling values on a material that is not recyclable", m.name); }
+        if m.props.contains_key("hc") { assert!(m.props.contains_key("co2_comb"), "{}: heat of combustion without its CO₂", m.name); }
+        if r("ee").is_none() { no_eco.push(m.id.as_str()); }
+    }
+    // The gaps left on purpose: no open source gives a fair figure.
+    assert_eq!(no_eco, ["be", "zr-r60804", "leather", "bone"]);
+}
+
+#[test]
+fn eco_audit_works_out_each_phase() {
+    use crate::eco::*;
+    let d = db();
+    let e = |k: &str| d.get("steel-1020").unwrap().props[k].range().unwrap();
+    let (ee, co2) = (e("ee"), e("co2"));
+    let part = Part { name: "Bracket".into(), material: "steel-1020".into(), mass: 10.0, ..Default::default() };
+    let opt = Opt { name: "Steel".into(), parts: vec![part.clone()], legs: vec![Leg { mode: "truck".into(), km: 1000.0 }],
+        use_: Use { kind: "static".into(), kw: 0.1, hours: 10.0, days: 100.0, ..Default::default() }, years: 2.0 };
+    let a = audit(&d, &Eco { options: vec![opt.clone()], grid: "world".into() });
+    let o = &a.options[0];
+    let near = |x: f64, y: f64| (x - y).abs() < 1e-9 * y.abs().max(1.0);
+    assert!(near(o.phases[0].mj[0], 10.0 * ee.0) && near(o.phases[0].mj[1], 10.0 * ee.1), "material: mass × embodied energy");
+    assert!(near(o.phases[0].co2[1], 10.0 * co2.1));
+    assert_eq!(o.phases[2].mj, [10.0, 16.0], "10 tonne·km by truck at 1 to 1.6 MJ");
+    assert!(near(o.phases[3].co2[0], 200.0 * 0.45) && near(o.phases[3].co2[1], 200.0 * 0.5), "200 kWh on the world grid");
+    assert!(near(o.phases[4].mj[0], 1.0) && near(o.phases[4].mj[1], 3.0), "landfill handling");
+    assert_eq!(o.dominant, "Use");
+    // Recycled content lowers the material phase; recycling at end of life is a credit (negative).
+    let mut rec = opt.clone();
+    rec.parts[0].recycled = 100.0;
+    rec.parts[0].eol = "recycle".into();
+    let b = audit(&d, &Eco { options: vec![rec], grid: "world".into() });
+    assert!(b.options[0].phases[0].mj[1] < o.phases[0].mj[0]);
+    assert!(b.options[0].phases[4].mj[1] < 0.0 && b.options[0].net.mj[1] < b.options[0].total.mj[1]);
+    // Steel cannot be burnt for energy: said, and left out (never a silent zero).
+    let mut burn = opt.clone();
+    burn.parts[0].eol = "burn".into();
+    let c = audit(&d, &Eco { options: vec![burn], grid: "world".into() });
+    assert!(c.options[0].notes.iter().any(|n| n.contains("not combustible")));
+    // A material without embodied energy is a reported gap.
+    let mut gap = opt;
+    gap.parts[0].material = "bone".into();
+    let g = audit(&d, &Eco { options: vec![gap], grid: "world".into() });
+    assert!(g.options[0].notes.iter().any(|n| n.contains("gap")) && g.options[0].phases[0].mj == [0.0, 0.0]);
+}
+
+#[test]
+fn eco_break_even_of_a_lighter_option() {
+    use crate::eco::*;
+    let d = db();
+    let car = |mat: &str, kg: f64| Opt { name: mat.into(), parts: vec![Part { material: mat.into(), mass: kg, ..Default::default() }], legs: vec![],
+        use_: Use { kind: "mobile".into(), vehicle: "car-petrol".into(), km: 10_000.0, ..Default::default() }, years: 15.0 };
+    let a = audit(&d, &Eco { options: vec![car("steel-1020", 10.0), car("al-6061-t6", 5.0)], grid: "world".into() });
+    let (s, al) = (&a.options[0], &a.options[1]);
+    assert!((s.rate[0] - 2.0 * al.rate[0]).abs() < 1e-9, "half the mass, half the fuel");
+    let t = a.breakeven[0].mj_years.expect("the lighter, energy-hungrier option pays back");
+    assert!((t - (al.fixed[0] - s.fixed[0]) / (s.rate[0] - al.rate[0])).abs() < 1e-9 && t > 0.0);
+}
+
+#[test]
+fn eco_audit_edits_are_checked() {
+    use crate::eco::*;
+    let mut doc = Doc::new(Project::new("t"));
+    let bad = Eco { options: vec![Opt { parts: vec![Part { mass: -1.0, ..Default::default() }], ..Default::default() }], ..Default::default() };
+    assert!(doc.apply(Op::Eco { eco: bad }).is_err());
+    assert!(doc.apply(Op::Eco { eco: Eco { options: vec![Opt::default(); 5], ..Default::default() } }).is_err());
+    // A damaged file is mended on opening: numbers in range, unknown choices back to defaults.
+    let mut p = Project::new("t");
+    p.eco = Eco { grid: "mars".into(), options: vec![Opt { years: f64::NAN, parts: vec![Part { recycled: 400.0, eol: "x".into(), process: "y".into(), ..Default::default() }], ..Default::default() }] };
+    let mut back = p.clone();
+    back.normalize();
+    let o = &back.eco.options[0];
+    assert_eq!((back.eco.grid.as_str(), o.parts[0].recycled, o.parts[0].eol.as_str(), o.parts[0].process.as_str()), ("world", 100.0, "landfill", "none"));
+    assert!(o.years.is_finite());
+}
+
+#[test]
+fn greener_substitutes_do_the_same_job_with_less_co2() {
+    let d = db();
+    let mut doc = Doc::new(crate::templates::build(&d, Some("beam")).unwrap());
+    doc.apply(Op::SetStages { stages: Stages::default() }).unwrap();
+    let s = crate::eco::substitutes(&d, &doc.p, "steel-1020", 0.5);
+    assert!(s.basis.contains("same job"), "{}", s.basis);
+    assert!(!s.rows.is_empty());
+    assert!(s.rows.windows(2).all(|w| w[0].co2 <= w[1].co2) && s.rows.iter().all(|r| r.co2 < 1.0 && r.index.unwrap() >= 0.5));
+    assert!(crate::eco::substitutes(&d, &doc.p, "nothing", 0.1).rows.is_empty());
+}

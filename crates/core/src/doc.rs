@@ -22,6 +22,8 @@ pub enum Op {
     SetFormulas { formulas: Vec<Formula> },
     /// The materials to compare (up to six) and the radar chart's properties (empty: the default set).
     Compare { ids: Vec<String>, radar: Vec<String> },
+    /// Replaces the eco audit (options, parts, transport, use, end of life, grid).
+    Eco { eco: crate::eco::Eco },
     Name { name: String },
     Notes { text: String },
     /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
@@ -155,6 +157,16 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             let mut seen = vec![];
             for id in ids { if !seen.contains(&id) { seen.push(id) } }
             (p.compare, p.radar) = (seen, radar);
+        }
+        Op::Eco { eco } => {
+            if eco.options.len() > crate::eco::MAX_OPTS { return Err(format!("Compare up to {} design options.", crate::eco::MAX_OPTS)); }
+            for o in &eco.options {
+                if o.parts.len() > crate::eco::MAX_PARTS { return Err(format!("Up to {} parts in one option.", crate::eco::MAX_PARTS)); }
+                let nums = o.parts.iter().flat_map(|p| [p.mass, p.qty, p.removed, p.recycled]).chain(o.legs.iter().map(|l| l.km)).chain([o.years, o.use_.kw, o.use_.hours, o.use_.days, o.use_.km]);
+                if nums.into_iter().any(|v| !(v.is_finite() && v >= 0.0)) { return Err("Masses, distances, years and the like are numbers of zero or more.".into()); }
+                if o.parts.iter().any(|p| p.recycled > 100.0) { return Err("Recycled content is a percentage, up to 100.".into()); }
+            }
+            p.eco = eco;
         }
         Op::Name { name } => {
             let name = name.trim().to_string();

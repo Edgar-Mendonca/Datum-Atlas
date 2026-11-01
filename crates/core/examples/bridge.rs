@@ -2,7 +2,7 @@
 //! ({"cmd": "...", "args": {...}}), one JSON answer per line on stdout ({"ok": ...} or {"err": "..."}).
 //! It answers the shell's commands that need the engine, without files or the OS:
 //! cargo run -q -p datum-atlas-core --example bridge
-use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, goals, select, sheet, templates, Database, Material, Source, Val, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, eco, goals, select, sheet, templates, Database, Material, Source, Val, FORMAT};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
@@ -15,7 +15,7 @@ fn rebuild(s: &mut St) { s.db = Db::new(db::builtin(), Some(&s.user)).with_other
 fn out(s: &St) -> Value {
     let db = s.db.with_formulas(&s.doc.p.formulas);
     let charts: Vec<_> = s.doc.p.charts.iter().map(|c| chart::build(&db, c)).collect();
-    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "dbRev": s.db_rev })
+    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "eco": eco::audit(&db, &s.doc.p.eco), "dbRev": s.db_rev })
 }
 
 fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
@@ -31,6 +31,8 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "history" => { if a["redo"].as_bool().unwrap_or(false) { s.doc.redo() } else { s.doc.undo() } out(s) }
         "new_project" => { s.doc = Doc::new(templates::build(&s.db, a["template"].as_str()).ok_or("Unknown template.")?); out(s) }
         "goal_list" => json!(goals::GOALS),
+        "eco_data" => json!(eco::data()),
+        "substitutes" => json!(eco::substitutes(&s.db.with_formulas(&s.doc.p.formulas), &s.doc.p, a["id"].as_str().unwrap_or(""), a["tol"].as_f64().unwrap_or(0.1))),
         "templates" => json!(templates::list()),
         "database" => json!({ "materials": s.db.materials, "sources": s.db.sources, "userCount": s.db.user_count, "props": db::props_out(), "tree": db::tree(&s.db.materials), "rev": s.db_rev }),
         "save_material" => {

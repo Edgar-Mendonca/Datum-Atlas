@@ -140,6 +140,14 @@ pub const PROPS: &[Property] = &[
     p("co2", "CO₂ footprint, primary production", "CO₂", "Eco", "kg/kg", true, "Carbon dioxide (equivalent) released to make one kilogram from raw materials."),
     p("ee", "Embodied energy, primary production", "Hm", "Eco", "MJ/kg", true, "Energy used to make one kilogram from raw materials."),
     f("recyclable", "Recyclable", "Eco", "Can be recycled into the same kind of material."),
+    p("rc_ee", "Embodied energy, recycling", "Hrc", "Eco", "MJ/kg", true, "Energy to make one kilogram from recycled material (scrap or cullet)."),
+    p("rc_co2", "CO₂ footprint, recycling", "CO₂rc", "Eco", "kg/kg", true, "CO₂ (equivalent) released to make one kilogram from recycled material."),
+    p("rc_frac", "Recycled fraction in current supply", "frc", "Eco", "%", false, "The share of today's supply that is recycled material."),
+    p("hc", "Heat of combustion", "Hc", "Eco", "MJ/kg", false, "Heat released by burning one kilogram (higher heating value): what energy recovery can win back."),
+    p("co2_comb", "Combustion CO₂", "CO₂c", "Eco", "kg/kg", false, "CO₂ released by burning one kilogram, from its carbon content. For wood and other natural materials this carbon is biogenic; it is counted, not netted out."),
+    f("downcycle", "Downcyclable", "Eco", "Can be reused as a lower-grade material: filler, aggregate, crumb or board."),
+    f("combust", "Combustible for energy recovery", "Eco", "Burns cleanly enough to recover its heat at end of life."),
+    f("biodeg", "Biodegradable", "Eco", "Breaks down biologically (industrial composting for the bio-based polymers)."),
     p("cv", "Price per volume", "Cₘρ", "Derived", "USD/m³", true, "Price × density: what a cubic metre costs. Used by the minimum-cost indices."),
     p("co2v", "CO₂ per volume", "CO₂ρ", "Derived", "kg CO₂/m³", true, "CO₂ footprint × density. Used by the minimum-carbon indices."),
     p("eev", "Embodied energy per volume", "Hₘρ", "Derived", "MJ/m³", true, "Embodied energy × density."),
@@ -175,6 +183,8 @@ pub struct Project {
     /// The materials side by side on the Compare page (up to six), and the radar chart's properties.
     pub compare: Vec<String>,
     pub radar: Vec<String>,
+    /// The eco audit: design options with their parts, transport, use and end of life.
+    pub eco: crate::eco::Eco,
 }
 
 /// A property of your own: a formula of other properties (`[E]^0.5/[rho]`), saved with the
@@ -200,7 +210,7 @@ pub fn pname(k: &str) -> String {
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![] }
+        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![], eco: crate::eco::Eco::default() }
     }
 }
 
@@ -357,6 +367,7 @@ impl Project {
             c.sels.retain(ChartSel::valid);
         }
         self.stages.weights.retain(|w| known(&w.prop) && w.w.is_finite() && w.w > 0.0);
+        self.eco.normalize();
     }
     pub fn from_json(text: &str) -> Result<Self, String> {
         let mut p: Project = serde_json::from_str(text).map_err(|e| e.to_string())?;
