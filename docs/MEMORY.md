@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.1** (released 2026-11-02: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.1). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md) |
+| **Current version** | **0.3.0** released (https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.0); 0.3.1 (wording only) is ready in the code and ships with the next release. Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
@@ -411,7 +411,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-11-02: Session 15 (comparison, public-repo cleanup, 0.3.1)
 - Compared Atlas with commercial tools in chat only (not written to the repo). Gaps found, in order: data depth and trust; specific grades and equivalents; hybrid materials; restricted substances; process depth; curves and data at temperature; links to simulation and CAD; polish. Proposed 0.4.0 trust the data, 0.5.0 hybrids and compliance, 0.6.0 deeper processes and data, then 1.0.0.
 - Cleanup: reworded CLAUDE.md (the rule now covers the whole repo), MEMORY, PLAN-0.1 and PLAN-0.1.1, and code comments (ribbon, styles, selection, fmt, cells, browse, shell clipboard). Trademark line in README and NOTICE. New UI check reads 65 views (pages, ribbon tabs, dialogs, every ? card, tooltips) for product names.
-- No functional change. Released 0.3.1.
+- No functional change. Version set to 0.3.1 and its CHANGELOG written; not published on its own: it ships with the next release, as asked.
 
 ---
 
