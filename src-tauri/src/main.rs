@@ -462,7 +462,7 @@ async fn pick_logo(app: AppHandle) -> R<Option<String>> {
     Ok(Some(format!("data:{mime};base64,{}", base64(&bytes))))
 }
 
-/// A chart picture (PNG data URL) to the Windows clipboard, for Word and PowerPoint.
+/// A chart picture (PNG data URL) to the Windows clipboard, to paste into documents and slides.
 #[tauri::command]
 fn copy_png(app: AppHandle, data: String) -> R<()> {
     let b64 = data.split_once(";base64,").map_or(data.as_str(), |x| x.1);

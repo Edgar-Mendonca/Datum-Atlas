@@ -465,6 +465,26 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(200);
   const rows = await p.$$eval(".opt", os => os.map(o => Math.abs(o.children[1].getBoundingClientRect().left - os[0].children[1].getBoundingClientRect().left)));
   check("Options controls line up", rows.length > 6 && Math.max(...rows) < 2, JSON.stringify(rows));
+  // No commercial product names anywhere in the window (FAMILY §13): every page, ribbon tab,
+  // dialog and ? card, with tooltips. Formats the app reads or writes (.xlsx, CSV, SVG…) are fine.
+  const PRODUCTS = /\b(Excel|Microsoft|PowerPoint|Word document|MS Office|MS Project|Granta|EduPack|CES Selector|Ansys|MatWeb|Total ?Materia|MakeItFrom|Matmatch|MaterialHub|AZoM|Wikipedia|Knovel|SpringerMaterials|SolidWorks|AutoCAD|CATIA|MATLAB|Google Sheets|LibreOffice|Apple Numbers|Siemens|Altair|OriginPro|Tableau|Power BI)\b/;
+  const texts = [];
+  const grab = async () => texts.push(await p.evaluate(() => document.body.innerText + " " + [...document.querySelectorAll("[title],[placeholder]")].map(e => (e.getAttribute("title") ?? "") + " " + (e.getAttribute("placeholder") ?? "")).join(" ")));
+  await p.keyboard.press("Escape"); await p.waitForTimeout(150);
+  if (await p.$(".bs")) { await p.click(".bs aside .back"); await p.waitForTimeout(150); }
+  for (const v of await p.$$eval(".side button", bs => bs.map(b => b.title))) { await p.click(`.side button[title="${v}"]`); await p.waitForTimeout(150); await grab(); }
+  for (const t of await p.$$eval(".tabs button:not(.file)", bs => bs.map(b => b.textContent.trim()).filter(Boolean))) { await p.click(`.tabs button:has-text("${t}")`); await p.waitForTimeout(100); await grab(); }
+  await p.click('.tabs button:has-text("Help")');
+  for (const t of ["Getting Started", "Bubble, envelope", "Every tool explained"]) {
+    await p.click(`.ribbon button[title^="${t}"]`); await p.waitForTimeout(200); await grab();
+    if (t === "Every tool explained") {
+      const n = await p.$$eval(".menu button", b => b.length);
+      for (let k = 0; k < n; k++) { if (k) { await p.click('.ribbon button[title^="Every tool explained"]'); await p.waitForTimeout(100); } await p.click(`.menu button >> nth=${k}`); await p.waitForTimeout(100); await grab(); await p.keyboard.press("Escape"); }
+    } else await p.keyboard.press("Escape");
+  }
+  for (const b of ["Home", "Roadmap", "Options", "Updates", "Export", "Print"]) { await p.click(".tabs .file"); await p.waitForTimeout(100); const btn = await p.$(`.bs aside button:has-text("${b}")`); if (btn) { await btn.click(); await p.waitForTimeout(200); await grab(); } await p.keyboard.press("Escape"); await p.waitForTimeout(100); }
+  const hit = texts.join("\n").match(PRODUCTS);
+  check(`no commercial product names in the window (${texts.length} views read)`, !hit && texts.length > 40, hit ? hit[0] + " in: " + texts.find(t => PRODUCTS.test(t)).match(new RegExp(".{0,60}" + hit[0] + ".{0,60}"))[0] : String(texts.length));
   check("no script errors", errors.length === 0, errors.join(" | "));
 
   await b.close(); srv.close(); eng.kill();

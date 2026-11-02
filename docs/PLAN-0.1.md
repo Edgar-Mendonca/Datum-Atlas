@@ -4,7 +4,7 @@ Status: **answered (§10); 0.1.0 built and released.** §10 overrides the earlie
 
 <img src="brand/datum-atlas-icon.svg" width="96" align="right" alt="Draft Datum Atlas icon">
 
-**Goal:** a small, fast Windows app for materials selection with property charts (the Ashby method): find the right material for a part, see why it is right, compare candidates and document the decision. Open data with a reference for every value, Excel-style formulas, publication-quality charts.
+**Goal:** a small, fast Windows app for materials selection with property charts (the property-chart method): find the right material for a part, see why it is right, compare candidates and document the decision. Open data with a reference for every value, spreadsheet-style formulas, publication-quality charts.
 
 **Sources:** the brief [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md) (followed; this file refines it), [FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md) (followed exactly), Datum Plan's code (the reference implementation) and Datum Plot's code (checked for reuse, §3).
 
@@ -136,7 +136,7 @@ Later (per the brief): `expr.rs` (0.2.1), `select.rs` (0.2.0), `index.rs` (0.2.1
 
 ### 5.1 Layout (family)
 - **Title bar:** QAT (save, undo, redo, print), document name, Tell Me (Ctrl+K), Theme (Auto/Light/Dark).
-- **Ribbon tabs** (brief §4): **Home** (clipboard, find, new chart, units), **Select**, **Chart**, **Data**, **Report**, **View**, **Help**; contextual **Chart Tools › Format** while a chart is open. "Home" is the brief's word for Atlas; Plan dropped a Home tab because it was crowded and MSP-like, which does not apply here (to confirm, Q11).
+- **Ribbon tabs** (brief §4): **Home** (clipboard, find, new chart, units), **Select**, **Chart**, **Data**, **Report**, **View**, **Help**; contextual **Chart Tools › Format** while a chart is open. "Home" is the brief's word for Atlas; Plan dropped a Home tab because it was crowded, which does not apply here (to confirm, Q11).
 - **Left sidebar:** Setup · Browse · Datasheet · Charts | Stages · Results · Compare · Index builder | Report · Data.
 - **Main area:** the chart canvas on Plan's dotted whiteboard background (white when printed or exported); the stage panel on the right arrives with stages in 0.2.0.
 - **Status bar:** Ready · materials shown / total · the database · the units · zoom.
@@ -144,7 +144,7 @@ Later (per the brief): `expr.rs` (0.2.1), `select.rs` (0.2.0), `index.rs` (0.2.1
 
 ### 5.2 Browse
 - Left: the family tree (Metals › Non-ferrous › Aluminium alloys …) with counts; clicking a node filters the table.
-- Right: the record table on the family grid engine: name, family, and chosen property columns (density, E, σy, K_IC, λ, price…) shown as `lo – hi` with units in the heading; sort by clicking a heading (by the geometric mean of the range), ranges with Sum/Average/Count, Ctrl+C copies TSV for Excel.
+- Right: the record table on the family grid engine: name, family, and chosen property columns (density, E, σy, K_IC, λ, price…) shown as `lo – hi` with units in the heading; sort by clicking a heading (by the geometric mean of the range), ranges with Sum/Average/Count, Ctrl+C copies tab-separated text for a spreadsheet.
 - Double-click a row → Datasheet.
 
 ### 5.3 Datasheet
@@ -163,7 +163,7 @@ Later (per the brief): `expr.rs` (0.2.1), `select.rs` (0.2.0), `index.rs` (0.2.1
 - New icons in the sprite: `i-atlas` (chart), `i-bubble`, `i-hull`, `i-index` (slope line), `i-datasheet`, `i-tree`, `i-stage`, `i-results`, `i-compare`, `i-radar`, `i-units`, `i-material`, `i-db`.
 
 ### 5.5 Help
-Getting Started for newcomers to the Ashby method (what a property chart is, why log axes, what a bubble and a hull are, how an index line selects), a searchable Glossary (bubble, hull, family, class, performance index, selection line, limit stage, range, typical value, log decade…), Shortcuts, Tell Me, GitHub links.
+Getting Started for newcomers to the property-chart method (what a property chart is, why log axes, what a bubble and a hull are, how an index line selects), a searchable Glossary (bubble, hull, family, class, performance index, selection line, limit stage, range, typical value, log decade…), Shortcuts, Tell Me, GitHub links.
 
 ---
 
@@ -172,7 +172,7 @@ Getting Started for newcomers to the Ashby method (what a property chart is, why
 ### 6.1 Policy (brief §3.5)
 - Every value is **compiled by us** with a reference: `src` points to a record in `data/sources.json` (title, publisher or author, year, edition, URL, licence, kind: `handbook`, `government`, `open-dataset`, `datasheet`, `textbook-typical`, `computed`).
 - **Allowed:** public-domain US government handbooks and data (MIL-HDBK-5J, MIL-HDBK-17, NIST, USGS Mineral Commodity Summaries for metal prices), open datasets with a compatible licence, named per record (Materials Project, CC-BY 4.0, only for computed properties and marked as computed), manufacturer datasheets (cited with the product and date), and textbook-level typical ranges rewritten as our own compilation and cited.
-- **Never** Granta/CES, MatWeb, Total Materia, ASM or any other proprietary database, and no product names or wording from them in the app.
+- **Never** a proprietary or licensed database or an aggregator site, and no product names or wording from them in the app.
 - Each record carries a `checked` status (`draft` → `checked`), so we can ship honest drafts and tighten references over releases. The Datasheet shows a "draft value" mark until it is checked (Q7).
 - Prices and CO₂ carry their year and basis (e.g. USD/kg, 2025, bulk) because they change.
 
@@ -203,7 +203,7 @@ density kg/m³ · modulus GPa · strength MPa · toughness MPa·m½ · hardness 
 | 0.2.0 | Selection: limit, chart (box + draggable index line) and tree stages; Results with reasons ("Failed: max service temperature 120 °C < 150 °C"); stage panel; failed materials greyed on every chart |
 | 0.2.1 | Index builder (~40 indices with derivations); expression axes (`[Young's modulus]^0.5/[Density]`); derived properties (GridCraft) |
 | 0.3.0 | Compare (2–6) with radar charts; the selection report; ~250 materials with references |
-| 0.3.x | User databases (`.datdb`), Excel/CSV import with mapping and export; label collision avoidance with leader lines; style presets (publication, classic, monochrome); polygon stage |
+| 0.3.x | User databases (`.datdb`), spreadsheet (.xlsx) and CSV import with mapping and export; label collision avoidance with leader lines; style presets (publication, classic, monochrome); polygon stage |
 | 0.4 | Eco audit · 0.5 Process selection · 1.0 ~1,000 materials, user guide, signed installer |
 
 ---
@@ -233,7 +233,7 @@ From the brief (§9):
 My own:
 
 7. **References:** for the 0.1.0 drafts, is a reference to the document (e.g. "MIL-HDBK-5J, aluminium alloys chapter") with a visible "draft" mark acceptable, tightening to the table or page by 0.3.0? Or do you want table/page-level references from the first value?
-8. **Sources:** OK to use MIL-HDBK-5J/-17, NIST, USGS (prices), the Materials Project (CC-BY 4.0, computed values only), manufacturer datasheets and our own compilation of textbook-typical ranges? Any source you want excluded or added (e.g. a university course's open data)? Wikipedia only to find primary sources, never as the source (its CC BY-SA licence does not fit an MIT database).
+8. **Sources:** OK to use MIL-HDBK-5J/-17, NIST, USGS (prices), the Materials Project (CC-BY 4.0, computed values only), manufacturer datasheets and our own compilation of textbook-typical ranges? Any source you want excluded or added (e.g. a university course's open data)? Encyclopaedias only to find primary sources, never as the source (a share-alike licence does not fit an MIT database).
 9. **Print in 0.1.0:** the brief puts print in 0.1.1, but the family rule is that every view prints. The chart is already SVG, so printing it and the datasheet is small. Bring it into 0.1.0? *Proposal: yes; exports and Copy Picture stay in 0.1.1.*
 10. **Lay out the whole UI first** (as Datum Plot 0.1.1 did): every planned command already in the ribbon and sidebar, dimmed, with a card saying what it will do and when? Or only show what works, with honest empty states? *Proposal: lay it out, so you can judge the whole workflow from 0.1.0.*
 11. **Ribbon:** keep the brief's tabs, including **Home**, or rename it (e.g. "Atlas") as Plan did not use "Home"?

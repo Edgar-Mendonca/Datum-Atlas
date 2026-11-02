@@ -1,5 +1,5 @@
 // Browse: the family tree on the left and the materials table on the right, on the family grid
-// engine (selection.ts): sort by a heading, select cells, rows or columns, Ctrl+C to Excel.
+// engine (selection.ts): sort by a heading, select cells, rows or columns, Ctrl+C to a spreadsheet.
 // Datasheet: every property of one material, grouped, with its range, unit and reference.
 import { For, Show, createMemo, createSignal } from "solid-js";
 import { greener, auditMaterial } from "./eco";

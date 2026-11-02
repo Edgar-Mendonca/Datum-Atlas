@@ -5,9 +5,9 @@
 
 | | |
 | --- | --- |
-| **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the Ashby method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
+| **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.0** (released 2026-11-01: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.0). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md) |
+| **Current version** | **0.3.1** (released 2026-11-02: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.1). Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
@@ -149,7 +149,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 0.1.1 | Answers to PLAN-0.1.1 §7: build §3; 22 goals (the screenshot showed 14, so 8 extras); goals set the line **and** suggest limits; a goal changes the open chart; check data now, metals first; no teaching mode | The user's answers, 2026-10-25. |
 | 0.1.1 | Goal limits are marked (`Limit.goal`) and replaced by the next goal; the user's own limits are never touched | A goal must be easy to change without losing the user's work. |
 | 0.1.1 | **? help beside the tools in every Datum app**: a click opens a card saying what the tool is for and how to use it, from one `HELP` table | The user, instead of a teaching mode: “we should do it in all of our applications”. |
-| 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never aggregator sites (MatWeb, MakeItFrom, Total Materia, Wikipedia); a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
+| 0.1.1 | Data check cites only primary publishers (producers, suppliers' own datasheets, universities, government), never proprietary databases or aggregator sites; a value is marked checked only if the datasheet's figure falls in our range, else the range is widened to include it | Open sources only, and honest ✓ marks. |
 | 0.1.1 | The check used the figures quoted by web search from each datasheet (the build machine cannot open web pages); a second pass that opens each document is planned | Recorded so nobody mistakes it for a table-level check. |
 | 0.1.1 | `docs/site.json` (about, steps, highlights, roadmap) is updated in every release, together with the roadmap here; public text never names or compares with a commercial product (hub FAMILY §13) | The user, 2026-10-28: the family site and the Datum network build from it. |
 | 0.2.0 | **Data for the 250 materials: open, public and free sources only** (government, open datasets, producers' free datasheets cited value by value, our labelled compilation). Never a proprietary or licensed database or aggregator, not even to check a value. Enforced by the source kinds in `db::check`. | The user, 2026-10-28, before the big update. |
@@ -160,6 +160,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-29 | Windows publisher "Datum" for every Datum app (hub FAMILY §9); copyright stays "© 2026 Edgar Mendonca" | One family name in Windows Apps and the installer. |
 | 2026-11-01 | Eco and process values are compiled by class from open sources and labelled drafts; a value no open source supports stays a gap (beryllium, zirconium, leather and bone energy; water use) | The open-sources rule; gaps, never zero. |
 | 2026-11-01 | The eco audit and process selection live in the engine (`eco.rs`, `process.rs`) and in the project file (`eco`, `process`), so they undo, save and go into the report | Engine logic in `crates/core`; older files open with empty ones. |
+| 2026-11-02 | The whole repository is public text: docs, plans, MEMORY and code comments never name commercial products or say Atlas copies, combines, replaces or targets one; file-format names only where they name a file Atlas reads or writes. Kept on purpose: the blocklist in `db.rs` (`BARRED`) and its test, which make the build refuse those sites as sources | Hub FAMILY §13; the blocklist enforces the open-sources rule. |
 
 ---
 
@@ -175,6 +176,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.0** | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Hardening (safe writes, damaged files set aside, fuzz tests, cargo deny, Windows/macOS CI); several lines, bands, polygons, two-chart goals, keyboard, weighted ranking; 25 goals + 47-index library and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to xlsx/CSV; 252 materials from open sources, durability ratings, 73 values checked; several databases, spreadsheet/CSV import and export; roadmap read from site.json | ✅ |
 | **0.2.1** | Publisher | Windows publisher "Datum" for the whole family (hub FAMILY §9); copyright unchanged | ✅ |
 | **0.3.0** | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | End-of-life data for every material (recycling energy and CO₂, recycled fraction, heat of combustion, combustion CO₂, downcycle/burn/biodegrade flags), 60 primary-energy gaps filled; `data/eco.json` factors; eco audit (parts, transport, use, years; five phases as ranges; up to four options; break-even; to a spreadsheet); greener substitutes; 5 more eco indices (52); 55 processes, cast/mach/weld ratings; process selection with reasons, cost against batch, shortlist matrix, joins and finishes; report sections | ✅ |
+| **0.3.1** | Wording | Public-repo cleanup (hub FAMILY §13): docs, plans, CLAUDE.md and code comments describe Atlas on its own terms; trademark line in README and NOTICE; UI test that no product name appears in the window | ✅ |
 | 1.0.0 | Stable | ~1,000 materials with pictures, user guide, signed installer | 🔜 |
 
 ---
@@ -222,10 +224,10 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-10-28: Session 5 (site.json)
 - Added `docs/site.json` (hub FAMILY §10) from the user's draft, checked against the roadmap and CHANGELOG. Corrected: not every value cites a public source (our compilation and price estimates are our own), so it now says every value names its source; datasheets and results are printed, not exported; bar charts, cost per volume and Copy Picture added; versions written with three numbers (also in the roadmap here).
 - New test `site_json_is_current`; CLAUDE.md and the release flow now include site.json. 17 engine tests pass.
-- README, CHANGELOG 0.1.0 and the app said "Excel"; reworded to "spreadsheet" at the user's request (FAMILY §13).
+- README, CHANGELOG 0.1.0 and the app named a spreadsheet product; reworded to "spreadsheet" at the user's request (FAMILY §13).
 
 ### 2026-10-28: Session 6 (wording, plan for 0.1.2)
-- Reworded "Excel" to "spreadsheet" in the README, CHANGELOG 0.1.0 and the app (Material Library tile, Browse copy toast, ? help, shortcuts, ribbon Import, Data page, roadmap features), and removed other product names from app text (Copy Picture and SVG tiles, the copy toast, the ribbon tooltip), per hub FAMILY §13. Code comments are unchanged.
+- Reworded a spreadsheet product's name to "spreadsheet" in the README, CHANGELOG 0.1.0 and the app (Material Library tile, Browse copy toast, ? help, shortcuts, ribbon Import, Data page, roadmap features), and removed other product names from app text (Copy Picture and SVG tiles, the copy toast, the ribbon tooltip), per hub FAMILY §13.
 - Wrote [PLAN-0.1.2.md](PLAN-0.1.2.md):
   - where we are;
   - proposal: 0.1.2 lines and results, 0.1.3 charts side by side, 0.2.0/0.2.1/0.2.2 indices;
@@ -406,11 +408,16 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Stage F: report sections 6 Eco audit and 7 Manufacture; eco audit to a spreadsheet (`export_results` with `what: "eco"`); Home tiles; Getting Started step 5; Glossary terms; ? cards (eco, ecoParts, ecoTransport, ecoUse, ecoOptions, greener, processes, process, cost, joinfinish).
 - Checks: clippy, cargo test (42), check:ui, test:ui (86 checks), cargo deny, the real app under Xvfb. Released 0.3.0.
 
+### 2026-11-02: Session 15 (comparison, public-repo cleanup, 0.3.1)
+- Compared Atlas with commercial tools in chat only (not written to the repo). Gaps found, in order: data depth and trust; specific grades and equivalents; hybrid materials; restricted substances; process depth; curves and data at temperature; links to simulation and CAD; polish. Proposed 0.4.0 trust the data, 0.5.0 hybrids and compliance, 0.6.0 deeper processes and data, then 1.0.0.
+- Cleanup: reworded CLAUDE.md (the rule now covers the whole repo), MEMORY, PLAN-0.1 and PLAN-0.1.1, and code comments (ribbon, styles, selection, fmt, cells, browse, shell clipboard). Trademark line in README and NOTICE. New UI check reads 65 views (pages, ribbon tabs, dialogs, every ? card, tooltips) for product names.
+- No functional change. Released 0.3.1.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** plan 1.0.0 (about 1,000 materials with pictures, user guide, signed installer) with a `docs/PLAN-1.0.0.md` and questions first; and more values checked against their sources.
+**Next:** the user's choice after the comparison; proposed `docs/PLAN-0.4.0.md` (trust the data: more values checked, about 500 materials with specific grades, search by equivalent designations) with questions first.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

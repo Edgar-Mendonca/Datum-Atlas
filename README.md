@@ -93,3 +93,5 @@ Values are in `data/*.json`, one file per family, with their sources in `data/so
 ## Licence
 
 MIT. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
+
+Product and file-format names are trademarks of their owners and are used only to describe file compatibility.

@@ -17,7 +17,7 @@ import { greener } from "./eco";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Atlas";
 const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
-  // MS Project split button: the picture runs the command, the label opens the menu.
+  // Split button: the picture runs the command, the label opens the menu.
   <div class="rbw big splitbig" classList={{ on: p.on }}>
     <button class="rb top" title={p.title ?? p.l} onClick={e => p.run!(e)}><Icon n={p.i} /></button>
     <button class="rb bot" title={`${p.l} options`} onClick={e => p.dd!(e)}><span>{p.l}</span><b class="car">▾</b></button>

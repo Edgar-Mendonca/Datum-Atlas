@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.1 — 2026-11-02
+
+Wording only: the project's documents and code describe Datum Atlas on its own terms. Nothing changes in how the app works.
+
+**Wording**
+- The plans, the project memory, the notes for contributors and the code comments now describe Datum Atlas's own goals and features, without naming or comparing with other products.
+- The README and NOTICE say that product and file-format names are trademarks of their owners, used only to describe file compatibility.
+- A new automatic test reads every page, ribbon tab, dialog, tooltip and ? card of the window and fails if another product's name appears.
+
 ## 0.3.0 — 2026-11-01
 
 Eco and process: an eco audit of a product's whole life, greener substitutes, and process selection with the cost per part against batch size.

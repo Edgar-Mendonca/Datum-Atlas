@@ -69,7 +69,7 @@ This file follows the family pattern: feedback → diagnosis → proposal → me
 - **A4 Units:** SI and imperial for every value, chart, limit and datasheet (the engine conversions exist and are tested).
 - **A5 Search everywhere:** Tell Me also finds materials (name, UNS/EN/ASTM, synonym, use); Enter opens the datasheet; the found material blinks on the chart.
 - **B6 Bar charts:** one property for every material, sorted, coloured by family; the selection greys failures.
-- **B11 Copy Picture:** chart to the Windows clipboard (through Rust) for Word and PowerPoint.
+- **B11 Copy Picture:** chart to the Windows clipboard (through Rust) to paste into documents and slides.
 
 ### 3.4 Fixes noticed in review
 - Envelope labels collide where families meet (Composites over Ceramics). Proposal: nudge the labels apart (a small engine step), ahead of full label placement (B9).
@@ -84,11 +84,11 @@ Pick, move or combine freely. IDs match Help › Roadmap. "New" means not in the
 | --- | --- | --- |
 | A4 | Units SI / imperial | 0.1.1 |
 | A5 | Search everywhere | 0.1.1 |
-| A6 | Derived properties: the built-in set (§3.1) in 0.1.1; your own formulas (Excel syntax) later | 0.1.1 / 0.2 |
+| A6 | Derived properties: the built-in set (§3.1) in 0.1.1; your own formulas (spreadsheet-style syntax) later | 0.1.1 / 0.2 |
 | A12 new | **Check the built-in values** one by one against their sources, with table/page references; status "checked" | 0.3 (could start now, a family per release) |
 | A7 | 250 materials: specific grades (steels, Al, Ti, Ni alloys, engineering polymers) with designations | 0.3 |
 | A13 new | Durability ratings (water, acids, alkalis, UV, flammability), processability, food contact, RoHS/REACH flags | 0.3 |
-| A8 | Import / export Excel and CSV with a mapping step | 0.3.1 |
+| A8 | Import / export spreadsheets (.xlsx) and CSV with a mapping step | 0.3.1 |
 | A9 | Several databases (open, share, switch `.datdb`) | 0.3.1 |
 | A10 | Pictures and microstructures on datasheets | 0.3.1 |
 | A11 | 1,000 materials | 1.0 |
@@ -118,10 +118,10 @@ Pick, move or combine freely. IDs match Help › Roadmap. "New" means not in the
 ### D. Compare, report, share
 | ID | Item | Now planned in |
 | --- | --- | --- |
-| D5 new | Export the results table to Excel/CSV | 0.1.2 |
+| D5 new | Export the results table to a spreadsheet (.xlsx) or CSV | 0.1.2 |
 | D2 / D3 | Compare 2–6 materials, radar chart | 0.3 |
 | D4 | Selection report (requirements, stages, charts, shortlist, datasheets) to print or PDF | 0.3 |
-| D6 new | Word report | 0.3 |
+| D6 new | Selection report as a document | 0.3 |
 
 ### E–F. Eco and process (the user wants both before 1.0)
 | ID | Item | Now planned in |
