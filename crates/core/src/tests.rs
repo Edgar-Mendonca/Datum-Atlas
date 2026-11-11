@@ -719,3 +719,23 @@ fn process_selection_says_why_each_process_fails() {
     q.normalize();
     assert_eq!((q.mass, q.batch, q.shape.as_str()), (1.0, 1.0, ""));
 }
+
+#[test]
+fn the_guide_and_public_text_hold_together() {
+    let root = concat!(env!("CARGO_MANIFEST_DIR"), "/../../");
+    let guide = std::fs::read_to_string(format!("{root}docs/guide/en.md")).unwrap();
+    // Every picture the guide shows exists, and every chapter has a heading.
+    for img in guide.lines().filter_map(|l| l.strip_prefix("![")).filter_map(|l| l.split_once("](")).map(|(_, r)| r.trim_end_matches(')')) {
+        assert!(std::path::Path::new(&format!("{root}docs/guide/{img}")).exists(), "the guide shows {img}, which is missing");
+    }
+    assert!(guide.matches("\n## ").count() >= 12);
+    // Public text never names a commercial product (hub FAMILY §13); file formats are named by extension.
+    let names = ["Excel", "Microsoft", "PowerPoint", "Granta", "EduPack", "Ansys", "MatWeb", "Total Materia", "MakeItFrom", "Matmatch", "Wikipedia", "SolidWorks", "MATLAB", "Google Sheets", "LibreOffice"];
+    for f in ["docs/guide/en.md", "README.md", "CHANGELOG.md", "docs/site.json", "docs/MEMORY.md", "SECURITY.md", "CONTRIBUTING.md"] {
+        let text = std::fs::read_to_string(format!("{root}{f}")).unwrap_or_default();
+        for n in names {
+            let hit = text.match_indices(n).any(|(i, _)| !text[i + n.len()..].starts_with(|c: char| c.is_alphanumeric()) && !text[..i].ends_with(|c: char| c.is_alphanumeric()));
+            assert!(!hit, "{f} names {n}");
+        }
+    }
+}

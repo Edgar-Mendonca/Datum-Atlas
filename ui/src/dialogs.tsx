@@ -94,6 +94,23 @@ export const glossary = () => openDialog(() => {
   );
 });
 
+/** Help › Guide: downloads the guide (PDF) for this version from GitHub, checks it, saves it in Downloads and opens it. */
+export const guide = () => openDialog(() => {
+  const [busy, setBusy] = createSignal(false);
+  const get = async () => {
+    setBusy(true);
+    try { const path = await call<string>("guide"); if (path) { toast(`Saved in Downloads and opened: ${path}`, true); closeDialog(); } }
+    finally { setBusy(false); }
+  };
+  return (
+    <Dialog title="Datum Atlas Guide">
+      <p>A step-by-step guide to Datum Atlas, with pictures: property charts, design goals and indices, selection and results, compare, your own materials, the eco audit, process selection, the report, and the command line. <Help k="guide" /></p>
+      <div class="guidecards"><button class="guidecard" disabled={busy()} onClick={get}><svg class="ic"><use href="#i-manual" /></svg><b>English</b><span>{busy() ? "Downloading…" : "Datum Atlas Guide (PDF)"}</span></button></div>
+      <p class="muted">It downloads from GitHub, is checked against the release's checksums, saved in your Downloads folder and opened. It matches this version of Datum Atlas; you need an internet connection.</p>
+    </Dialog>
+  );
+});
+
 /** Help › Use with an AI Assistant: how to connect an assistant to Datum Atlas through the command line. */
 export const assistant = () => openDialog(() => {
   const exe = `C:\\Tools\\datum-atlas-cli-${VERSION_NOW}.exe`;

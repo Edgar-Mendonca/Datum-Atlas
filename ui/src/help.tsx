@@ -6,6 +6,8 @@ import { Dialog } from "./ui";
 
 type Topic = { t: string; what: string; how?: string[]; tip?: string };
 export const HELP: Record<string, Topic> = {
+  guide: { t: "The guide", what: "The Datum Atlas Guide: a PDF of about thirty pages that takes you through every part of the app with numbered pictures.",
+    how: ["Help › Guide (or the Guide tile on the Home page) downloads it from this version's release, checks it, saves it in Downloads and opens it.", "Each chapter stands on its own: read the one you need."] },
   assistant: { t: "AI assistant connection", what: "The command-line program datum-atlas-cli can serve Datum Atlas to an AI assistant over the Model Context Protocol: the assistant searches materials, reads datasheets with their sources, sets up and reads selections, and runs the eco audit and process selection.",
     how: ["Download datum-atlas-cli from the release, beside the installer.", "Add it to the assistant's list of servers with the argument mcp (Help › Use with an AI Assistant has the settings to copy).", "Ask in plain words; the assistant shows what it found and changed."],
     tip: "It edits a project only through the window's own edits and writes a file only when asked to save." },

@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.2** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.2). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.3** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.3). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
@@ -95,6 +95,7 @@ flowchart LR
 | `crates/core/src/sheet.rs` | Spreadsheets in and out of a database: `read`, `from_text`, `guess`, `range`, `to_database`, `of_database`, `bytes`. |
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
+| `docs/guide/en.md`, `img/`, `pdf/` | The Datum Atlas Guide: Markdown source (English), screenshots, the built PDF (attached to every release as `DatumAtlas-Guide-en.pdf`). `npm run guide` remakes the screenshots (`tests_ui/guide_shots.cjs`, the bridge with a bracket project) and the PDF (`scripts/guide.cjs`, Chromium, from Datum Plan's). |
 | `crates/core/src/ops.rs` | The named operations (`catalog`: name, what it does, a working example of each `Op`) and `apply` (turns a `Goal` into its edits). Used by `datum-atlas-cli`. |
 | `crates/cli/` | `datum-atlas-cli` and `mcp` (Model Context Protocol over stdio, 18 tools; a test drives a whole assistant session): search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db` adds `.datdb` files. Writes only .datlas/.xlsx/.csv. Ships as `datum-atlas-cli-X.Y.Z.exe`. |
 | `crates/core/src/process.rs` | Processes (`data/processes.json`), `suits`, `ProcSel` in the project, `select` (stages with reasons, `cost` and curves, cheapest by batch, shortlist matrix, joins, finishes), `check`. |
@@ -162,6 +163,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-29 | Windows publisher "Datum" for every Datum app (hub FAMILY §9); copyright stays "© 2026 Edgar Mendonca" | One family name in Windows Apps and the installer. |
 | 2026-11-01 | Eco and process values are compiled by class from open sources and labelled drafts; a value no open source supports stays a gap (beryllium, zirconium, leather and bone energy; water use) | The open-sources rule; gaps, never zero. |
 | 2026-11-01 | The eco audit and process selection live in the engine (`eco.rs`, `process.rs`) and in the project file (`eco`, `process`), so they undo, save and go into the report | Engine logic in `crates/core`; older files open with empty ones. |
+| 2026-11-11 | The guide is English only for now (the open question on languages took the default); a PDF downloaded on demand (not in the installer), checked against the release's checksums, as in Datum Plan | Smaller installer; the guide matches its version. |
 | 2026-11-11 | Small releases: 0.3.1 to 0.3.10 before 0.4.0, one item each (the user: "let's not jump version"); the code version stays at the last release until the next one ships | Every release in the updater, no jumps. |
 | 2026-11-11 | Every Datum app's README ends with the Datum family section and table of apps (the user's) | Show the whole family from every app. |
 | 2026-11-02 | The whole repository is public text: docs, plans, MEMORY and code comments never name commercial products or say Atlas copies, combines, replaces or targets one; file-format names only where they name a file Atlas reads or writes. Kept on purpose: the blocklist in `db.rs` (`BARRED`) and its test, which make the build refuse those sites as sources | Hub FAMILY §13; the blocklist enforces the open-sources rule. |
@@ -182,8 +184,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.0** | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | End-of-life data for every material (recycling energy and CO₂, recycled fraction, heat of combustion, combustion CO₂, downcycle/burn/biodegrade flags), 60 primary-energy gaps filled; `data/eco.json` factors; eco audit (parts, transport, use, years; five phases as ranges; up to four options; break-even; to a spreadsheet); greener substitutes; 5 more eco indices (52); 55 processes, cast/mach/weld ratings; process selection with reasons, cost against batch, shortlist matrix, joins and finishes; report sections | ✅ |
 | **0.3.1** | Command line ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a) | `datum-atlas-cli` (search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db`), `ops.rs` catalogue with tested examples; ships in the release; wording cleanup | ✅ |
 | **0.3.2** | Assistant connection | `datum-atlas-cli mcp` (18 tools: search_materials, get_material, list_properties/goals/processes/templates, new/open_project, project_info, list_operations, apply_operation, undo, get_results, get_chart, eco_audit, process_selection, greener_substitutes, save_project); Help › Use with an AI Assistant; ? card | ✅ |
-| 0.3.3 | User guide | The user guide in the app and as a PDF in the release. | 🔜 |
-| 0.3.4 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | ⬜ |
+| **0.3.3** | User guide | `docs/guide/en.md` (16 chapters), 25 screenshots with numbered markers (`tests_ui/guide_shots.cjs`, real engine), `scripts/guide.cjs` → `docs/guide/pdf/DatumAtlas-Guide-en.pdf` (~29 pages), attached to the release with its checksum; Help › Guide, Home tile, Tell Me, ? card; `update::guide` downloads, checks and opens it | ✅ |
+| 0.3.4 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | 🔜 |
 | 0.3.5 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. | ⬜ |
 | 0.3.6 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. | ⬜ |
 | 0.3.7 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. | ⬜ |
@@ -443,11 +445,17 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Window: Help › Use with an AI Assistant (settings and command to copy), `assistant` ? card; UI checks for both, and the product-name scan reads the new dialog (67 views).
 - CHANGELOG, README, SECURITY, site.json, MEMORY; versions 0.3.2 (app, engine, cli). Released 0.3.2.
 
+### 2026-11-11: Session 16, continued (0.3.3: the guide)
+- Copied Datum Plan's guide pattern: Markdown source, screenshots from the built window with numbered markers (here with the real engine through the bridge, a bracket project with an eco audit and a cast part set up by named operations), Chromium PDF with cover, contents and page numbers, attached to the release; `update::guide` downloads this version's PDF (else the latest), checks SHA256SUMS.txt, saves to Downloads and opens it.
+- Window: Help › Guide (first in Learn), Guide tile on Home, Tell Me "Guide (PDF)", `guide` ? card; UI checks for the dialog and the download; the product-name scan reads 69 views.
+- Engine test `the_guide_and_public_text_hold_together`: every picture the guide names exists; the guide, README, CHANGELOG, site.json, MEMORY, SECURITY and CONTRIBUTING name no commercial product.
+- Released 0.3.3.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.3: the user guide ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
+**Next:** 0.3.4: colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

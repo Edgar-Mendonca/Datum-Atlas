@@ -146,3 +146,50 @@ fn launch(installer: &std::path::Path) -> Result<(), String> {
 fn launch(_: &std::path::Path) -> Result<(), String> {
     Ok(())
 }
+
+const MAX_GUIDE: u64 = 60 * 1024 * 1024;
+const GUIDE: &str = "DatumAtlas-Guide-en.pdf";
+
+/// The guide (PDF) for this version: from this version's release (else the latest), checked
+/// against that release's SHA256SUMS.txt, saved in Downloads and opened.
+pub fn guide(app: &AppHandle) -> Result<std::path::PathBuf, String> {
+    use tauri::Manager;
+    let get = |url: &str| -> Result<Option<Vec<u8>>, String> {
+        match agent().get(url).call() {
+            Ok(r) => {
+                let mut b = vec![];
+                r.into_reader().take(MAX_GUIDE + 1).read_to_end(&mut b).map_err(|e| format!("Download failed: {e}"))?;
+                if b.len() as u64 > MAX_GUIDE { return Err("The guide is far larger than expected, so it was not saved.".into()) }
+                Ok(Some(b))
+            }
+            Err(ureq::Error::Status(404, _)) => Ok(None),
+            Err(ureq::Error::Status(c, _)) => Err(format!("GitHub answered {c}. Try again later.")),
+            Err(_) => Err("Could not reach GitHub. Check your internet connection.".into()),
+        }
+    };
+    let mut found = None;
+    for base in [format!("https://github.com/{REPO}/releases/download/v{}/", env!("CARGO_PKG_VERSION")), format!("https://github.com/{REPO}/releases/latest/download/")] {
+        if let Some(pdf) = get(&format!("{base}{GUIDE}"))? {
+            found = Some((pdf, base));
+            break;
+        }
+    }
+    let (pdf, base) = found.ok_or("The guide is not on the releases page yet. Try again after the next update.")?;
+    let sums = get(&format!("{base}SHA256SUMS.txt"))?.ok_or("The release has no checksum file, so the guide was not saved.")?;
+    let sums = String::from_utf8_lossy(&sums);
+    let want = sums.lines().filter_map(|l| { let mut w = l.split_whitespace(); Some((w.next()?, w.next()?.trim_start_matches('*'))) }).find(|(_, f)| *f == GUIDE).map(|(h, _)| h).unwrap_or("");
+    let got: String = Sha256::digest(&pdf).iter().map(|b| format!("{b:02x}")).collect();
+    if want.len() != 64 || !want.eq_ignore_ascii_case(&got) || !pdf.starts_with(b"%PDF") {
+        return Err("The download did not match its checksum, so it was not saved. Try again.".into());
+    }
+    // Downloads; where a system has none set up, ~/Downloads (made if needed), Documents, then the temporary folder.
+    let home_dl = || app.path().home_dir().ok().map(|h| h.join("Downloads")).filter(|d| std::fs::create_dir_all(d).is_ok());
+    let dir = app.path().download_dir().ok().filter(|d| d.is_dir()).or_else(home_dl).or_else(|| app.path().document_dir().ok().filter(|d| d.is_dir())).unwrap_or_else(std::env::temp_dir);
+    let path = dir.join("Datum Atlas Guide.pdf");
+    datum_atlas_core::doc::write_atomic(&path, &pdf)?;
+    #[cfg(windows)]
+    let _ = std::process::Command::new("explorer").arg(&path).spawn();
+    #[cfg(not(windows))]
+    let _ = std::process::Command::new("xdg-open").arg(&path).spawn();
+    Ok(path)
+}

@@ -26,6 +26,8 @@
 
 ## What it does
 
+The **Datum Atlas Guide** (PDF, with pictures) is on every release page, and Help › Guide in the app downloads it.
+
 Datum Atlas is part of Datum; see its page: https://edgar-mendonca.github.io/Datum/apps/atlas
 
 Datum Atlas helps engineers, designers and students pick a material and show why it is the right one:

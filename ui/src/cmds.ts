@@ -46,7 +46,7 @@ export const ALL_CMDS: [string, () => void, string?][] = [
   ["Add another selection line (a band)", C.addLine], ["Pass the line through an index value", C.passThrough], ["Draw a selection shape (polygon)", () => { show("charts"); setTool("poly"); }],
   ["Rank by weighted properties", () => show("stages")],
   ["Export chart as SVG", () => exportChart("svg")], ["Export chart as PNG", () => exportChart("png")], ["Fit the chart", C.fit],
-  ["Options", () => setBackstage("options")], ["Check for updates", () => setBackstage("about")], ["Keyboard shortcuts", D.shortcuts, "F1"], ["Getting started", D.gettingStarted], ["Glossary", D.glossary],
+  ["Options", () => setBackstage("options")], ["Check for updates", () => setBackstage("about")], ["Keyboard shortcuts", D.shortcuts, "F1"], ["Guide (PDF)", D.guide], ["Getting started", D.gettingStarted], ["Glossary", D.glossary],
   ["Roadmap: what comes when", () => setBackstage("roadmap")],
   ...FEATURES.filter(f => !ready(f[0])).map(f => [`${f[1]} (${f[2]})`, () => soon(f[0])] as [string, () => void]),
 ];

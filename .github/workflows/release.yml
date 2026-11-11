@@ -39,7 +39,8 @@ jobs:
           mkdir out
           cp target/release/bundle/nsis/*-setup.exe "out/DatumAtlas-$V-setup.exe"
           cp target/release/datum-atlas-cli.exe "out/datum-atlas-cli-$V.exe"
-          cd out && sha256sum "DatumAtlas-$V-setup.exe" "datum-atlas-cli-$V.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt
+          cp docs/guide/pdf/DatumAtlas-Guide-en.pdf out/
+          cd out && sha256sum "DatumAtlas-$V-setup.exe" "datum-atlas-cli-$V.exe" DatumAtlas-Guide-en.pdf > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -56,4 +57,5 @@ jobs:
           files: |
             out/DatumAtlas-${{ env.V }}-setup.exe
             out/datum-atlas-cli-${{ env.V }}.exe
+            out/DatumAtlas-Guide-en.pdf
             out/SHA256SUMS.txt

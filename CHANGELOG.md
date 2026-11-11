@@ -1,6 +1,14 @@
 # Changelog
 
-## 0.3.2 — 2026-11-11
+## 0.3.3 — 2026-11-11
+
+The Datum Atlas Guide: every part of the app, step by step, with numbered pictures.
+
+**Guide**
+- A guide of about thirty pages in sixteen chapters: the window, the method, property charts, design goals and indices, selecting, results, datasheets and sources, compare, your own materials, the eco audit, greener substitutes, process selection, the report and export, the command line and AI assistants, and help and shortcuts.
+- Help › Guide and a Guide tile on the Home page download it from this version's release, check it against the release's checksums, save it in your Downloads folder and open it. It is also on the releases page beside the installer.
+
+
 
 Connect an AI assistant: it can search the materials, read datasheets, set up and read a selection, run the eco audit and process selection, and save the project.
 

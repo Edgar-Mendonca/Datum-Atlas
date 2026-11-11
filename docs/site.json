@@ -32,7 +32,8 @@
     "An eco audit: energy and CO₂ of a product from its materials to the end of its life, for up to four design options, with the largest phase named, the break-even life, and greener substitutes for the same job.",
     "Process selection from 55 processes: the ones that can make your part from your material, why the others cannot, and the cost per part against batch size; joins and finishes that suit it.",
     "Compare up to six materials with a radar chart, and print a selection report with the charts, shortlist, eco audit, manufacture and datasheets. Your own materials and databases, spreadsheet and CSV import and export, SI or imperial units.",
-    "A command line beside the app, and a connection for AI assistants (Model Context Protocol): search materials, read datasheets with their sources, run a selection, the eco audit and process selection."
+    "A command line beside the app, and a connection for AI assistants (Model Context Protocol): search materials, read datasheets with their sources, run a selection, the eco audit and process selection.",
+    "A guide of about thirty pages with numbered pictures, in the app and on every release page."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -44,17 +45,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.3",
-      "title": "User guide",
-      "when": "Next",
-      "items": [
-        "A user guide, in the app and as a PDF."
-      ]
-    },
-    {
       "v": "0.3.4",
       "title": "Display and export",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Colour-blind safe colours, imperial units on the eco and process pages, .ods export."
       ]

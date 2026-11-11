@@ -29,7 +29,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.exposeFunction("__engine", async (cmd, args) => ask(cmd, args));
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
-    const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb" };
+    const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
     const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
@@ -461,6 +461,12 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.fill(".dlg input.find", "index");
   check("the glossary finds terms", (await p.textContent(".gloss")).includes("Performance index"));
   await p.keyboard.press("Escape");
+  await p.click('.ribbon button[title^="The Datum Atlas Guide"]');
+  await p.waitForTimeout(200);
+  check("Help › Guide offers the PDF", (await p.textContent(".dlg")).includes("Datum Atlas Guide (PDF)"));
+  await p.click(".dlg .guidecard");
+  await p.waitForTimeout(300);
+  check("the guide is downloaded, checked and opened", (await p.textContent("#toast").catch(() => "")).includes("Datum Atlas Guide.pdf") && !(await p.$(".dlg")));
   await p.click('.ribbon button[title^="Connect an AI assistant"]');
   await p.waitForTimeout(200);
   const ad = await p.textContent(".dlg");
@@ -483,7 +489,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   for (const v of await p.$$eval(".side button", bs => bs.map(b => b.title))) { await p.click(`.side button[title="${v}"]`); await p.waitForTimeout(150); await grab(); }
   for (const t of await p.$$eval(".tabs button:not(.file)", bs => bs.map(b => b.textContent.trim()).filter(Boolean))) { await p.click(`.tabs button:has-text("${t}")`); await p.waitForTimeout(100); await grab(); }
   await p.click('.tabs button:has-text("Help")');
-  for (const t of ["Getting Started", "Bubble, envelope", "Connect an AI assistant", "Every tool explained"]) {
+  for (const t of ["The Datum Atlas Guide", "Getting Started", "Bubble, envelope", "Connect an AI assistant", "Every tool explained"]) {
     await p.click(`.ribbon button[title^="${t}"]`); await p.waitForTimeout(200); await grab();
     if (t === "Every tool explained") {
       const n = await p.$$eval(".menu button", b => b.length);

@@ -786,3 +786,9 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .proctable button.lnk { text-align: left; }
 .guide pre.code { background: var(--panel); border: 1px solid var(--line); padding: 8px 10px; font: 11.5px var(--mono); white-space: pre-wrap; user-select: text; }
 .guide code { font: 11.5px var(--mono); background: var(--panel); padding: 0 3px; user-select: text; }
+.guidecards { display: grid; grid-template-columns: 1fr; gap: 12px; margin: 14px 0; }
+.guidecard { display: grid; grid-template-columns: 40px 1fr; grid-template-rows: auto auto; column-gap: 12px; align-items: center; text-align: left; padding: 14px; border: 1px solid var(--line); background: var(--bg2); }
+.guidecard:hover:not(:disabled) { border-color: var(--blue); background: var(--pale); }
+.guidecard .ic { grid-row: span 2; width: 36px; height: 36px; color: var(--blue); }
+.guidecard b { font-size: 16px; }
+.guidecard span { color: var(--muted); font-size: 12px; }

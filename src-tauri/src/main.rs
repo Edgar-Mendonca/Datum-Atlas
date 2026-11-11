@@ -619,6 +619,12 @@ async fn install_update(app: AppHandle, url: String, sums: Option<String>) -> R<
     tauri::async_runtime::spawn_blocking(move || update::install(&app, &url, sums.as_deref())).await.map_err(|e| e.to_string())?
 }
 
+/// Help › Guide: downloads the guide PDF for this version, checks it, saves it in Downloads and opens it.
+#[tauri::command]
+async fn guide(app: AppHandle) -> R<String> {
+    tauri::async_runtime::spawn_blocking(move || update::guide(&app).map(|p| p.display().to_string())).await.map_err(|e| e.to_string())?
+}
+
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
@@ -654,7 +660,7 @@ fn main() {
         })
         .invoke_handler(tauri::generate_handler![
             state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes,
-            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update
+            options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())
         .expect("Datum Atlas failed to start");
