@@ -1,11 +1,20 @@
 # Changelog
 
-## 0.3.1 — 2026-11-02
+## 0.3.1 — 2026-11-11
 
-Wording only: the project's documents and code describe Datum Atlas on its own terms. Nothing changes in how the app works.
+A command line: search the materials, read datasheets, run a selection, the eco audit and process selection, and change and export projects without the window.
+
+**Command line**
+- `datum-atlas-cli`, a small program beside the installer in every release. `search` and `material` read the database: every value with its unit, its source and whether it was checked. `props`, `goals`, `processes` and `templates` list what Atlas knows.
+- `new`, `info`, `results`, `chart`, `eco`, `process` and `substitutes` start and read a project: the charts and stages, every material ranked with the reason each other one fails, the eco audit, the processes that can make the part and their cost.
+- `apply` changes a project only through the named operations the window uses (`ops` lists them, each with an example); a failed operation changes nothing. `export` writes a project (.datlas), its results or its eco audit (.xlsx, .csv). Nothing is saved unless you ask.
+- `--db` adds a database of your own beside the built-in data.
+
+**Safety**
+- The spreadsheet reader is updated: a damaged .xls or .xlsb file can no longer crash an import or use up memory.
 
 **Wording**
-- The plans, the project memory, the notes for contributors and the code comments now describe Datum Atlas's own goals and features, without naming or comparing with other products.
+- The plans, the project memory, the notes for contributors and the code comments describe Datum Atlas's own goals and features, without naming or comparing with other products.
 - The README and NOTICE say that product and file-format names are trademarks of their owners, used only to describe file compatibility.
 - A new automatic test reads every page, ribbon tab, dialog, tooltip and ? card of the window and fails if another product's name appears.
 

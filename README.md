@@ -69,6 +69,22 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 
 1.0.0: about 1,000 materials with pictures and microstructures, a user guide and a signed installer. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
+## Command line
+
+`datum-atlas-cli-x.y.z.exe` comes with every release. It reads the materials, runs a selection project and changes it through the same named operations the window uses. Nothing is saved unless you ask.
+
+```
+datum-atlas-cli search 6061                       # materials by name, designation or use
+datum-atlas-cli material al-6061-t6               # a datasheet: values, units, sources
+datum-atlas-cli new beam bracket.datlas           # start from a design problem
+datum-atlas-cli results bracket.datlas --csv      # every material ranked, and why the others fail
+datum-atlas-cli ops                               # the named operations, with examples
+datum-atlas-cli apply bracket.datlas --op '{"Goal":{"chart":1,"goal":"tie-strong"}}' --save tie.datlas
+datum-atlas-cli eco tie.datlas                    # the eco audit
+datum-atlas-cli process tie.datlas                # process selection and cost
+datum-atlas-cli export tie.datlas results.xlsx    # .datlas, .xlsx or .csv
+```
+
 ## Install
 
 Download `DatumAtlas-x.y.z-setup.exe` from the [latest release](https://github.com/Edgar-Mendonca/Datum-Atlas/releases/latest) and run it (per-user install, no administrator rights). Windows SmartScreen may warn on the first install because the installer is not signed yet. Updates install from File › Updates.

@@ -11,6 +11,7 @@ pub mod export;
 pub mod geometry;
 pub mod goals;
 pub mod model;
+pub mod ops;
 pub mod process;
 pub mod select;
 pub mod sheet;

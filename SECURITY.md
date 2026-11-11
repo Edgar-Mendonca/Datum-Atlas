@@ -9,6 +9,7 @@ Please report a security problem privately: use **Security › Report a vulnerab
 - Selections are `.datlas` files and your own materials are `.datdb` files (JSON), on your own computer.
 - The only network call is the update check and download from this repository's GitHub Releases. Every download is checked against its SHA-256 checksum before it installs.
 - The window can only open links to this repository (`open_url` refuses anything else).
+- `datum-atlas-cli` runs on your computer with your permissions and makes no network call. It changes a project only through the named operations, writes only `.datlas`, `.xlsx` and `.csv` files (by extension), and only when you say `--save` or `export`.
 - Files are treated as untrusted. The readers for projects, your materials, options and recovery files are tested with thousands of damaged files and must never crash the app.
 - A damaged materials file is never written over: it is kept aside under a new name, and the app says so.
 - Every file is saved through a temporary file and a rename, so a crash mid-save leaves the old file whole.

@@ -1,5 +1,5 @@
 name: Release
-# Builds the Windows installer and publishes a GitHub Release that the in-app updater picks up.
+# Builds the Windows installer and the command-line tool and publishes a GitHub Release that the in-app updater picks up.
 # Bump the version in src-tauri/Cargo.toml, add a CHANGELOG.md section, then either push a tag
 # (git tag v0.1.1 && git push origin v0.1.1) or run this workflow from the Actions tab.
 on:
@@ -30,14 +30,16 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match version $V in src-tauri/Cargo.toml"; exit 1
           fi
           echo "V=$V" >> "$GITHUB_ENV"
-      - run: cargo test -p datum-atlas-core
+      - run: cargo test -p datum-atlas-core -p datum-atlas-cli
       - run: npx tauri build --bundles nsis
+      - run: cargo build --release -p datum-atlas-cli
       - name: Installer and checksum
         shell: bash
         run: |
           mkdir out
           cp target/release/bundle/nsis/*-setup.exe "out/DatumAtlas-$V-setup.exe"
-          cd out && sha256sum "DatumAtlas-$V-setup.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt
+          cp target/release/datum-atlas-cli.exe "out/datum-atlas-cli-$V.exe"
+          cd out && sha256sum "DatumAtlas-$V-setup.exe" "datum-atlas-cli-$V.exe" > SHA256SUMS.txt && cat SHA256SUMS.txt
       - name: Release notes from CHANGELOG.md
         shell: bash
         run: |
@@ -53,4 +55,5 @@ jobs:
           make_latest: true
           files: |
             out/DatumAtlas-${{ env.V }}-setup.exe
+            out/datum-atlas-cli-${{ env.V }}.exe
             out/SHA256SUMS.txt
