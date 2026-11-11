@@ -181,7 +181,8 @@ Below them, every material that fails says why: *below the selection line on "Yo
 
 1. **Greener substitutes**, **Eco audit** (adds it to the audit) and **Copy as my material**.
 2. **The facts:** designations, other names, typical uses, notes, how it fares in the selection, and its status (draft, or how many values were checked).
-3. **The values**, grouped (general, mechanical, thermal, electrical, durability, processing, eco, derived), each with its unit and the number of its reference; ✓ marks a checked value; *no data* is a gap.
+3. **The schematic microstructure:** what the material is made of, as it would look under a microscope (grains, phases, fibres, cells or crystals), with a scale bar. It is drawn by Datum Atlas from a recipe for the material's class, so it shows the kind of structure, not a photograph of a real sample, and its caption says so.
+4. **The values**, grouped (general, mechanical, thermal, electrical, durability, processing, eco, derived), each with its unit and the number of its reference; ✓ marks a checked value; *no data* is a gap.
 
 The references at the bottom give each source: its title, publisher, year, licence and link. The **Sources** page lists every source, its kind and licence; click one to see which materials and values cite it.
 

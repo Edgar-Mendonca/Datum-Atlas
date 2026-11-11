@@ -1,6 +1,18 @@
 # Changelog
 
-## 0.3.3 — 2026-11-11
+## 0.3.4 — 2026-11-11
+
+A picture of every material's structure: a schematic microstructure on every datasheet and in the report.
+
+**Microstructures**
+- Every material has a schematic microstructure, drawn by Datum Atlas from a recipe for its class: grains (with twins in copper, nickel and stainless steels), ferrite and pearlite in carbon steels, martensite in hardened steels, graphite flakes or nodules in cast irons, dendrites in castings, lamellar colonies in titanium alloys, precipitates in age-hardened alloys, sintered ceramics with pores, glass, fibres and plies in composites, cells in foams, wood, cork and bamboo, spherulites in semicrystalline polymers, and more.
+- Each has a scale bar and is marked as a schematic: it shows the kind of structure, not a photograph of a real sample. The same material always gets the same picture.
+- On the datasheet (with a ? card), on each candidate's datasheet in the selection report, and from the command line (`datum-atlas-cli microstructure ID`).
+
+**Data**
+- Sixteen aluminium alloys showed their EN designation twice ("EN EN AW-6061"); fixed.
+
+
 
 The Datum Atlas Guide: every part of the app, step by step, with numbered pictures.
 

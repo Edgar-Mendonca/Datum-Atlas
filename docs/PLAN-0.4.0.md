@@ -62,15 +62,19 @@ The items of §2, one small release each. Every one is a full release: checks, r
 | 0.3.1 | Command line | The wording cleanup, and `datum-atlas-cli`: search materials, datasheets, results, eco audit, process selection, apply edits and export from the command line; the operations catalogue. |
 | 0.3.2 | Assistant connection | `datum-atlas-cli mcp`: the MCP server (Datum Plan's rules), tests that drive an assistant session, and Help › Use with an AI assistant. |
 | 0.3.3 | User guide | The user guide in the app and as a PDF in the release. |
-| 0.3.4 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. |
-| 0.3.5 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. |
-| 0.3.6 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. |
-| 0.3.7 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. |
-| 0.3.8 | Equivalent designations | Search by UNS, EN, JIS, ASTM and common names in one box; equivalents on the datasheet. |
-| 0.3.9 | Hybrid materials | Sandwich panels and lattices worked out from the database, plotted beside the materials. |
-| 0.3.10 | Restricted and critical substances | Flags from public lists of restricted substances and critical raw materials, on datasheets and as limits. |
+| 0.3.4 | Schematic microstructures | A schematic microstructure for every material, drawn by the engine from a recipe for its class (grains, phases, fibres, cells, crystals), on datasheets and in the report. |
+| 0.3.5 | Elements | The 118 elements with their main properties from public-domain data, and a clickable periodic table. |
+| 0.3.6 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. |
+| 0.3.7 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. |
+| 0.3.8 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. |
+| 0.3.9 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. |
+| 0.3.10 | Equivalent designations | Search by UNS, EN, JIS, ASTM and common names in one box; equivalents on the datasheet. |
+| 0.3.11 | Hybrid materials | Sandwich panels and lattices worked out from the database, plotted beside the materials. |
+| 0.3.12 | Restricted and critical substances | Flags from public lists of restricted substances and critical raw materials, on datasheets and as limits. |
 
 Then 0.4.0 (properties against temperature, curves, more processes) and later 1.0.0.
+
+2026-11-11: the user asked for pictures of microstructures and the elements to come first (option B): 0.3.4 schematic microstructures, 0.3.5 elements; the other steps move back two. Real micrographs from open sources (public domain or CC BY, cited like values; never AI-made images presented as micrographs) follow as research allows.
 
 ## 3. Roadmap after this
 

@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.3** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.3). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.4** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.4). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
@@ -96,6 +96,7 @@ flowchart LR
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
 | `docs/guide/en.md`, `img/`, `pdf/` | The Datum Atlas Guide: Markdown source (English), screenshots, the built PDF (attached to every release as `DatumAtlas-Guide-en.pdf`). `npm run guide` remakes the screenshots (`tests_ui/guide_shots.cjs`, the bridge with a bracket project) and the PDF (`scripts/guide.cjs`, Chromium, from Datum Plan's). |
+| `crates/core/src/micro.rs` | Schematic microstructures: `recipe(material)` → kind, caption, scale bar by class (with id overrides); `draw` → `Micro { kind, caption, scale, svg }` (Voronoi grains with Lloyd steps, clip paths per grain for lamellae, seeded xorshift so a material always looks the same). Shell/bridge `microstructure`, CLI `microstructure`, `MicroFig` in the datasheet and report. |
 | `crates/core/src/ops.rs` | The named operations (`catalog`: name, what it does, a working example of each `Op`) and `apply` (turns a `Goal` into its edits). Used by `datum-atlas-cli`. |
 | `crates/cli/` | `datum-atlas-cli` and `mcp` (Model Context Protocol over stdio, 18 tools; a test drives a whole assistant session): search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db` adds `.datdb` files. Writes only .datlas/.xlsx/.csv. Ships as `datum-atlas-cli-X.Y.Z.exe`. |
 | `crates/core/src/process.rs` | Processes (`data/processes.json`), `suits`, `ProcSel` in the project, `select` (stages with reasons, `cost` and curves, cheapest by batch, shortlist matrix, joins, finishes), `check`. |
@@ -163,6 +164,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-29 | Windows publisher "Datum" for every Datum app (hub FAMILY §9); copyright stays "© 2026 Edgar Mendonca" | One family name in Windows Apps and the installer. |
 | 2026-11-01 | Eco and process values are compiled by class from open sources and labelled drafts; a value no open source supports stays a gap (beryllium, zirconium, leather and bone energy; water use) | The open-sources rule; gaps, never zero. |
 | 2026-11-01 | The eco audit and process selection live in the engine (`eco.rs`, `process.rs`) and in the project file (`eco`, `process`), so they undo, save and go into the report | Engine logic in `crates/core`; older files open with empty ones. |
+| 2026-11-11 | Pictures of structure are schematics drawn by Atlas (labelled “Schematic, not a micrograph”), never AI-made images presented as micrographs; real micrographs only from public-domain or CC BY sources, cited like values (not non-commercial licences: Atlas is MIT) | A picture must not pretend to be evidence. |
 | 2026-11-11 | The guide is English only for now (the open question on languages took the default); a PDF downloaded on demand (not in the installer), checked against the release's checksums, as in Datum Plan | Smaller installer; the guide matches its version. |
 | 2026-11-11 | Small releases: 0.3.1 to 0.3.10 before 0.4.0, one item each (the user: "let's not jump version"); the code version stays at the last release until the next one ships | Every release in the updater, no jumps. |
 | 2026-11-11 | Every Datum app's README ends with the Datum family section and table of apps (the user's) | Show the whole family from every app. |
@@ -185,13 +187,15 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.1** | Command line ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a) | `datum-atlas-cli` (search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db`), `ops.rs` catalogue with tested examples; ships in the release; wording cleanup | ✅ |
 | **0.3.2** | Assistant connection | `datum-atlas-cli mcp` (18 tools: search_materials, get_material, list_properties/goals/processes/templates, new/open_project, project_info, list_operations, apply_operation, undo, get_results, get_chart, eco_audit, process_selection, greener_substitutes, save_project); Help › Use with an AI Assistant; ? card | ✅ |
 | **0.3.3** | User guide | `docs/guide/en.md` (16 chapters), 25 screenshots with numbered markers (`tests_ui/guide_shots.cjs`, real engine), `scripts/guide.cjs` → `docs/guide/pdf/DatumAtlas-Guide-en.pdf` (~29 pages), attached to the release with its checksum; Help › Guide, Home tile, Tell Me, ? card; `update::guide` downloads, checks and opens it | ✅ |
-| 0.3.4 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | 🔜 |
-| 0.3.5 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. | ⬜ |
-| 0.3.6 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. | ⬜ |
-| 0.3.7 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. | ⬜ |
-| 0.3.8 | Equivalent designations | Search by UNS, EN, JIS, ASTM and common names in one box; equivalents on the datasheet. | ⬜ |
-| 0.3.9 | Hybrid materials | Sandwich panels and lattices worked out from the database, plotted beside the materials. | ⬜ |
-| 0.3.10 | Restricted and critical substances | Flags from public lists of restricted substances and critical raw materials, on datasheets and as limits. | ⬜ |
+| **0.3.4** | Schematic microstructures | `micro.rs`: a recipe per class (25 kinds: grains with twins, ferrite–pearlite, martensite, duplex, lamellar α+β, precipitates, graphite flakes/worms/nodules, dendrites, ceramics with pores, cermet, glass, fibres, plies, short fibres, particles, foams, wood, cork, bamboo, fibre networks, bone, spherulites, amorphous, stone, layers), seeded by the id; SVG with scale bar and SCHEMATIC mark; datasheet, report, `datum-atlas-cli microstructure`; ? card | ✅ |
+| 0.3.5 | Elements | 118 elements from public-domain data, clickable periodic table | 🔜 |
+| 0.3.6 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | ⬜ |
+| 0.3.7 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. | ⬜ |
+| 0.3.8 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. | ⬜ |
+| 0.3.9 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. | ⬜ |
+| 0.3.10 | Equivalent designations | Search by UNS, EN, JIS, ASTM and common names in one box; equivalents on the datasheet. | ⬜ |
+| 0.3.11 | Hybrid materials | Sandwich panels and lattices worked out from the database, plotted beside the materials. | ⬜ |
+| 0.3.12 | Restricted and critical substances | Flags from public lists of restricted substances and critical raw materials, on datasheets and as limits. | ⬜ |
 | 0.4.0 | Data at temperature | Properties against temperature, simple curves, more processes with process charts, material cards for simulation | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials with pictures, signed installer | ⬜ |
 
@@ -451,11 +455,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Engine test `the_guide_and_public_text_hold_together`: every picture the guide names exists; the guide, README, CHANGELOG, site.json, MEMORY, SECURITY and CONTRIBUTING name no commercial product.
 - Released 0.3.3.
 
+### 2026-11-11: Session 16, continued (0.3.4: schematic microstructures)
+- The user (after the comparison): pictures and microstructures matter; option B (bring them forward), start now. Advised against AI-made micrographs (a made-up picture of a real alloy looks like evidence); showed a demo of procedural schematics; built them.
+- `micro.rs` with 25 kinds, seeded by id; each SVG under 250 kB (hatching limited to each grain); contact sheet checked by eye and the weak kinds redrawn (cermet, metal-matrix particles, sandstone, slate layers, plywood veneers).
+- Datasheet figure (with ? card), report datasheets, CLI `microstructure`; engine test (every material, deterministic, labelled, at least 22 kinds, the right kind for key classes); UI check; guide section and screenshot.
+- Data fix: 16 aluminium designations read "EN EN AW-…"; now "AW-…" under EN.
+- Roadmap: 0.3.5 elements; display/export to 0.3.6 … substances to 0.3.12. Released 0.3.4.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.4: colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
+**Next:** 0.3.5: the elements and a periodic table ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

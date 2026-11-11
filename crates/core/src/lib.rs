@@ -10,6 +10,7 @@ pub mod eco;
 pub mod export;
 pub mod geometry;
 pub mod goals;
+pub mod micro;
 pub mod model;
 pub mod ops;
 pub mod process;

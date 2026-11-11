@@ -792,3 +792,11 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .guidecard .ic { grid-row: span 2; width: 36px; height: 36px; color: var(--blue); }
 .guidecard b { font-size: 16px; }
 .guidecard span { color: var(--muted); font-size: 12px; }
+/* Schematic microstructure */
+.shtop { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+.shtop .sfacts { flex: 1; min-width: 380px; }
+.micro { margin: 0; width: 300px; flex: none; }
+.micro .msvg svg { display: block; width: 300px; height: 200px; border: 1px solid var(--line); }
+.micro figcaption { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.micro.small { float: right; width: 210px; margin: 0 0 6px 12px; }
+.micro.small .msvg svg { width: 210px; height: 140px; }

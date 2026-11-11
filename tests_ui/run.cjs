@@ -30,7 +30,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -141,6 +141,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForSelector(".sheetpage h1", { timeout: 8000 }).catch(() => {});
   const h1 = await p.textContent(".sheetpage h1").catch(() => "");
   check("the material is saved and its datasheet opens", h1.startsWith("Test alloy X") && (await p.textContent(".refs")).includes("Test report 7"), h1 + " | " + await p.textContent("#toast").catch(() => ""));
+  check("a datasheet shows a schematic microstructure, labelled as one", !!(await p.$(".micro svg")) && (await p.textContent(".micro figcaption")).startsWith("Schematic, not a micrograph"));
   await p.click('.side button[title="Charts"]');
   await p.waitForTimeout(300);
   check("your material is on the chart", !!(await p.$('.cbox ellipse.bub[data-id="u-1"]')));

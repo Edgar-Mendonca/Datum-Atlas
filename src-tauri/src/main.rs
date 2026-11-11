@@ -152,6 +152,13 @@ fn substitutes(st: State<St>, id: String, tol: f64) -> Value {
     serde_json::to_value(eco::substitutes(&a.db.with_formulas(&a.doc.p.formulas), &a.doc.p, &id, tol)).unwrap_or_default()
 }
 
+/// A material's schematic microstructure (SVG, caption, scale).
+#[tauri::command]
+fn microstructure(st: State<St>, id: String) -> R<datum_atlas_core::micro::Micro> {
+    let a = st.lock();
+    a.db.get(&id).map(datum_atlas_core::micro::draw).ok_or_else(|| "That material is not in the database.".into())
+}
+
 /// The process records (shaping, machining, additive, joining, finishing).
 #[tauri::command]
 fn processes() -> Value { serde_json::to_value(process::processes()).unwrap_or_default() }
@@ -659,7 +666,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

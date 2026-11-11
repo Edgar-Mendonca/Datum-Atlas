@@ -739,3 +739,25 @@ fn the_guide_and_public_text_hold_together() {
         }
     }
 }
+
+#[test]
+fn every_material_has_a_schematic_microstructure() {
+    use crate::micro::{draw, Kind};
+    let d = db::builtin();
+    let mut kinds = std::collections::HashSet::new();
+    for m in &d.materials {
+        let a = draw(m);
+        assert!(a.svg.starts_with("<svg") && a.svg.ends_with("</svg>") && a.svg.contains("SCHEMATIC"), "{}", m.id);
+        assert!(!a.svg.contains("NaN") && !a.svg.contains("inf"), "{}: a number off the picture", m.id);
+        assert!(a.svg.len() < 250_000, "{}: {} bytes", m.id, a.svg.len());
+        assert!(a.caption.starts_with("Schematic, not a micrograph:"), "{}", m.id);
+        assert_eq!(a.svg, draw(m).svg, "{}: the same material always gives the same picture", m.id);
+        kinds.insert(format!("{:?}", a.kind).split([' ', '{']).next().unwrap_or("").to_string());
+    }
+    assert!(kinds.len() >= 22, "{kinds:?}");
+    // The classes get the structures they have.
+    let k = |id: &str| crate::micro::recipe(d.materials.iter().find(|m| m.id == id).unwrap()).0;
+    assert!(matches!(k("steel-1020"), Kind::Pearlite { .. }) && matches!(k("ci-grey"), Kind::Graphite { shape: 0 }) && matches!(k("ci-ductile"), Kind::Graphite { shape: 2 }));
+    assert!(matches!(k("al-a356-t6"), Kind::Dendrites { .. }) && matches!(k("cfrp-ud"), Kind::Fibres { .. }) && matches!(k("pp"), Kind::Spherulites { .. }) && matches!(k("pc"), Kind::Amorphous { .. }));
+    assert!(matches!(k("glass-soda"), Kind::Glass) && matches!(k("pe-foam"), Kind::Foam { open: false, .. }) && matches!(k("pine-l"), Kind::Wood { hard: false }));
+}

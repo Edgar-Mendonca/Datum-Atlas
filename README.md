@@ -37,7 +37,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
 4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Features (0.3.0)
+## Features (0.3.4)
 
 - **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
 - **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
@@ -50,7 +50,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 - **Compare** up to six materials in a table and a **radar chart**, and print a **selection report** (with the eco audit and the manufacture) with the requirements, charts, shortlist, comparison and datasheets.
 - **Your own data**: add materials by hand, **import from a spreadsheet or CSV**, open a colleague's database beside the built-in data, and save yours as a database, a spreadsheet or CSV. Results go to a spreadsheet too.
 - **SI or imperial units** everywhere; derived properties such as specific stiffness, cost per volume and thermal diffusivity.
-- **Browse** with a family tree and a spreadsheet-like table, **datasheets** with numbered references, and a **Sources** page.
+- **Browse** with a family tree and a spreadsheet-like table, **datasheets** with numbered references and a **schematic microstructure** of every material, and a **Sources** page.
 - **? help** beside the tools, a Glossary, and **Tell Me** (Ctrl+K) for commands, goals and materials.
 - Print or save as PDF; export charts as SVG or PNG, or copy them as a picture. Light, dark and auto themes; the in-app updater; recovery of unsaved work; damaged files never crash the app.
 

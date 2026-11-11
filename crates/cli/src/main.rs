@@ -9,6 +9,7 @@ const HELP: &str = "datum-atlas-cli: Datum Atlas on the command line
 
   datum-atlas-cli search TEXT [--family F]     materials whose name, designation or uses match
   datum-atlas-cli material ID|NAME             a datasheet: every value with its unit and source
+  datum-atlas-cli microstructure ID|NAME       its schematic microstructure as SVG (a schematic, not a micrograph)
   datum-atlas-cli props                        the property keys, names and units
   datum-atlas-cli goals                        the design goals and the index library
   datum-atlas-cli processes                    the process records
@@ -76,6 +77,7 @@ fn run(args: &[String]) -> Result<String, String> {
         Some("--version" | "version") => Ok(format!("datum-atlas-cli {}", env!("CARGO_PKG_VERSION"))),
         Some("search") => { let d = database(args)?; Ok(pretty(&json!(search(&d, arg(0, "the text to search for")?, flag(args, "--family"))))) }
         Some("material") => { let d = database(args)?; Ok(pretty(&material(&d, arg(0, "a material id or name")?)?)) }
+        Some("microstructure") => { let d = database(args)?; Ok(datum_atlas_core::micro::draw(find(&d, arg(0, "a material id or name")?)?).svg) }
         Some("props") => Ok(PROPS.iter().map(|p| format!("{:<12} {:<38} {}", p.key, p.name, if p.unit.is_empty() { p.kind } else { p.unit })).collect::<Vec<_>>().join("\n")),
         Some("goals") => Ok(goals::GOALS.iter().map(|g| format!("{:<22} {:<46} {}{}", g.id, g.name, g.index, if g.library { "  (library)" } else { "" })).collect::<Vec<_>>().join("\n")),
         Some("processes") => Ok(process::processes().iter().map(|p| format!("{:<18} {:<44} {}", p.id, p.name, p.group)).collect::<Vec<_>>().join("\n")),

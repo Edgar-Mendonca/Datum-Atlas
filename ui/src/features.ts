@@ -3,7 +3,7 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.3.3";
+export const VERSION_NOW = "0.3.4";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
@@ -13,6 +13,7 @@ const PAST: Record<string, string> = {
   "0.3.1": "A command line: search, datasheets, selections, eco audit and process selection",
   "0.3.2": "Connect an AI assistant (Model Context Protocol)",
   "0.3.3": "The Datum Atlas Guide (PDF)",
+  "0.3.4": "Schematic microstructures for every material",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */
@@ -33,7 +34,7 @@ export const FEATURES: Feature[] = [
   ["A7", "250 materials", "0.2.0", "Specific grades, ratings for durability and processing, all referenced."],
   ["A8", "Import from a spreadsheet or CSV", "0.2.0", "Bring your own data in with a column-mapping step; export it the same way."],
   ["A9", "Several databases", "0.2.0", "Open, share and switch between .datdb databases, for a team or a project."],
-  ["A10", "Pictures and microstructures", "1.0.0", "A picture on each datasheet."],
+  ["A10", "Real micrographs and pictures", "1.0.0", "Photographs of microstructures and of parts, from public-domain and open-licence sources, each cited like a value."],
   ["A12", "Values checked against their sources", "0.1.1", "Each value checked against the document it cites, marked ✓; the metals first, then a family per release."],
   ["A14", "Sources page", "0.1.1", "Every source, its licence and the values that cite it: open and public sources only."],
   ["A11", "1,000 materials", "1.0.0", "A database grown with the community, every value referenced."],

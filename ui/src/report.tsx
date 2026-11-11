@@ -7,6 +7,7 @@ import { out, P, act, db, mat, propOf, vtext, unitOf, srcOf, goals, setBackstage
 import { ChartSvg } from "./chart";
 import { Radar } from "./compare";
 import { PHASES } from "./eco";
+import { MicroFig } from "./browse";
 import { Check } from "./ui";
 import { Help } from "./help";
 
@@ -64,7 +65,7 @@ export const ReportDoc = (p: { print?: boolean }) => {
         <table class="ptable"><thead><tr><th>Process</th><th class="r">USD per part (indicative)</th></tr></thead>
           <tbody><For each={out()!.process.rows.filter(r => r.pass).slice(0, 8)}>{r => <tr><td>{r.name}</td><td class="r">{r.cost ? `${fmt(Math.sqrt(r.cost[0] * r.cost[1]))} (${fmt(r.cost[0])} – ${fmt(r.cost[1])})` : ""}</td></tr>}</For></tbody></table></Show>
       <Show when={parts().sheets && candidates().length}><h2>8 · Datasheets of the candidates</h2>
-        <For each={candidates()}>{id => { const m = () => mat(id)!; return <Show when={mat(id)}><div class="rsheet"><h3>{m().name}</h3><p class="muted">{m().family.join(" › ")}{Object.keys(m().des).length ? ` · ${Object.entries(m().des).map(([k, v]) => `${k} ${v}`).join(", ")}` : ""}</p>
+        <For each={candidates()}>{id => { const m = () => mat(id)!; return <Show when={mat(id)}><div class="rsheet"><MicroFig id={id} small /><h3>{m().name}</h3><p class="muted">{m().family.join(" › ")}{Object.keys(m().des).length ? ` · ${Object.entries(m().des).map(([k, v]) => `${k} ${v}`).join(", ")}` : ""}</p>
           <table class="ptable"><tbody><For each={KEYS.filter(k => m().props[k])}>{k => { const v = m().props[k]; return <tr><td>{propOf(k)?.name}</td><td>{vtext(k, v)} {unitOf(k)}</td><td class="muted small">{srcOf(String(v[v.length === 4 ? 2 : v.length - 1]))?.title}{m().checked?.includes(k) ? " ✓" : ""}</td></tr>; }}</For></tbody></table>
           <Show when={m().uses}><p class="small">Uses: {m().uses}</p></Show></div></Show>; }}</For></Show>
       <h2>Sources</h2>

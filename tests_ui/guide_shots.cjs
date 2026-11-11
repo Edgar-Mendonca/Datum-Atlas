@@ -25,7 +25,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "Northwind Engineering", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "0.3.3", copy_text: null, save_file: null };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure"];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (engine.includes(c)) { const r = await window.__engine(c, a); if ("err" in r) throw r.err; return r.ok; }
       if (c === "set_options") return (await window.__engine("state", {})).ok;
@@ -110,7 +110,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await side("Browse"); await shot("browse", [[".tree", 1, 0, "in"], [".find", 2], [".btable", 3, 0, "in"]]);
   await side("Compare"); await shot("compare", [[".cmptable", 1, 0, "in"], [".cmpradar", 2]]);
   await p.click(".cmp th button.lnk >> nth=0"); await wait(600);
-  await shot("datasheet", [[".shead .inline", 1], [".sfacts", 2], [".tbl.dsheet", 3, 1]]);
+  await shot("datasheet", [[".shead .inline", 1], [".sfacts", 2], [".micro", 3], [".tbl.dsheet", 4, 1]]);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

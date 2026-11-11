@@ -33,6 +33,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "goal_list" => json!(goals::GOALS),
         "eco_data" => json!(eco::data()),
         "processes" => json!(process::processes()),
+        "microstructure" => json!(datum_atlas_core::micro::draw(s.db.get(a["id"].as_str().unwrap_or("")).ok_or("That material is not in the database.")?)),
         "substitutes" => json!(eco::substitutes(&s.db.with_formulas(&s.doc.p.formulas), &s.doc.p, a["id"].as_str().unwrap_or(""), a["tol"].as_f64().unwrap_or(0.1))),
         "templates" => json!(templates::list()),
         "database" => json!({ "materials": s.db.materials, "sources": s.db.sources, "userCount": s.db.user_count, "props": db::props_out(), "tree": db::tree(&s.db.materials), "rev": s.db_rev }),
