@@ -85,6 +85,12 @@ datum-atlas-cli process tie.datlas                # process selection and cost
 datum-atlas-cli export tie.datlas results.xlsx    # .datlas, .xlsx or .csv
 ```
 
+`datum-atlas-cli mcp` is a Model Context Protocol server: an AI assistant can search the materials, read datasheets with their sources, set up and read a selection, run the eco audit and process selection, and save the project. Nothing is written unless it is asked to save. In the app, Help › Use with an AI Assistant has the settings to copy:
+
+```json
+{ "mcpServers": { "datum-atlas": { "command": "C:\\Tools\\datum-atlas-cli-x.y.z.exe", "args": ["mcp"] } } }
+```
+
 ## Install
 
 Download `DatumAtlas-x.y.z-setup.exe` from the [latest release](https://github.com/Edgar-Mendonca/Datum-Atlas/releases/latest) and run it (per-user install, no administrator rights). Windows SmartScreen may warn on the first install because the installer is not signed yet. Updates install from File › Updates.

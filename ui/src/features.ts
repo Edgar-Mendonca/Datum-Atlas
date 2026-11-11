@@ -3,7 +3,7 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.3.1";
+export const VERSION_NOW = "0.3.2";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
@@ -11,6 +11,7 @@ const PAST: Record<string, string> = {
   "0.2.1": "Windows lists the publisher as Datum",
   "0.3.0": "Eco and process: eco audit, greener substitutes, process selection and cost",
   "0.3.1": "A command line: search, datasheets, selections, eco audit and process selection",
+  "0.3.2": "Connect an AI assistant (Model Context Protocol)",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */

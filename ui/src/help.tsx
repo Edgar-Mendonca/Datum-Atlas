@@ -6,6 +6,9 @@ import { Dialog } from "./ui";
 
 type Topic = { t: string; what: string; how?: string[]; tip?: string };
 export const HELP: Record<string, Topic> = {
+  assistant: { t: "AI assistant connection", what: "The command-line program datum-atlas-cli can serve Datum Atlas to an AI assistant over the Model Context Protocol: the assistant searches materials, reads datasheets with their sources, sets up and reads selections, and runs the eco audit and process selection.",
+    how: ["Download datum-atlas-cli from the release, beside the installer.", "Add it to the assistant's list of servers with the argument mcp (Help › Use with an AI Assistant has the settings to copy).", "Ask in plain words; the assistant shows what it found and changed."],
+    tip: "It edits a project only through the window's own edits and writes a file only when asked to save." },
   processes: { t: "Processes", what: "The manufacturing processes Datum Atlas knows: shaping (casting, moulding, forming, composites), machining, additive manufacturing, joining and finishing, each with what it can make and what it costs.",
     how: ["Click a process for its record: materials, part mass, section, shapes, tolerance, roughness, economic batch and indicative costs."], tip: "Typical ranges, not a supplier's quote." },
   process: { t: "Process selection", what: "Which processes can make your part from your material, stage by stage like material selection, and why each other process cannot.",

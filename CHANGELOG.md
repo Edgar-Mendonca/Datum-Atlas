@@ -1,6 +1,15 @@
 # Changelog
 
-## 0.3.1 — 2026-11-11
+## 0.3.2 — 2026-11-11
+
+Connect an AI assistant: it can search the materials, read datasheets, set up and read a selection, run the eco audit and process selection, and save the project.
+
+**AI assistant**
+- `datum-atlas-cli mcp` serves Datum Atlas to an AI assistant over the Model Context Protocol, with 18 tools: search and read materials, properties, goals, processes and templates; start or open a project, apply an edit or a design goal, undo, read the results and a chart; the eco audit, process selection and greener substitutes; save.
+- The assistant changes a project only through the same named edits as the window, a failed edit changes nothing, and nothing is written unless it is asked to save (.datlas, .xlsx or .csv only). `--db` adds your own databases.
+- Help › Use with an AI Assistant shows how to connect one, with the settings to copy, and a ? card explains it.
+
+
 
 A command line: search the materials, read datasheets, run a selection, the eco audit and process selection, and change and export projects without the window.
 

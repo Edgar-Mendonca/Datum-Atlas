@@ -1,7 +1,9 @@
 // Help and small dialogs: Getting Started (the method), Glossary, Shortcuts, save before closing.
 import { For, Show, createSignal } from "solid-js";
 import { Out } from "./api";
-import { openDialog, closeDialog, call, P } from "./store";
+import { openDialog, closeDialog, call, P, toast } from "./store";
+import { VERSION_NOW } from "./features";
+import { Help } from "./help";
 import { Dialog } from "./ui";
 
 export const gettingStarted = () => openDialog(() => (
@@ -88,6 +90,31 @@ export const glossary = () => openDialog(() => {
     <Dialog title="Glossary" wide>
       <input class="find" placeholder="Search terms" value={q()} onInput={e => setQ(e.currentTarget.value)} />
       <div class="gloss"><For each={GLOSSARY}>{([h, list]) => { const f = () => list.filter(x => (x[0] + x[1]).toLowerCase().includes(q().toLowerCase())); return <Show when={f().length}><h4>{h}</h4><dl><For each={f()}>{([t, d]) => <><dt>{t}</dt><dd>{d}</dd></>}</For></dl></Show>; }}</For></div>
+    </Dialog>
+  );
+});
+
+/** Help › Use with an AI Assistant: how to connect an assistant to Datum Atlas through the command line. */
+export const assistant = () => openDialog(() => {
+  const exe = `C:\\Tools\\datum-atlas-cli-${VERSION_NOW}.exe`;
+  const cfg = JSON.stringify({ mcpServers: { "datum-atlas": { command: exe, args: ["mcp"] } } }, null, 2);
+  const copy = (t: string) => call("copy_text", { text: t }).then(() => toast("Copied: paste it into the assistant's settings.", true));
+  return (
+    <Dialog title="Use with an AI assistant" wide>
+      <div class="guide">
+        <p>An AI assistant that speaks the <b>Model Context Protocol</b> can use Datum Atlas: search the materials and read their datasheets, set up a selection, read the ranked results, run the eco audit and process selection, and save the project. <Help k="assistant" /></p>
+        <h4>1 · Get the command-line program</h4>
+        <p>Download <code>datum-atlas-cli-{VERSION_NOW}.exe</code> from the same release as the installer (Help › Releases) and keep it in a folder of your choice, such as <code>C:\Tools</code>.</p>
+        <h4>2 · Add it to the assistant's settings</h4>
+        <p>Most assistants take a list of servers like this one. Change the path to where you saved the program.</p>
+        <pre class="code">{cfg}</pre>
+        <p class="inline"><button class="btn sm" onClick={() => copy(cfg)}>Copy the settings</button><button class="btn sm" onClick={() => copy(`"${exe}" mcp`)}>Copy the command</button></p>
+        <h4>3 · Ask</h4>
+        <ul><li>“Find light, stiff materials for a bracket that works at 150 °C and costs under 5 USD/kg.”</li>
+          <li>“Compare the CO₂ of a steel and an aluminium version of this part over ten years of driving.”</li>
+          <li>“Which processes can make a 2 kg hollow aluminium casting, and which is cheapest for 20,000 parts?”</li></ul>
+        <p class="muted">The assistant changes a project only through the same edits as the window, and saves nothing unless asked. Your own databases (.datdb) can be added with <code>--db</code> after <code>mcp</code>. Nothing leaves your computer through Datum Atlas.</p>
+      </div>
     </Dialog>
   );
 });

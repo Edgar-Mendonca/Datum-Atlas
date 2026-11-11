@@ -461,6 +461,14 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.fill(".dlg input.find", "index");
   check("the glossary finds terms", (await p.textContent(".gloss")).includes("Performance index"));
   await p.keyboard.press("Escape");
+  await p.click('.ribbon button[title^="Connect an AI assistant"]');
+  await p.waitForTimeout(200);
+  const ad = await p.textContent(".dlg");
+  check("Help shows how to connect an AI assistant", ad.includes("datum-atlas-cli-") && ad.includes('"mcp"') && ad.includes("mcpServers"), ad.slice(0, 200));
+  await p.click('.dlg button:has-text("Copy the settings")');
+  await p.waitForTimeout(150);
+  check("the assistant settings can be copied", (await p.evaluate(() => window.__calls.filter(c => c[0] === "copy_text").pop()?.[1]?.text ?? "")).includes('"args": [\n        "mcp"'));
+  await p.keyboard.press("Escape");
   await p.click(".tabs .file"); await p.click(".bs aside button:has-text('Options')");
   await p.waitForTimeout(200);
   const rows = await p.$$eval(".opt", os => os.map(o => Math.abs(o.children[1].getBoundingClientRect().left - os[0].children[1].getBoundingClientRect().left)));
@@ -475,7 +483,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   for (const v of await p.$$eval(".side button", bs => bs.map(b => b.title))) { await p.click(`.side button[title="${v}"]`); await p.waitForTimeout(150); await grab(); }
   for (const t of await p.$$eval(".tabs button:not(.file)", bs => bs.map(b => b.textContent.trim()).filter(Boolean))) { await p.click(`.tabs button:has-text("${t}")`); await p.waitForTimeout(100); await grab(); }
   await p.click('.tabs button:has-text("Help")');
-  for (const t of ["Getting Started", "Bubble, envelope", "Every tool explained"]) {
+  for (const t of ["Getting Started", "Bubble, envelope", "Connect an AI assistant", "Every tool explained"]) {
     await p.click(`.ribbon button[title^="${t}"]`); await p.waitForTimeout(200); await grab();
     if (t === "Every tool explained") {
       const n = await p.$$eval(".menu button", b => b.length);

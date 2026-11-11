@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.1** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.1). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.2** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.2). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
@@ -96,11 +96,11 @@ flowchart LR
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
 | `crates/core/src/ops.rs` | The named operations (`catalog`: name, what it does, a working example of each `Op`) and `apply` (turns a `Goal` into its edits). Used by `datum-atlas-cli`. |
-| `crates/cli/` | `datum-atlas-cli`: search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db` adds `.datdb` files. Writes only .datlas/.xlsx/.csv. Ships as `datum-atlas-cli-X.Y.Z.exe`. |
+| `crates/cli/` | `datum-atlas-cli` and `mcp` (Model Context Protocol over stdio, 18 tools; a test drives a whole assistant session): search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db` adds `.datdb` files. Writes only .datlas/.xlsx/.csv. Ships as `datum-atlas-cli-X.Y.Z.exe`. |
 | `crates/core/src/process.rs` | Processes (`data/processes.json`), `suits`, `ProcSel` in the project, `select` (stages with reasons, `cost` and curves, cheapest by batch, shortlist matrix, joins, finishes), `check`. |
 | `ui/src/eco.tsx`, `ui/src/process.tsx` | The Eco page (options, parts, transport, use, bars, break-even chart, `greener` dialog, `exportEco`), the Process selection and Processes pages (`procCard`, cost chart). |
 | `data/eco.json`, `data/processes.json` | Eco factors (processes, machining, transport, vehicles, grids, end of life) and the 55 process records, each with its source. |
-| `ui/src/help.tsx` | `HELP` (26 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
+| `ui/src/help.tsx` | `HELP` (37 topics), the `?` button, `helpCard`. Help › What Is This Tool? lists every topic. |
 | `ui/src/pages.tsx` | Setup (requirements, goal list, design problems), `goalCard` (Why), Sources page (kinds, licences, cites), Data (your materials, families, sources), `Later` pages for Compare, Index builder, Report; `MiniChart`. |
 | `ui/src/print.tsx` | Print page: chart pages (vector, legend, caption), datasheet and results as flowing pages; header/footer codes. |
 | `ui/src/features.ts`, `roadmap.tsx` | The feature catalogue (A data, B charts, C selection, D compare/report, E eco, F process, G help) and `soon(id)` cards, Roadmap page; past releases plus `RELEASES`/`PLANS` read from `docs/site.json`. |
@@ -181,8 +181,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.1** | Publisher | Windows publisher "Datum" for the whole family (hub FAMILY §9); copyright unchanged | ✅ |
 | **0.3.0** | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | End-of-life data for every material (recycling energy and CO₂, recycled fraction, heat of combustion, combustion CO₂, downcycle/burn/biodegrade flags), 60 primary-energy gaps filled; `data/eco.json` factors; eco audit (parts, transport, use, years; five phases as ranges; up to four options; break-even; to a spreadsheet); greener substitutes; 5 more eco indices (52); 55 processes, cast/mach/weld ratings; process selection with reasons, cost against batch, shortlist matrix, joins and finishes; report sections | ✅ |
 | **0.3.1** | Command line ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a) | `datum-atlas-cli` (search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db`), `ops.rs` catalogue with tested examples; ships in the release; wording cleanup | ✅ |
-| 0.3.2 | Assistant connection | `datum-atlas-cli mcp`: the MCP server (Datum Plan's rules), tests that drive an assistant session, and Help › Use with an AI assistant. | 🔜 |
-| 0.3.3 | User guide | The user guide in the app and as a PDF in the release. | ⬜ |
+| **0.3.2** | Assistant connection | `datum-atlas-cli mcp` (18 tools: search_materials, get_material, list_properties/goals/processes/templates, new/open_project, project_info, list_operations, apply_operation, undo, get_results, get_chart, eco_audit, process_selection, greener_substitutes, save_project); Help › Use with an AI Assistant; ? card | ✅ |
+| 0.3.3 | User guide | The user guide in the app and as a PDF in the release. | 🔜 |
 | 0.3.4 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | ⬜ |
 | 0.3.5 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. | ⬜ |
 | 0.3.6 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. | ⬜ |
@@ -438,11 +438,16 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - cargo deny found RUSTSEC-2026-0436 (calamine 0.37: a malformed .xls/.xlsb could panic or exhaust memory): calamine 0.38, tests and import checks pass.
 - README Command line section, SECURITY, CHANGELOG 0.3.1 (with the wording), site roadmap from 0.3.2. Released 0.3.1.
 
+### 2026-11-11: Session 16, continued (0.3.2: assistant connection)
+- `datum-atlas-cli mcp` on Datum Plan's pattern: 18 tools, Datum Plan's rules (only named operations; saves only on save_project, only .datlas/.xlsx/.csv; panics caught), read-only database (the default for the open question), `--db` for your own. Session test (19 messages: tools/list, errors, a goal, a bad edit, results, eco, process, substitutes, undo, save, a refused .exe, unknown tool and method, bad JSON) and a stdio smoke test.
+- Window: Help › Use with an AI Assistant (settings and command to copy), `assistant` ? card; UI checks for both, and the product-name scan reads the new dialog (67 views).
+- CHANGELOG, README, SECURITY, site.json, MEMORY; versions 0.3.2 (app, engine, cli). Released 0.3.2.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.2: `datum-atlas-cli mcp` (assistant connection) and its Help card ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
+**Next:** 0.3.3: the user guide ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
