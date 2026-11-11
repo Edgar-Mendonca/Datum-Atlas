@@ -1,7 +1,8 @@
 // Browse: the family tree on the left and the materials table on the right, on the family grid
 // engine (selection.ts): sort by a heading, select cells, rows or columns, Ctrl+C to a spreadsheet.
 // Datasheet: every property of one material, grouped, with its range, unit and reference.
-import { For, Show, createMemo, createSignal, createResource } from "solid-js";
+import { For, Show, createMemo, createSignal } from "solid-js";
+import { setMicroFocus } from "./structures";
 import { greener, auditMaterial } from "./eco";
 import { Material, mid, isRange, SEP, famColor, fmt } from "./api";
 import { Help } from "./help";
@@ -11,11 +12,13 @@ import { toTsv } from "./cells";
 import { Icon } from "./ui";
 import { editMaterial, deleteMaterial } from "./material";
 
-/** A material's schematic microstructure (drawn by the engine, micro.rs) with its caption. */
-export const MicroFig = (p: { id: string; help?: boolean; small?: boolean }) => {
-  const [m] = createResource(() => p.id, id => call<{ svg: string; caption: string }>("microstructure", { id }));
-  return <Show when={m()}>{x => <figure class="micro" classList={{ small: p.small }}><div class="msvg" innerHTML={x().svg} /><figcaption>{x().caption}{p.help ? <> <Help k="micro" /></> : ""}</figcaption></figure>}</Show>;
-};
+/** The datasheet's micrograph: a real, open-licence one when there is one (none yet), and a link to
+ *  the material's typical structure in the Microstructure module. */
+const Micrograph = (p: { id: string; print?: boolean }) => (
+  <figure class="micrograph"><div class="mgbox"><b>Micrograph</b><span>No open-licence micrograph of this material yet.</span>
+    <Show when={!p.print}><button class="btn sm" onClick={() => { setMicroFocus(p.id); show("micro"); }}>Typical structure ›</button></Show></div>
+    <figcaption>Real micrographs appear here with their source when an open dataset has this material. <Show when={!p.print}><Help k="micrograph" /></Show></figcaption></figure>
+);
 
 export const [cols, setCols] = createSignal(["rho", "price", "E", "sy", "ts", "kic", "tmax", "lam", "alpha", "co2"]);
 const FAMS = ["Metals", "Polymers", "Elastomers", "Ceramics and glasses", "Composites", "Foams", "Natural materials"];
@@ -119,7 +122,7 @@ export const Datasheet = (p: { id?: string; print?: boolean }) => {
           <Show when={m().notes}><div><b>Notes</b><span>{m().notes}</span></div></Show>
           <Show when={row() && out()!.results.stages.length}><div><b>Selection</b><span classList={{ ok: row()!.pass, late: !row()!.pass }}>{row()!.pass ? `Passes${row()!.rank ? `, rank ${row()!.rank}` : ""}` : `Fails: ${row()!.reasons.join("; ")}`}</span></div></Show>
           <div><b>Status</b><span>{m().user ? "Your own material." : m().origin ? `From the database “${m().origin}” (opened beside the built-in data).` : m().checked?.length ? `${m().checked.length} values checked against their source (✓); the others are drafts.` : "Draft: compiled from the sources below; not yet checked value by value."}</span></div>
-        </div><MicroFig id={m().id} help={!p.print} /></div>
+        </div><Micrograph id={m().id} print={p.print} /></div>
         <For each={GROUPS}>{g => { const ps = () => db().props.filter(x => x.group === g); const have = () => ps().filter(x => m().props[x.key]);
           return <Show when={have().length || !p.print}><h2>{g}{g === "Derived" && !p.print ? <> <Help k="derived" /></> : ""}</h2><table class="tbl dsheet"><tbody><For each={p.print ? have() : ps()}>{x => { const v = m().props[x.key];
             return <tr classList={{ nodata: !v }} title={x.about}><td>{x.name}{x.sym && <span class="sym"> {x.sym}</span>}</td><td class="r">{v ? vtext(x.key, v) : "no data"}{v && v.length === 4 ? <span class="muted"> (typical {fmt(toShown(x.key, v[3] as number))})</span> : ""}</td><td class="muted">{v ? unitOf(x.key) : ""}</td><td class="ref">{v ? <sup>{srcIdx(v as any[])}</sup> : ""}{m().checked?.includes(x.key) ? <span class="chk ok" title="Checked against the source">✓</span> : ""}</td></tr>; }}</For></tbody></table></Show>; }}</For>

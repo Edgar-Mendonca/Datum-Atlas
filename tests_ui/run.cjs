@@ -10,6 +10,15 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure" };
+/** Opens a page: switches module first when the page is in another module. */
+const goTo = async (p, t) => {
+  if (t === "Eco") t = "Eco audit";
+  if (!(await p.$(`.side button[title="${t}"]`))) { await p.click(".side .modsw"); await p.click(`.menu button:has(span:text-is("${PAGE_MOD[t]}"))`); await p.waitForTimeout(250); }
+  await p.click(`.side button[title="${t}"]`);
+};
+/** Opens a ribbon tab, opening a page of a module that has it first. */
+const tabTo = async (p, t) => { if (!(await p.$(`.tabs button:text-is("${t}")`))) await goTo(p, t === "Data" ? "Browse" : "Charts"); await p.click(`.tabs button:text-is("${t}")`); };
 let failed = 0;
 const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${name}${ok ? "" : "  " + info}`); if (!ok) failed++; };
 
@@ -75,7 +84,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("a double-click opens the full datasheet with references", sheet.includes(under) && sheet.includes("Young's modulus") && sheet.includes("References") && /MIL-HDBK|Tables of Physical/.test(sheet), sheet.slice(0, 200));
   check("missing values show as no data, not zero", sheet.includes("no data"));
   await shot("03-datasheet");
-  await p.click('.side button[title="Charts"]');
+  await goTo(p, "Charts");
   await p.waitForTimeout(300);
 
   // 3. Dragging the selection line changes the pass count (moving it down lets more through).
@@ -87,7 +96,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("the drag is one Select edit", (await p.evaluate(() => window.__calls.filter(c => c[0] === "apply" && c[1].op.Select).length)) === 1);
 
   // 4. A limit stage; results match the stages and give reasons.
-  await p.click('.side button[title="Stages"]');
+  await goTo(p, "Stages");
   await p.waitForTimeout(200);
   await p.getByText("Add a limit", { exact: true }).first().click();
   await p.waitForTimeout(300);
@@ -95,7 +104,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.locator(".limit input[placeholder=min]").last().fill("150"); await p.keyboard.press("Tab");
   await p.waitForTimeout(300);
   await shot("04-stages");
-  await p.click('.side button[title="Results"]');
+  await goTo(p, "Results");
   await p.waitForTimeout(300);
   const st = await p.evaluate(async () => { const s = await window.__TAURI__.core.invoke("state"); return { pass: s.results.pass, rows: s.results.rows.filter(r => r.pass).map(r => r.name) }; });
   const listed = await p.$$eval(".tbl.results tbody tr", rs => rs.map(r => r.children[1].querySelector("b").textContent));
@@ -107,7 +116,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await shot("05-results");
 
   // 5. Browse: tree filters the table; selection and Ctrl+C give TSV.
-  await p.click('.side button[title="Browse"]');
+  await goTo(p, "Browse");
   await p.waitForTimeout(300);
   const all = await p.$$eval(".bgrid tbody tr", r => r.length);
   await p.click(".tree button:has-text('Polymers')");
@@ -141,13 +150,21 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForSelector(".sheetpage h1", { timeout: 8000 }).catch(() => {});
   const h1 = await p.textContent(".sheetpage h1").catch(() => "");
   check("the material is saved and its datasheet opens", h1.startsWith("Test alloy X") && (await p.textContent(".refs")).includes("Test report 7"), h1 + " | " + await p.textContent("#toast").catch(() => ""));
-  check("a datasheet shows a schematic microstructure, labelled as one", !!(await p.$(".micro svg")) && (await p.textContent(".micro figcaption")).startsWith("Schematic, not a micrograph"));
-  await p.click('.side button[title="Charts"]');
+  check("a datasheet has a micrograph slot that says when there is none", (await p.textContent(".micrograph")).includes("No open-licence micrograph"));
+  await p.click('.micrograph button:has-text("Typical structure")');
+  await p.waitForTimeout(500);
+  check("“Typical structure” opens the Microstructure module on that material", (await p.textContent(".side .modsw")).includes("Micro") && !!(await p.$(".structpage .focus .micro svg")) && (await p.$$(".structpage .scard")).length >= 30);
+  await p.click(".side .modsw");
+  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("EBSD (0.3.14)"));
+  await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
+  await goTo(p, "Browse");
+  check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
+  await goTo(p, "Charts");
   await p.waitForTimeout(300);
   check("your material is on the chart", !!(await p.$('.cbox ellipse.bub[data-id="u-1"]')));
 
   // 6b. 0.1.1: design goals, units, bar charts, search, Sources, "?" help, Home tiles.
-  await p.click('.side button[title="Charts"]');
+  await goTo(p, "Charts");
   await p.waitForTimeout(300);
   check("the goal list has 25 goals and Explore", (await p.$$eval(".goalpick select option", o => o.length)) === 26);
   const state = () => p.evaluate(async () => await window.__TAURI__.core.invoke("state"));
@@ -190,18 +207,18 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
     && s0.results.rows.some(r => !r.pass && r.reasons.some(x => x.includes("outside the shape"))));
   await shot("12-selections");
   await p.click('.cbar .tools button:has-text("Pan")');
-  await p.click('.side button[title="Stages"]');
+  await goTo(p, "Stages");
   await p.waitForTimeout(200);
   await p.getByText("By weighted properties").click();
   await p.waitForTimeout(400);
   check("weighted ranking ranks by the weighted properties", (await state()).results.indexName.startsWith("Weighted: 50 % Density (low), 50 % Price (low)") && (await p.textContent(".stagespage")).includes("lower is better"));
   await p.getByText("By the index of a selection line").click();
   await p.waitForTimeout(300);
-  await p.click('.side button[title="Charts"]');
+  await goTo(p, "Charts");
   await p.waitForTimeout(300);
 
   // Indices and formulas: the builder finds an index, plotting it makes a chart; a library index adds its formula; Expression Axis plots a formula.
-  await p.click('.side button[title="Index"]');
+  await goTo(p, "Index");
   await p.waitForTimeout(300);
   await p.selectOption(".bsteps label:nth-child(1) select", "Thin-walled pressure vessel");
   await p.waitForTimeout(200);
@@ -213,7 +230,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   s0 = await state();
   const last = s0.project.charts[s0.project.charts.length - 1];
   check("Plot on a new chart adds a chart with the index line", s0.project.charts.length === nCharts + 1 && last.x === "rho" && last.y === "sy" && last.sels.length === 1 && (await p.textContent(".cbox svg")).includes("σy/ρ ="));
-  await p.click('.side button[title="Index"]');
+  await goTo(p, "Index");
   await p.waitForTimeout(300);
   await p.fill(".indexpage input", "light spring");
   await p.waitForTimeout(200);
@@ -222,7 +239,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   s0 = await state();
   check("a library index adds the formula property it needs", s0.project.formulas.some(f => f.name === "Elastic energy per volume" && f.expr === "[sy]^2/[E]") && (await p.textContent(".cbox svg")).includes("Elastic energy per volume") && /\(Elastic energy per volume\)\/ρ|Elastic energy per volume\/ρ/.test(await p.textContent(".cbox svg")));
   await p.click('.ribbon button:has-text("Chart")').catch(() => {});
-  await p.click('.tabs button:has-text("Chart")').catch(() => {});
+  await tabTo(p, "Chart").catch(() => {});
   await p.waitForTimeout(200);
   await p.getByText("Expression Axis").click();
   await p.waitForTimeout(300);
@@ -246,7 +263,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await shot("13-index");
 
   // Compare, export, best labels, styles, charts side by side, label dragging, the report.
-  await p.click('.side button[title="Results"]');
+  await goTo(p, "Results");
   await p.waitForTimeout(300);
   const k3 = Math.min(3, (await state()).results.pass);
   await p.getByText("Compare the best three").click();
@@ -261,12 +278,12 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("a material is added to Compare by name", (await state()).project.compare.includes("al-7075-t6"));
   check("the radar draws an outline per material", (await p.$$eval(".comparepage svg.radar polygon[fill-opacity]", e => e.length)) === k3 + 1);
   await shot("14-compare");
-  await p.click('.side button[title="Results"]');
+  await goTo(p, "Results");
   await p.waitForTimeout(200);
   await p.click('.ptools button:has-text("To a spreadsheet")');
   await p.waitForTimeout(300);
   check("To a spreadsheet saves the results as .xlsx", (await p.evaluate(() => window.__calls.some(c => c[0] === "export_results" && c[1].fmt === "xlsx"))) && (await p.textContent("#toast").catch(() => "")).includes("results.xlsx"));
-  await p.click('.side button[title="Charts"]');
+  await goTo(p, "Charts");
   await p.waitForTimeout(300);
   await p.click('.cbar button:has-text("Best 5")');
   await p.waitForTimeout(400);
@@ -288,7 +305,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await shot("15-grid");
   await p.click('.cbar .seg button[title="1 chart at once"]');
   await p.waitForTimeout(300);
-  await p.click('.side button[title="Report"]');
+  await goTo(p, "Report");
   await p.waitForTimeout(500);
   const rep = await p.textContent(".report");
   const nch = (await state()).project.charts.length;
@@ -296,7 +313,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await shot("16-report");
 
   // Your own data: import from a CSV with the columns guessed, open another database and close it.
-  await p.click('.side button[title="Data"]');
+  await goTo(p, "Data");
   await p.waitForTimeout(300);
   await p.click('.datapage button:has-text("Import from a spreadsheet or CSV")');
   await p.waitForSelector(".imptable", { timeout: 5000 });
@@ -317,7 +334,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(800);
   dbx = await p.evaluate(async () => await window.__TAURI__.core.invoke("database"));
   check("closing it takes its materials away again", !dbx.materials.some(m => m.name === "Team alloy T"));
-  await p.click('.side button[title="Charts"]');
+  await goTo(p, "Charts");
   await p.waitForTimeout(300);
   await p.selectOption(".goalpick select", "beam-cheap");
   await p.waitForTimeout(500);
@@ -350,7 +367,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   check("Tell Me finds a material by its UNS number", (await p.textContent(".sheetpage h1").catch(() => "")).includes("7075"));
   check("checked values carry a ✓ and cite the datasheet", (await p.locator(".sheetpage .chk.ok").count()) === 3 && (await p.textContent(".sheetpage")).includes("7075 Aluminum Alloy Properties"));
-  await p.click('.side button[title="Sources"]');
+  await goTo(p, "Sources");
   await p.waitForTimeout(200);
   await p.click(".sources tbody tr.link >> nth=2");
   await p.waitForTimeout(200);
@@ -364,7 +381,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
   const at = t => tiles.indexOf(t);
-  check("Home: Material Library, Add a material, Sources, Roadmap in order", at("Material Library") > 0 && at("Material Library") < at("Add a material") && at("Add a material") < at("Sources") && at("Sources") < at("Roadmap"), JSON.stringify(tiles));
+  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
   await p.click(".bs aside .back");
   await p.waitForTimeout(200);
 
@@ -372,7 +389,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   for (const w of [1280, 1600]) {
     await p.setViewportSize({ width: w, height: 900 });
     for (const t of ["Home", "Select", "Chart", "Data", "Report", "View", "Help"]) {
-      await p.click(`.tabs button:has-text("${t}")`);
+      await tabTo(p, t);
       await p.waitForTimeout(80);
       const over = await p.$eval(".ribbon", e => e.scrollWidth - e.clientWidth);
       if (over > 1) check(`ribbon ${t} fits at ${w}px`, false, `${over}px over`);
@@ -381,7 +398,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("every ribbon tab fits at 1280 and 1600 px", true);
   await p.setViewportSize({ width: 1440, height: 900 });
   // Eco audit: start one, a part, its phases; a lighter copy and where it breaks even; greener substitutes.
-  await p.click('.tabs button:has-text("Report")');
+  await tabTo(p, "Report");
   await p.click('.ribbon button[title^="Energy and CO₂"]');
   await p.waitForTimeout(200);
   check("Eco Audit opens the eco page", !!(await p.$(".ecopage")));
@@ -439,14 +456,14 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(200);
   check("a process record opens", (await p.textContent(".dlg")).includes("Economic batch"));
   await p.keyboard.press("Escape");
-  await p.click('.side button[title="Report"]');
+  await goTo(p, "Report");
   await p.waitForTimeout(300);
   const rep2 = await p.textContent(".report");
   check("the report adds the eco audit and the manufacture", rep2.includes("6 · Eco audit") && rep2.includes("7 · Manufacture") && rep2.includes("Investment casting"), rep2.slice(0, 200));
 
   // 8. Every view prints; the chart prints as a vector page.
   for (const [v, want] of [["Charts", ".ppage svg.chartsvg"], ["Datasheet", ".pflow .sheetpage"], ["Results", ".pflow .ptable"]]) {
-    await p.click(`.side button[title="${v}"]`);
+    await goTo(p, v);
     await p.waitForTimeout(200);
     await p.keyboard.press("Control+p");
     await p.waitForTimeout(400);
@@ -487,7 +504,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   const grab = async () => texts.push(await p.evaluate(() => document.body.innerText + " " + [...document.querySelectorAll("[title],[placeholder]")].map(e => (e.getAttribute("title") ?? "") + " " + (e.getAttribute("placeholder") ?? "")).join(" ")));
   await p.keyboard.press("Escape"); await p.waitForTimeout(150);
   if (await p.$(".bs")) { await p.click(".bs aside .back"); await p.waitForTimeout(150); }
-  for (const v of await p.$$eval(".side button", bs => bs.map(b => b.title))) { await p.click(`.side button[title="${v}"]`); await p.waitForTimeout(150); await grab(); }
+  for (const v of Object.keys(PAGE_MOD).filter(k => k !== "Eco")) { await goTo(p, v); await p.waitForTimeout(150); await grab(); }
   for (const t of await p.$$eval(".tabs button:not(.file)", bs => bs.map(b => b.textContent.trim()).filter(Boolean))) { await p.click(`.tabs button:has-text("${t}")`); await p.waitForTimeout(100); await grab(); }
   await p.click('.tabs button:has-text("Help")');
   for (const t of ["The Datum Atlas Guide", "Getting Started", "Bubble, envelope", "Connect an AI assistant", "Every tool explained"]) {

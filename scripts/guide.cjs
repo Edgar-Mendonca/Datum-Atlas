@@ -85,7 +85,7 @@ tr { break-inside: avoid; }
 
 (async () => {
   const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
-  for (const [lang, title, sub, tocName] of [["en", "Datum Atlas Guide", "Choose materials with property charts and indices, check their life and how to make them, step by step.", "Contents"]]) {
+  for (const [lang, title, sub, tocName] of [["en", "Datum Atlas Guide", "A materials workbench: choose materials, check their life and how to make them, and see their structure, step by step.", "Contents"]]) {
     anchors = 0;
     const src = fs.readFileSync(path.join(dir, `${lang}.md`), "utf8");
     const { html, toc } = md(src.replace(/^# .*\n/, ""));

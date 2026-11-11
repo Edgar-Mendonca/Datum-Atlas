@@ -11,7 +11,7 @@ import "@fontsource/ibm-plex-mono/latin-600.css";
 import "./styles.css";
 import { invoke, listen, Out, Options } from "./api";
 import { grid } from "./store";
-import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, setThemeRaw, applyTheme, view, show, View, chart, db, loadDb, mat, cur, P, setChartId, setGoals, imperial, setUnits } from "./store";
+import { out, setOut, backstage, setBackstage, setOpts, opts, dialogs, call, openDialog, toast, loadOut, openMenu, setThemeRaw, applyTheme, view, show, chart, db, loadDb, mat, cur, P, setChartId, setGoals, imperial, setUnits } from "./store";
 import { C } from "./cmds";
 import { TitleBar, Ribbon, palette } from "./ribbon";
 import { Backstage, update, checkUpdate } from "./backstage";
@@ -22,17 +22,24 @@ import { SetupPage, DataPage, SourcesPage, IndexPage } from "./pages";
 import { ReportPage } from "./report";
 import { ComparePage } from "./compare";
 import { EcoPage } from "./eco";
+import { StructuresPage } from "./structures";
+import { MODULES, PLANNED, moduleOf } from "./modules";
+import { feature } from "./features";
+import { soon } from "./roadmap";
 import { ProcessesPage, ProcessPage } from "./process";
 import { Goal } from "./api";
 import { Menu, Toast, Dialog, Icon } from "./ui";
 import * as D from "./dialogs";
 
-/** The sidebar: Setup first, then the materials, the selection, and the outputs (FAMILY §6). */
-const SIDE: ([View, string, string] | "-")[] = [
-  ["setup", "setup", "Setup"], "-", ["browse", "tree", "Browse"], ["datasheet", "datasheet", "Datasheet"], ["charts", "atlas", "Charts"], "-",
-  ["stages", "filter", "Stages"], ["results", "results", "Results"], ["compare", "compare", "Compare"], ["index", "builder", "Index"], "-", ["eco", "eco", "Eco"], ["process", "process", "Process"], ["report", "report", "Report"], ["data", "db", "Data"], ["sources", "source", "Sources"],
-];
-
+/** The sidebar: the module switcher, then the open module's pages (modules.ts). */
+const ModSwitch = () => {
+  const m = () => moduleOf(view());
+  const pick = (e: MouseEvent) => openMenu(e, [
+    ...MODULES.map(x => ({ label: x.name, icon: x.icon, on: x.id === m().id, run: () => show(x.pages[0][0]) })), "-" as const,
+    ...PLANNED.map(([id, name, icon]) => ({ label: `${name} (${feature(id)?.[2] ?? "later"})`, icon, dim: true, run: () => soon(id) })),
+  ]);
+  return <button class="modsw" title={`Module: ${m().name}. Switch module`} onClick={pick}><Icon n={m().icon} /><span>{m().short}</span><b>▾</b></button>;
+};
 /** The charts shown side by side: the page of n charts that holds the open one, in project order. */
 const page = (n: number) => { const cs = P().charts, i = Math.max(0, cs.findIndex(x => x.id === chart()?.id)); return cs.slice(Math.floor(i / n) * n, Math.floor(i / n) * n + n); };
 const ChartsPage = () => (
@@ -106,7 +113,7 @@ const App = () => {
       <TitleBar update={update()?.available ? update()!.latest : null} />
       <Ribbon />
       <main class="work">
-        <nav class="side"><For each={SIDE}>{x => x === "-" ? <hr /> : <button classList={{ on: view() === x[0] }} onClick={() => show(x[0])} title={x[2]}><Icon n={x[1]} /><span>{x[2]}</span></button>}</For></nav>
+        <nav class="side"><ModSwitch /><hr /><For each={moduleOf(view()).pages}>{x => <button classList={{ on: view() === x[0] }} onClick={() => show(x[0])} title={x[2]}><Icon n={x[1]} /><span>{x[2]}</span></button>}</For></nav>
         <div class="content">
           <Show when={out()}>
             <Switch fallback={<ChartsPage />}>
@@ -117,6 +124,7 @@ const App = () => {
               <Match when={view() === "results"}><ResultsPage /></Match>
               <Match when={view() === "compare"}><ComparePage /></Match>
               <Match when={view() === "eco"}><EcoPage /></Match>
+              <Match when={view() === "micro"}><StructuresPage /></Match>
               <Match when={view() === "process"}><ProcessPage /></Match>
               <Match when={view() === "processes"}><ProcessesPage /></Match>
               <Match when={view() === "index"}><IndexPage /></Match>

@@ -20,7 +20,7 @@ export const Menu = () => {
     return (
       <div class="menu" ref={el} style={{ left: `${x}px`, top: `${y}px` }} onMouseDown={e => e.stopPropagation()} onContextMenu={e => e.preventDefault()}>
         <For each={items}>{it => it === "-" ? <hr /> : (
-          <button disabled={it.off} classList={{ on: it.on }}
+          <button disabled={it.off} classList={{ on: it.on, dim: it.dim }}
             onMouseEnter={e => { const r = e.currentTarget.getBoundingClientRect(); setSubs([...subs().slice(0, depth), ...(it.sub ? [{ x: r.right, y: r.top - 4, px: r.left, items: it.sub }] : [])]); }}
             onClick={() => { if (it.sub) return; close(); it.run?.(); }}>
             <i class="tick">{it.on ? "✓" : it.icon ? <Icon n={it.icon} /> : ""}</i><span>{it.label}</span>{it.keys && <kbd>{it.keys}</kbd>}{it.sub && <b class="more">›</b>}

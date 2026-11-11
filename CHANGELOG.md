@@ -1,6 +1,23 @@
 # Changelog
 
-## 0.3.4 — 2026-11-11
+## 0.3.5 — 2026-11-11
+
+Datum Atlas becomes a materials workbench: modules that share one library, a module switcher, and a new logo.
+
+**Modules**
+- The work is grouped into modules: **Library** (browse, datasheets, data, sources), **Select** (setup, charts, stages, results, compare, index, report), **Eco** (the eco audit), **Make** (process selection and the processes) and **Microstructure** (typical structures).
+- The button at the top of the sidebar shows the open module; click it to switch. Each module shows its own pages and its own ribbon tabs; File, View and Help are always there. One project file still holds everything, and older projects open unchanged.
+- The modules on the way show dimmed in the switcher with their release: Crystal, Testing, image analysis, synthetic structures, EBSD, DIC, corrosion, and heat treatment with phase diagrams.
+- The Home page has a tile for each module, then the design problems.
+
+**Microstructure**
+- The schematic microstructures move from the datasheet to the Microstructure module, as a page of typical structures for every class of material.
+- The datasheet now has a **Micrograph** box for a real micrograph with its source, when an open-licence one exists (none yet, and it says so), and a **Typical structure** link to the module.
+
+**Logo**
+- A new logo: a globe whose surface is a map of grains, with one grain in amber, the material you pick. On the window, the installer, the guide and the site.
+
+
 
 A picture of every material's structure: a schematic microstructure on every datasheet and in the report.
 

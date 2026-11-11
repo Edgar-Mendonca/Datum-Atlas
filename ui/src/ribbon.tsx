@@ -14,6 +14,7 @@ import { editFormulas } from "./formula";
 import { exportResults } from "./stages";
 import { importMaterials, openDatabase, saveMine } from "./importer";
 import { greener } from "./eco";
+import { moduleOf } from "./modules";
 
 const GH = "https://github.com/Edgar-Mendonca/Datum-Atlas";
 const B = (p: { i: string; l: string; run?: (e: MouseEvent) => void; big?: boolean; on?: boolean; off?: boolean; dd?: (e: MouseEvent) => void; title?: string; soon?: boolean }) => p.big && p.run && p.dd ? (
@@ -77,7 +78,7 @@ export const TitleBar = (p: { update: string | null }) => (
     </div>
     <nav class="tabs">
       <button class="file" onClick={() => setBackstage("home")}>File</button>
-      <For each={[["home", "Home"], ["select", "Select"], ["chart", "Chart"], ["data", "Data"], ["report", "Report"], ["view", "View"], ["help", "Help"]]}>{([k, l]) => <button classList={{ on: tab() === k }} onClick={() => setTab(k)}>{l}</button>}</For>
+      <For each={([["home", "Home"], ["select", "Select"], ["chart", "Chart"], ["data", "Data"], ["report", "Report"], ["view", "View"], ["help", "Help"]] as [string, string][]).filter(([k]) => k === "view" || k === "help" || moduleOf(view()).tabs.includes(k))}>{([k, l]) => <button classList={{ on: tab() === k }} onClick={() => setTab(k)}>{l}</button>}</For>
       <Show when={view() === "charts"}><div class="ctxgrp"><small>Chart Tools</small><button classList={{ on: tab() === "format" }} onClick={() => setTab("format")}>Format</button></div></Show>
     </nav>
   </header>

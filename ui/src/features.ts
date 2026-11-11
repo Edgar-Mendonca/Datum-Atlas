@@ -3,7 +3,7 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.3.4";
+export const VERSION_NOW = "0.3.5";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
@@ -14,12 +14,13 @@ const PAST: Record<string, string> = {
   "0.3.2": "Connect an AI assistant (Model Context Protocol)",
   "0.3.3": "The Datum Atlas Guide (PDF)",
   "0.3.4": "Schematic microstructures for every material",
+  "0.3.5": "A materials workbench of modules, and a new logo",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */
 export const PLANS: Record<string, { when: string; items: string[] }> = Object.fromEntries(site.roadmap.map(r => [r.v, { when: r.when, items: r.items }]));
 export const AREAS: Record<string, string> = {
-  A: "Materials data", B: "Property charts", C: "Selection", D: "Compare and report", E: "Eco audit", F: "Process selection", G: "Help and the app",
+  A: "Materials data", B: "Property charts", C: "Selection", D: "Compare and report", E: "Eco audit", F: "Process selection", G: "Help and the app", H: "Workbench modules",
 };
 /** [id, name, release, what it means (plain words)] */
 export type Feature = [string, string, string, string];
@@ -80,6 +81,15 @@ export const FEATURES: Feature[] = [
   ["G4", "“?” help on every tool", "0.1.1", "A small ? beside each tool opens a card saying what it is for and how to use it."],
   ["G2", "User guide", "0.3.3", "A full guide with worked examples for teaching and design."],
   ["G3", "Signed installer", "1.0.0", "No SmartScreen warning on install."],
+  ["H0", "Modules", "0.3.5", "Library, Select, Eco, Make and Microstructure as modules of one workbench, with a switcher."],
+  ["H1", "Crystal", "0.3.6", "The elements and a periodic table; crystal structures, Miller indices, interplanar spacing, X-ray peaks, stereographic projection."],
+  ["H2", "Testing", "0.3.8", "Tensile tests (modulus, proof stress, UTS, elongation, n and K), hardness, fatigue and creep; results become materials."],
+  ["H3", "Image analysis", "0.3.10", "Micrographs: calibration, phase fraction, porosity, particles, grain size, nodularity, coating thickness."],
+  ["H4", "Synthetic structures", "0.3.12", "Generate 2D grain structures with size spreads, phases, pores, orientations and texture."],
+  ["H5", "EBSD", "0.3.14", "Orientation maps, grains, boundaries and twins, local misorientation, pole figures, Schmid factors."],
+  ["H6", "DIC", "0.3.17", "Strain maps from displacement fields, statistics, and strain by grain linked to EBSD, with slip traces."],
+  ["H7", "Corrosion", "0.3.19", "Galvanic compatibility, resistance by environment, corrosion allowance."],
+  ["H8", "Heat treatment", "0.3.20", "Hardenability, tempering, welding preheat, and phase diagrams with the lever rule."],
 ];
 export const feature = (id: string) => FEATURES.find(f => f[0] === id);
 const parts = (v: string) => [...v.split(".").map(Number), 0, 0].slice(0, 3);

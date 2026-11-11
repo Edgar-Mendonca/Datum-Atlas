@@ -800,3 +800,20 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .micro figcaption { font-size: 11px; color: var(--muted); margin-top: 4px; }
 .micro.small { float: right; width: 210px; margin: 0 0 6px 12px; }
 .micro.small .msvg svg { width: 210px; height: 140px; }
+/* Modules */
+.side .modsw { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px 6px; background: var(--sel); color: var(--blue2); width: 100%; }
+.side .modsw span { font: 600 9.5px var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+.side .modsw b { font-size: 9px; line-height: 1; }
+.micrograph { margin: 0; width: 300px; flex: none; }
+.micrograph .mgbox { height: 200px; border: 1px dashed var(--line3); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; text-align: center; padding: 14px; color: var(--muted); background: var(--panel); }
+.micrograph .mgbox b { font: 500 10.5px var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+.micrograph figcaption { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.structpage .sgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.structpage .scard { background: var(--bg2); border: 1px solid var(--line); padding: 8px; display: flex; flex-direction: column; gap: 4px; }
+.structpage .scard .micro { width: 100%; } .structpage .scard .micro .msvg svg { width: 100%; height: auto; }
+.structpage .scard .micro.small { float: none; margin: 0; }
+.structpage .famh { margin: 18px 0 8px; }
+.structpage .focus .fwrap { display: flex; gap: 16px; align-items: flex-start; }
+.tile.later { opacity: .75; }
+.menu button.dim { opacity: .55; }
+.structpage .scard b, .structpage .scard span { text-align: left; }

@@ -2,7 +2,9 @@
 
 ## Welcome
 
-Datum Atlas helps you choose a material and show why it is the right one. Every material is drawn on property charts as a bubble spanning its range of values; design goals and performance indices turn what the part must do into a line on the chart; limits, lines, boxes and shapes narrow the field; and the materials that pass are ranked, with the reason every other one fails. Then you compare the best, add up their energy and CO₂ through the product's life, find the processes that can make the part and what it costs, and print a report that documents the choice.
+Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make** and **Microstructure**; Crystal, Testing, image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
+
+The Select module helps you choose a material and show why it is the right one. Every material is drawn on property charts as a bubble spanning its range of values; design goals and performance indices turn what the part must do into a line on the chart; limits, lines, boxes and shapes narrow the field; and the materials that pass are ranked, with the reason every other one fails. Then you compare the best, add up their energy and CO₂ through the product's life, find the processes that can make the part and what it costs, and print a report that documents the choice.
 
 This guide takes you through Datum Atlas step by step. Each chapter stands on its own.
 
@@ -35,9 +37,9 @@ Datum Atlas checks for a new version when it starts. When one is ready, **File �
 
 ![The Home page (File › Home).](img/home.png)
 
-1. **Design problems.** Each tile starts a project set up for a classic design: a light, stiff beam; a light, strong tie; a stiff panel; springs; a hot, stiff and light part; leak before break. **Blank selection** starts with one chart and nothing selected.
-2. **Material Library** opens every material by family, with its values.
-3. **Eco audit** and **Process selection** open those pages straight away.
+1. **Modules.** A tile per module opens it; **More modules** shows the ones on the way in the roadmap.
+2. **Start a selection.** Each design problem starts a project set up for a classic design: a light, stiff beam; a light, strong tie; a stiff panel; springs; a hot, stiff and light part; leak before break. **Blank selection** starts with one chart and nothing selected.
+3. **Add a material**, the **Guide** and **Open** are here too.
 4. **The File page** also has **New**, **Open**, **Import**, **Save**, **Save As**, **Export**, **Print**, **Roadmap**, **Options** and **Updates**. The arrow at the top goes back to your project.
 
 Projects are saved as `.datlas` files. Your own materials live in a database of their own (`.datdb`), so every project sees them.
@@ -48,7 +50,7 @@ Projects are saved as `.datlas` files. Your own materials live in a database of 
 
 1. **File and the ribbon tabs:** **Home**, **Select**, **Chart**, **Data**, **Report**, **View** and **Help**. **Chart Tools › Format** appears while a chart is open.
 2. **The ribbon.** The buttons of the chosen tab, in named groups.
-3. **The sidebar.** One click to each page: Setup, Browse, Datasheet, Charts, Stages, Results, Compare, Index, Eco, Process, Report, Data and Sources.
+3. **The sidebar.** At the top, the open module (click it to switch); below, its pages: here the Select module's Setup, Charts, Stages, Results, Compare, Index and Report.
 4. **The chart bar.** The design goal, bubbles or bars, envelopes, the five best labelled, the chart style, the axes and the chart tools.
 5. **The property chart.** Every material as a bubble; hover for its values, click to pick it, double-click for its datasheet.
 6. **The stage panel.** How many materials pass, each stage with its count, and the best materials by the ranking.
@@ -78,6 +80,22 @@ The ribbon at a glance:
 2. **Report:** the selection report, print, the results as a spreadsheet or CSV.
 3. **Eco:** the eco audit, its charts and greener substitutes.
 4. **Process:** process selection, the process records and the cost model.
+
+## Modules
+
+![The module switcher at the top of the sidebar.](img/modules.png)
+
+Click the module at the top of the sidebar to switch. Each module shows its own pages in the sidebar and its own tabs on the ribbon; **File**, **View** and **Help** are always there. One project file holds the work of every module.
+
+| Module | Pages | What it is for |
+| --- | --- | --- |
+| **Library** | Browse, Datasheet, Data, Sources | Every material with its referenced values; your own materials and databases; import and export |
+| **Select** | Setup, Charts, Stages, Results, Compare, Index, Report | Choosing a material: charts, goals and indices, stages, ranking, compare, the report |
+| **Eco** | Eco audit | Energy and CO₂ through a product's life; greener substitutes |
+| **Make** | Process, Processes | Which processes can make the part, and the cost |
+| **Microstructure** | Structures | The typical structure of every class of material |
+
+The dimmed modules in the list are on the way; click one to see what it will do and when.
 
 ## The method in five steps
 
@@ -181,12 +199,22 @@ Below them, every material that fails says why: *below the selection line on "Yo
 
 1. **Greener substitutes**, **Eco audit** (adds it to the audit) and **Copy as my material**.
 2. **The facts:** designations, other names, typical uses, notes, how it fares in the selection, and its status (draft, or how many values were checked).
-3. **The schematic microstructure:** what the material is made of, as it would look under a microscope (grains, phases, fibres, cells or crystals), with a scale bar. It is drawn by Datum Atlas from a recipe for the material's class, so it shows the kind of structure, not a photograph of a real sample, and its caption says so.
+3. **The micrograph:** a real micrograph of the material with its source, when an open-licence one exists (none yet: the box says so). **Typical structure** opens the Microstructure module on the material.
 4. **The values**, grouped (general, mechanical, thermal, electrical, durability, processing, eco, derived), each with its unit and the number of its reference; ✓ marks a checked value; *no data* is a gap.
 
 The references at the bottom give each source: its title, publisher, year, licence and link. The **Sources** page lists every source, its kind and licence; click one to see which materials and values cite it.
 
 ![Sources: open and public sources only.](img/sources.png)
+
+## Microstructure: typical structures
+
+![The Microstructure module: a typical structure for every class.](img/structures.png)
+
+The **Structures** page shows what each class of material is made of, as it would look under a microscope: grains (with twins in copper, nickel and stainless steels), ferrite and pearlite, martensite, graphite in cast irons, dendrites in castings, α + β colonies in titanium alloys, precipitates in age-hardened alloys, sintered ceramics, glass, fibres and plies, foam cells, wood, cork, spherulites in semicrystalline polymers, and more. Each has a scale bar and a caption.
+
+These are **schematics** drawn by Datum Atlas from a recipe for each class, never photographs of real samples. Opened from a datasheet, the page starts with that material's own drawing. The command line draws one too: `datum-atlas-cli microstructure ID`.
+
+Image analysis of your own micrographs, a structure generator, EBSD and DIC will join this module.
 
 ## Compare
 

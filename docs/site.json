@@ -4,11 +4,11 @@
   "name": "Datum Atlas",
   "accent": "#6C4AB6",
   "logo": "docs/brand/datum-atlas-icon.svg",
-  "tagline": "Choose the right material: property charts, selection and referenced data, in one app for Windows.",
+  "tagline": "A materials workbench: referenced materials data, property charts and selection, eco audit, process selection and microstructures, in one app for Windows.",
   "for": "Design and materials engineers, and students.",
   "about": [
-    "Datum Atlas helps you pick a material and show why it is the right one. Choose a design goal, such as a light, stiff beam or a cheap, strong tie, and Atlas sets the property chart, the selection line and the limits for you.",
-    "Every material is a bubble spanning its range of values, grouped by family. Limits, index lines, bands, boxes, drawn shapes and whole families left out narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best side by side, add up their energy and CO₂ through a product's life, find the processes that can make the part and what it costs, and print a report. Every value names its source, and you can add, import and share your own materials."
+    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material.",
+    "Every material is a bubble spanning its range of values. Limits, index lines, bands, boxes and shapes narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best, print a report, and add, import and share your own materials. Crystal, Testing, image analysis, EBSD, DIC, corrosion and heat treatment modules are on the way."
   ],
   "steps": [
     {
@@ -34,7 +34,7 @@
     "Compare up to six materials with a radar chart, and print a selection report with the charts, shortlist, eco audit, manufacture and datasheets. Your own materials and databases, spreadsheet and CSV import and export, SI or imperial units.",
     "A command line beside the app, and a connection for AI assistants (Model Context Protocol): search materials, read datasheets with their sources, run a selection, the eco audit and process selection.",
     "A guide of about thirty pages with numbered pictures, in the app and on every release page.",
-    "A schematic microstructure for every material, drawn from its class, on datasheets and in the report."
+    "Modules sharing one library: Library, Select, Eco, Make and Microstructure, with a switcher, and the typical structure of every class of material."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -46,75 +46,123 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.5",
-      "title": "Elements",
+      "v": "0.3.6",
+      "title": "Crystal: elements",
       "when": "Next",
       "items": [
-        "The elements and a clickable periodic table, from public-domain data."
-      ]
-    },
-    {
-      "v": "0.3.6",
-      "title": "Display and export",
-      "when": "Soon",
-      "items": [
-        "Colour-blind safe colours, imperial units on the eco and process pages, .ods export."
+        "The 118 elements and a clickable periodic table, from public-domain data."
       ]
     },
     {
       "v": "0.3.7",
-      "title": "Processes by alloy type",
+      "title": "Crystal: calculators",
       "when": "Soon",
       "items": [
-        "Processes matched by alloy type, so cast and wrought alloys are told apart."
+        "Crystal structures, Miller indices, interplanar spacing, X-ray peak positions and stereographic projection."
       ]
     },
     {
       "v": "0.3.8",
-      "title": "Metals: grades and checks",
+      "title": "Testing: tensile",
       "when": "Soon",
       "items": [
-        "More metal grades, and many more values checked against published datasheets."
+        "Tensile test data: modulus, proof stress, tensile strength, elongation and hardening exponent, for several specimens."
       ]
     },
     {
       "v": "0.3.9",
-      "title": "Polymers and others: grades and checks",
+      "title": "Testing: hardness, fatigue, creep",
       "when": "Soon",
       "items": [
-        "More polymer and other grades, and their values checked."
+        "Hardness statistics, S–N fitting, Larson–Miller; test results become your own materials."
       ]
     },
     {
       "v": "0.3.10",
-      "title": "Equivalent designations",
+      "title": "Image analysis 1",
       "when": "Soon",
       "items": [
-        "Search by equivalent designations, shown on every datasheet."
+        "Open and calibrate micrographs; phase fraction, porosity and particles."
       ]
     },
     {
       "v": "0.3.11",
-      "title": "Hybrid materials",
+      "title": "Image analysis 2",
       "when": "Soon",
       "items": [
-        "Sandwich panels and lattices, worked out and plotted beside the materials."
+        "Grain size by intercept and area, nodularity and coating thickness."
       ]
     },
     {
       "v": "0.3.12",
-      "title": "Restricted and critical substances",
+      "title": "Synthetic structures 1",
       "when": "Soon",
       "items": [
-        "Flags for restricted and critical substances, usable as limits."
+        "Generate 2D grain structures with size spreads, aspect ratios, phases and pores."
       ]
     },
     {
-      "v": "0.4.0",
-      "title": "Data at temperature",
+      "v": "0.3.13",
+      "title": "Synthetic structures 2",
       "when": "Soon",
       "items": [
-        "Properties against temperature, simple curves, more processes with process charts."
+        "Orientations and texture, with an orientation-coloured view."
+      ]
+    },
+    {
+      "v": "0.3.14",
+      "title": "EBSD 1",
+      "when": "Soon",
+      "items": [
+        "Read EBSD text exports; orientation, phase and quality maps."
+      ]
+    },
+    {
+      "v": "0.3.15",
+      "title": "EBSD 2",
+      "when": "Soon",
+      "items": [
+        "Grains, boundaries and twins, local misorientation, Schmid factors."
+      ]
+    },
+    {
+      "v": "0.3.16",
+      "title": "EBSD 3",
+      "when": "Soon",
+      "items": [
+        "Pole figures and inverse pole figures."
+      ]
+    },
+    {
+      "v": "0.3.17",
+      "title": "DIC 1",
+      "when": "Soon",
+      "items": [
+        "Strain maps from displacement fields, statistics and profiles."
+      ]
+    },
+    {
+      "v": "0.3.18",
+      "title": "DIC 2",
+      "when": "Soon",
+      "items": [
+        "Strain by grain linked to EBSD, with slip traces."
+      ]
+    },
+    {
+      "v": "0.3.19",
+      "title": "Corrosion",
+      "when": "Soon",
+      "items": [
+        "Galvanic compatibility, resistance by environment, corrosion allowance."
+      ]
+    },
+    {
+      "v": "0.3.20",
+      "title": "Heat treatment and phase diagrams",
+      "when": "Soon",
+      "items": [
+        "Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule."
       ]
     },
     {

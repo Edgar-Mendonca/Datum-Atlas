@@ -1,5 +1,6 @@
 // File (backstage): Home with design problems and recent projects, export, print, options, updates.
 import { For, Show, createSignal, createResource, onMount, JSX } from "solid-js";
+import { MODULES, PLANNED } from "./modules";
 import { PAPERS, PrintPage } from "./print";
 import { Options, Out } from "./api";
 import { backstage, setBackstage, call, loadOut, out, setOut, opts, setOpts, toast, setThemeRaw, applyTheme, chart, db, show } from "./store";
@@ -46,17 +47,18 @@ const Home = () => {
     <div class="home">
       <div>
         <h1>Good {new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening"}</h1>
-        <p class="muted">Start a selection: every material on a property chart, then limits and a selection line. {db().materials.length} materials are ready, each value with its reference.</p>
+        <p class="muted">A materials workbench: {db().materials.length} materials, each value with its reference, shared by every module.</p>
+        <h2>Modules</h2>
+        <div class="tiles mods">
+          <For each={MODULES}>{m => <button class="tile" onClick={() => { setBackstage(null); show(m.pages[0][0]); }}><div class="pic"><svg class="ic"><use href={`#i-${m.icon}`} /></svg></div><b>{m.name}</b><span>{m.about}</span></button>}</For>
+          <button class="tile later" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>More modules</b><span>{PLANNED.map(p => p[1]).join(", ")}: see the roadmap.</span></button>
+        </div>
+        <h2>Start a selection</h2>
         <div class="tiles">
           <For each={tpls() ?? []}>{t => <button class="tile" onClick={() => neu(t.id)}><div class="pic"><MiniChart slope={t.slope} /><small>{t.slope ? `slope ${t.slope}` : "chart"}</small></div><b>{t.name}</b><span>{t.desc}</span></button>}</For>
-          <button class="tile" onClick={() => { setBackstage(null); show("browse"); }}><div class="pic"><svg class="ic"><use href="#i-tree" /></svg></div><b>Material Library</b><span>Every material by family, with its values; sort, search and copy to a spreadsheet.</span></button>
           <button class="tile" onClick={() => { setBackstage(null); editMaterial(); }}><div class="pic"><svg class="ic"><use href="#i-material" /></svg></div><b>Add a material</b><span>Your own material, with a source for each value.</span></button>
-          <button class="tile" onClick={() => { setBackstage(null); show("sources"); }}><div class="pic"><svg class="ic"><use href="#i-source" /></svg></div><b>Sources</b><span>Where every value comes from: open and public sources only.</span></button>
-          <button class="tile" onClick={() => { setBackstage(null); show("eco"); }}><div class="pic"><svg class="ic"><use href="#i-eco" /></svg></div><b>Eco audit</b><span>Energy and CO₂ through a product's life, and greener substitutes.</span></button>
-          <button class="tile" onClick={() => { setBackstage(null); show("process"); }}><div class="pic"><svg class="ic"><use href="#i-process" /></svg></div><b>Process selection</b><span>Which processes can make your part, and the cost against batch size.</span></button>
           <button class="tile" onClick={() => D.guide()}><div class="pic"><svg class="ic"><use href="#i-manual" /></svg></div><b>Guide</b><span>The Datum Atlas Guide (PDF): every part of the app, step by step, with pictures.</span></button>
-          <button class="tile" onClick={() => setBackstage("roadmap")}><div class="pic"><svg class="ic"><use href="#i-list" /></svg></div><b>Roadmap</b><span>Everything Datum Atlas will do, and when.</span></button>
-          <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Atlas selection (.datlas).</span></button>
+          <button class="tile" onClick={() => C.open()}><div class="pic"><svg class="ic"><use href="#i-open" /></svg></div><b>Open</b><span>A Datum Atlas project (.datlas).</span></button>
         </div>
         <h2>Recent</h2>
         <table class="recent"><tbody>

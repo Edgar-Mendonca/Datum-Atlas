@@ -6,9 +6,12 @@ import { Dialog } from "./ui";
 
 type Topic = { t: string; what: string; how?: string[]; tip?: string };
 export const HELP: Record<string, Topic> = {
-  micro: { t: "Schematic microstructure", what: "A drawing of what the material is made of, as it would look under a microscope: grains, phases, fibres, cells or crystals. It is drawn by Datum Atlas from a recipe for the material's class, so it shows the kind of structure, not a photograph of a real sample.",
-    how: ["Read the caption: it says what the picture shows (for example ferrite and pearlite, or fibres seen end-on).", "The scale bar gives the usual size of the features; real samples vary with grade and processing.", "The same material always gets the same picture; the datasheet and the report show it."],
-    tip: "Real micrographs from open sources may follow; they will name their source like every value." },
+  micro: { t: "Typical structures", what: "What each class of material is made of, as it would look under a microscope: grains, phases, fibres, cells or crystals. Datum Atlas draws each one from a recipe for the class, so it shows the kind of structure, not a photograph of a real sample.",
+    how: ["Each card is one class; its caption says what the picture shows (for example ferrite and pearlite, or fibres seen end-on).", "The scale bar gives the usual size of the features; real samples vary with grade and processing.", "A datasheet's “Typical structure” opens this page on that material."],
+    tip: "Image analysis, a structure generator, EBSD and DIC come to this module in later releases." },
+  micrograph: { t: "Micrograph", what: "A real micrograph of the material, from an open-licence source (public domain or CC BY), shown with its source like every value.", how: ["When no open source has one yet, the box says so; “Typical structure” shows the kind of structure the material has."] },
+  modules: { t: "Modules", what: "Datum Atlas is a workbench of modules sharing one materials library: Library, Select, Eco, Make and Microstructure, with Crystal, Testing, image analysis, EBSD, DIC, corrosion and heat treatment to come.",
+    how: ["The button at the top of the sidebar shows the open module; click it to switch.", "The sidebar shows the module's pages, and the ribbon its tabs; File, View and Help are always there.", "One project file holds the work of every module."] },
   guide: { t: "The guide", what: "The Datum Atlas Guide: a PDF of about thirty pages that takes you through every part of the app with numbered pictures.",
     how: ["Help › Guide (or the Guide tile on the Home page) downloads it from this version's release, checks it, saves it in Downloads and opens it.", "Each chapter stands on its own: read the one you need."] },
   assistant: { t: "AI assistant connection", what: "The command-line program datum-atlas-cli can serve Datum Atlas to an AI assistant over the Model Context Protocol: the assistant searches materials, reads datasheets with their sources, sets up and reads selections, and runs the eco audit and process selection.",

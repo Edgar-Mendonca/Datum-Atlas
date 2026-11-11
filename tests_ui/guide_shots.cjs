@@ -13,6 +13,13 @@ const srv = http.createServer((q, r) => {
 const exe = path.join(__dirname, "../target/debug/examples/bridge" + (process.platform === "win32" ? ".exe" : ""));
 const eng = spawn(exe, [], { stdio: ["pipe", "pipe", "inherit"] }), waiting = [];
 readline.createInterface({ input: eng.stdout }).on("line", l => waiting.shift()(JSON.parse(l)));
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure" };
+/** Opens a page: switches module first when the page is in another module. */
+const goTo = async (p, t) => {
+  if (t === "Eco") t = "Eco audit";
+  if (!(await p.$(`.side button[title="${t}"]`))) { await p.click(".side .modsw"); await p.click(`.menu button:has(span:text-is("${PAGE_MOD[t]}"))`); await p.waitForTimeout(250); }
+  await p.click(`.side button[title="${t}"]`);
+};
 const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write(JSON.stringify({ cmd, args: args ?? {} }) + "\n"); });
 const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r.err); });
 
@@ -64,13 +71,13 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
     await p.screenshot({ path: path.join(out, `${name}.png`), clip });
     await mark([]); console.log("shot", name);
   };
-  const side = async t => { await p.click(`.side button[title="${t}"]`); await wait(600); };
-  const tab = async t => { await p.click(`.tabs button:text-is('${t}')`); await wait(250); };
+  const side = async t => { await goTo(p, t); await wait(600); };
+  const tab = async t => { if (!(await p.$(`.tabs button:text-is('${t}')`))) await side(t === 'Data' ? 'Browse' : 'Charts'); await p.click(`.tabs button:text-is('${t}')`); await wait(250); };
   const TOP = { x: 0, y: 0, width: 1440, height: 160 };
   const esc = async () => { await p.keyboard.press("Escape"); await wait(200); };
 
   // 1. Home (File › Home).
-  await shot("home", [[".home .tile", 1, 1], ["text:Material Library", 2], ["text:Eco audit", 3], [".bs aside", 4, 0, "in"]]);
+  await shot("home", [[".tiles.mods", 1], [".home .tiles", 2, 1], ["text:Add a material", 3], [".bs aside", 4, 0, "in"]]);
 
   // A project: a light, stiff beam, three materials to compare, an eco audit with two options, a cast part.
   await ask("new_project", { template: "beam" });
@@ -110,7 +117,12 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await side("Browse"); await shot("browse", [[".tree", 1, 0, "in"], [".find", 2], [".btable", 3, 0, "in"]]);
   await side("Compare"); await shot("compare", [[".cmptable", 1, 0, "in"], [".cmpradar", 2]]);
   await p.click(".cmp th button.lnk >> nth=0"); await wait(600);
-  await shot("datasheet", [[".shead .inline", 1], [".sfacts", 2], [".micro", 3], [".tbl.dsheet", 4, 1]]);
+  await shot("datasheet", [[".shead .inline", 1], [".sfacts", 2], [".micrograph", 3], [".tbl.dsheet", 4, 1]]);
+  await p.click('.micrograph button:has-text("Typical structure")'); await wait(900);
+  await shot("structures", [[".structpage .focus", 1], [".structpage .sgrid", 2]]);
+  await p.click(".side .modsw"); await wait(300);
+  await shot("modules", [], { x: 0, y: 150, width: 420, height: 520 });
+  await p.keyboard.press("Escape"); await p.mouse.click(700, 600); await wait(200);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

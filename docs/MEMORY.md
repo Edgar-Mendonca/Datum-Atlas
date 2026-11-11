@@ -7,10 +7,10 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.4** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.4). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.5** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.5). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
-| **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
+| **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
 | **Stack** | Rust engine (`crates/core`) + Rust shell (`src-tauri`), Tauri 2, WebView2, SolidJS + Vite UI in strict TypeScript, plain CSS tokens, IBM Plex. Own SVG chart engine (geometry in Rust). Chart.js later for bar/radar, GridCraft later for expressions. **No Python.** |
 | **Code size** | About 9,100 lines: core 3,970 (42 tests, incl. hardening), shell 810, UI 3,860 TSX/TS + CSS, UI tests 470 (86 checks); data: 252 materials, 44 sources, 73 values checked, 55 processes, eco factors |
 
@@ -96,6 +96,7 @@ flowchart LR
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
 | `docs/guide/en.md`, `img/`, `pdf/` | The Datum Atlas Guide: Markdown source (English), screenshots, the built PDF (attached to every release as `DatumAtlas-Guide-en.pdf`). `npm run guide` remakes the screenshots (`tests_ui/guide_shots.cjs`, the bridge with a bracket project) and the PDF (`scripts/guide.cjs`, Chromium, from Datum Plan's). |
+| `ui/src/modules.ts`, `ui/src/structures.tsx` | The modules (pages, ribbon tabs, `moduleOf(view)`, planned modules) and the Microstructure › Structures page (`MicroFig`, `microFocus`). The sidebar shows the open module's pages; tests open pages with `goTo` and tabs with `tabTo`. |
 | `crates/core/src/micro.rs` | Schematic microstructures: `recipe(material)` → kind, caption, scale bar by class (with id overrides); `draw` → `Micro { kind, caption, scale, svg }` (Voronoi grains with Lloyd steps, clip paths per grain for lamellae, seeded xorshift so a material always looks the same). Shell/bridge `microstructure`, CLI `microstructure`, `MicroFig` in the datasheet and report. |
 | `crates/core/src/ops.rs` | The named operations (`catalog`: name, what it does, a working example of each `Op`) and `apply` (turns a `Goal` into its edits). Used by `datum-atlas-cli`. |
 | `crates/cli/` | `datum-atlas-cli` and `mcp` (Model Context Protocol over stdio, 18 tools; a test drives a whole assistant session): search, material, props, goals, processes, templates, new, info, results, chart, ops, apply, eco, process, substitutes, export; `--db` adds `.datdb` files. Writes only .datlas/.xlsx/.csv. Ships as `datum-atlas-cli-X.Y.Z.exe`. |
@@ -191,14 +192,23 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.2** | Assistant connection | `datum-atlas-cli mcp` (18 tools: search_materials, get_material, list_properties/goals/processes/templates, new/open_project, project_info, list_operations, apply_operation, undo, get_results, get_chart, eco_audit, process_selection, greener_substitutes, save_project); Help › Use with an AI Assistant; ? card | ✅ |
 | **0.3.3** | User guide | `docs/guide/en.md` (16 chapters), 25 screenshots with numbered markers (`tests_ui/guide_shots.cjs`, real engine), `scripts/guide.cjs` → `docs/guide/pdf/DatumAtlas-Guide-en.pdf` (~29 pages), attached to the release with its checksum; Help › Guide, Home tile, Tell Me, ? card; `update::guide` downloads, checks and opens it | ✅ |
 | **0.3.4** | Schematic microstructures | `micro.rs`: a recipe per class (25 kinds: grains with twins, ferrite–pearlite, martensite, duplex, lamellar α+β, precipitates, graphite flakes/worms/nodules, dendrites, ceramics with pores, cermet, glass, fibres, plies, short fibres, particles, foams, wood, cork, bamboo, fibre networks, bone, spherulites, amorphous, stone, layers), seeded by the id; SVG with scale bar and SCHEMATIC mark; datasheet, report, `datum-atlas-cli microstructure`; ? card | ✅ |
-| 0.3.5 | Elements | 118 elements from public-domain data, clickable periodic table | 🔜 |
-| 0.3.6 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | ⬜ |
-| 0.3.7 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. | ⬜ |
-| 0.3.8 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. | ⬜ |
-| 0.3.9 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. | ⬜ |
-| 0.3.10 | Equivalent designations | Search by UNS, EN, JIS, ASTM and common names in one box; equivalents on the datasheet. | ⬜ |
-| 0.3.11 | Hybrid materials | Sandwich panels and lattices worked out from the database, plotted beside the materials. | ⬜ |
-| 0.3.12 | Restricted and critical substances | Flags from public lists of restricted substances and critical raw materials, on datasheets and as limits. | ⬜ |
+| **0.3.5** | Modules and a new logo ([PLAN-0.5.md](PLAN-0.5.md)) | `modules.ts` (Library, Select, Eco, Make, Microstructure; pages, ribbon tabs; planned modules H1–H8 dimmed with their release), module switcher on the sidebar, Home tiles per module; schematics moved to Microstructure › Structures (`structures.tsx`); datasheet Micrograph box and Typical structure link; grain-globe logo everywhere | ✅ |
+| 0.3.6 | Crystal: elements | The 118 elements and a clickable periodic table, from public-domain data. | 🔜 |
+| 0.3.7 | Crystal: calculators | Crystal structures, Miller indices, interplanar spacing, X-ray peak positions and stereographic projection. | ⬜ |
+| 0.3.8 | Testing: tensile | Tensile test data: modulus, proof stress, tensile strength, elongation and hardening exponent, for several specimens. | ⬜ |
+| 0.3.9 | Testing: hardness, fatigue, creep | Hardness statistics, S–N fitting, Larson–Miller; test results become your own materials. | ⬜ |
+| 0.3.10 | Image analysis 1 | Open and calibrate micrographs; phase fraction, porosity and particles. | ⬜ |
+| 0.3.11 | Image analysis 2 | Grain size by intercept and area, nodularity and coating thickness. | ⬜ |
+| 0.3.12 | Synthetic structures 1 | Generate 2D grain structures with size spreads, aspect ratios, phases and pores. | ⬜ |
+| 0.3.13 | Synthetic structures 2 | Orientations and texture, with an orientation-coloured view. | ⬜ |
+| 0.3.14 | EBSD 1 | Read EBSD text exports; orientation, phase and quality maps. | ⬜ |
+| 0.3.15 | EBSD 2 | Grains, boundaries and twins, local misorientation, Schmid factors. | ⬜ |
+| 0.3.16 | EBSD 3 | Pole figures and inverse pole figures. | ⬜ |
+| 0.3.17 | DIC 1 | Strain maps from displacement fields, statistics and profiles. | ⬜ |
+| 0.3.18 | DIC 2 | Strain by grain linked to EBSD, with slip traces. | ⬜ |
+| 0.3.19 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance. | ⬜ |
+| 0.3.20 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule. | ⬜ |
+| later | Pending from PLAN-0.4.0 | Display and export, processes by alloy type, metal and polymer grades and checks, equivalent designations, hybrids, restricted and critical substances; fracture; mesh export to Datum Mesh; download-on-demand data; HDF5 and makers' formats; 3D | ⬜ |
 | 0.4.0 | Data at temperature | Properties against temperature, simple curves, more processes with process charts, material cards for simulation | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials with pictures, signed installer | ⬜ |
 
@@ -470,11 +480,19 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Answers in [PLAN-0.5.md](PLAN-0.5.md) §10 (modules plus corrosion, heat treatment, phase diagrams, fracture; Python allowed where it helps; schematics move to the Microstructure module, the datasheet shows real micrographs; 2D first; samples in the installer; mesh export parked) and the agreed roadmap 0.3.5–0.3.20. Waiting for the go.
 - The user's new idea: Atlas becomes a materials workbench with modules; selection is one module; build analysis tools from scratch with open tools as references. Wrote [PLAN-0.5.md](PLAN-0.5.md): today's app as modules (Library, Select, Eco, Make), new modules (Microstructure image analysis, EBSD, DIC, Testing, Synthetic, Crystal), open data from Zenodo, licence approach (permissive code as reference with credit; copyleft only through papers), new crates, an order, nine questions. Nothing built yet.
 
+### 2026-11-11: Session 16, continued (0.3.5: modules and the new logo)
+- Logo: five ideas drawn and shown at every size; the user chose 1, the grain globe. Brand SVG, window logo (`ui/public/logo.svg`), all app icons.
+- Modules: `modules.ts`; sidebar switcher (short label "Micro"), each module's pages and ribbon tabs; planned modules dimmed in the switcher (`Item.dim`) with soon cards; Home with module tiles; Microstructure › Structures with the schematics by class and the material in focus; datasheet Micrograph box and Typical structure link; the report drops the schematic.
+- Tests: `goTo`/`tabTo` helpers; checks for the switcher, module pages and tabs, the micrograph box and the structures page; the product-name scan visits every module's pages. Guide: Modules and Microstructure chapters, screenshots retaken.
+- Site and README describe the workbench; roadmap 0.3.6–0.3.20 from PLAN-0.5 §10; PLAN-0.4.0 marked superseded for the order.
+- The family brief (in Datum Plan, read-only here) still says "material selection"; a draft for the user to paste is in the session reply.
+- Released 0.3.5.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** on the user's go, 0.3.5: the module restructure ([PLAN-0.5.md](PLAN-0.5.md) §10).
+**Next:** 0.3.6: Crystal, the elements and a periodic table ([PLAN-0.5.md](PLAN-0.5.md) §10).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
