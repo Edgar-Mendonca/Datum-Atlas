@@ -164,6 +164,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-29 | Windows publisher "Datum" for every Datum app (hub FAMILY §9); copyright stays "© 2026 Edgar Mendonca" | One family name in Windows Apps and the installer. |
 | 2026-11-01 | Eco and process values are compiled by class from open sources and labelled drafts; a value no open source supports stays a gap (beryllium, zirconium, leather and bone energy; water use) | The open-sources rule; gaps, never zero. |
 | 2026-11-01 | The eco audit and process selection live in the engine (`eco.rs`, `process.rs`) and in the project file (`eco`, `process`), so they undo, save and go into the report | Engine logic in `crates/core`; older files open with empty ones. |
+| 2026-11-11 | Atlas becomes a materials workbench of modules ([PLAN-0.5.md](PLAN-0.5.md) §10): Library, Select, Eco, Make, Crystal, Testing, Microstructure, Synthetic, EBSD, DIC, Corrosion, Heat treatment and phase diagrams, Fracture; 0.3.x steps from 0.3.5; 2D first; samples in the installer; mesh export parked | The user, after the brainstorm. |
+| 2026-11-11 | Python is allowed inside the app where a solver is clearly better with it (bundled as in Datum Plot, +50–100 MB accepted); Rust stays first, and each use of Python is decided per module with its reason | The user changed the earlier rule. |
+| 2026-11-11 | Code of permissively licensed tools (Apache, MIT, BSD) may be read as reference and credited in NOTICE; copyleft tools (GPL, AGPL) only through papers; Atlas stays MIT | Keeps Atlas MIT. |
 | 2026-11-11 | Pictures of structure are schematics drawn by Atlas (labelled “Schematic, not a micrograph”), never AI-made images presented as micrographs; real micrographs only from public-domain or CC BY sources, cited like values (not non-commercial licences: Atlas is MIT) | A picture must not pretend to be evidence. |
 | 2026-11-11 | The guide is English only for now (the open question on languages took the default); a PDF downloaded on demand (not in the installer), checked against the release's checksums, as in Datum Plan | Smaller installer; the guide matches its version. |
 | 2026-11-11 | Small releases: 0.3.1 to 0.3.10 before 0.4.0, one item each (the user: "let's not jump version"); the code version stays at the last release until the next one ships | Every release in the updater, no jumps. |
@@ -464,13 +467,14 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ### 2026-11-11: Session 16, continued (brainstorm: Atlas as a materials workbench)
 - The user asked whether Python tools exist for microstructures (DefDAP, DAMASK). Found: DefDAP (Manchester, Apache 2.0) analyses EBSD and HR-DIC; DAMASK (MPIE, GPL/AGPL) simulates crystal plasticity and builds Voronoi grids; generators MicroStructPy (MIT), Neper, DREAM.3D (6.5 for synthetics).
+- Answers in [PLAN-0.5.md](PLAN-0.5.md) §10 (modules plus corrosion, heat treatment, phase diagrams, fracture; Python allowed where it helps; schematics move to the Microstructure module, the datasheet shows real micrographs; 2D first; samples in the installer; mesh export parked) and the agreed roadmap 0.3.5–0.3.20. Waiting for the go.
 - The user's new idea: Atlas becomes a materials workbench with modules; selection is one module; build analysis tools from scratch with open tools as references. Wrote [PLAN-0.5.md](PLAN-0.5.md): today's app as modules (Library, Select, Eco, Make), new modules (Microstructure image analysis, EBSD, DIC, Testing, Synthetic, Crystal), open data from Zenodo, licence approach (permissive code as reference with credit; copyleft only through papers), new crates, an order, nine questions. Nothing built yet.
 
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** answers to [PLAN-0.5.md](PLAN-0.5.md) §9 (the workbench); 0.3.5 elements waits on them.
+**Next:** on the user's go, 0.3.5: the module restructure ([PLAN-0.5.md](PLAN-0.5.md) §10).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

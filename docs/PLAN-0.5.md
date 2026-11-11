@@ -1,6 +1,6 @@
 # Datum Atlas as a materials workbench (plan)
 
-Status: **brainstorm, questions open** (§9). Written 2026-11-11. Nothing here is built until the answers are in.
+Status: **answered (§10), waiting for the go**. Written 2026-11-11.
 
 The user: "Atlas can be a big material analysis software as well. The material selection can just be one module. … We take their code as reference and build our own from scratch, as per our requirement. … So let's brainstorm a lot, then we can start working on the update." The user studied materials science at the University of Manchester and used DefDAP and DAMASK there.
 
@@ -132,3 +132,40 @@ Small numbered releases throughout, as now; each a full release with tests, guid
 7. **Example data:** download on demand from Zenodo and similar (small installer), or bundle a few small samples in the installer (works offline)?
 8. **The family:** this widens Atlas beyond the brief in the hub (`docs/briefs/DATUM-ATLAS.md` in Datum Plan). Should the brief and the family site be updated to "materials workbench", and should Atlas export meshes to Datum Mesh?
 9. **2D only at first?** 3D (serial sections, 3D EBSD, 3D synthetic microstructures) is much larger; I suggest 2D first.
+
+## 10. Answers (2026-11-11)
+
+1. **Modules:** agreed. Add **Corrosion**, **Heat treatment**, **Phase diagrams** and **Fracture**.
+2. **Order:** the module restructure first, then the roadmap below, easiest first.
+3. **Versions:** small 0.3.x steps, no jumps.
+4. **Users:** engineers and researchers both.
+5. **Files:** easy formats first (PNG, JPEG, TIFF; DIC as CSV or text; EBSD `.ang` and `.ctf`); hard ones last (HDF5-based EBSD, microscope makers' own formats).
+6. **Licence:** Atlas stays MIT. Permissively licensed code (Apache, MIT, BSD) may be read as reference, our own code written, and credited in NOTICE; copyleft tools (GPL, AGPL) only through their papers and manuals.
+7. **Example data:** a few small samples in the installer first; download on demand later.
+8. **Family:** the brief and the site change to "materials workbench". Mesh export to Datum Mesh is **parked** (it would also need an importer in Datum Mesh).
+9. **2D first**, done very well; 3D (synthetic and measured) stays in memory for later, once the 2D tools are tested.
+10. **Schematic microstructures:** move from the datasheet into the Microstructure module as a gallery of typical structures; the datasheet shows a **real micrograph** when an open source has one, and a small "Typical structure" link to the module.
+11. **Python:** the user allows Python where it makes a solver better or more efficient, bundled with the app as in Datum Plot, and accepts 50–100 MB more. Approach: **Rust first** for everything it does well (most of this plan); Python only where an open, permissively licensed library clearly does the job better. The first likely case is phase diagrams (an MIT-licensed thermodynamic library with open databases); image segmentation is the second candidate. Decided module by module, with the reason written in MEMORY.
+
+### The roadmap, agreed
+
+| Release | What |
+| --- | --- |
+| 0.3.5 | **Modules:** switcher, Library / Select / Eco / Make; schematics move to the Microstructure module; the datasheet gets the real-micrograph slot and the "Typical structure" link |
+| 0.3.6 | **Crystal:** elements and periodic table |
+| 0.3.7 | **Crystal:** structures, Miller indices, d-spacing, X-ray peak positions, stereographic projection |
+| 0.3.8 | **Testing:** tensile (modulus, proof stress, UTS, elongation, n and K), several specimens |
+| 0.3.9 | **Testing:** hardness, fatigue, creep; "Add to my materials" |
+| 0.3.10 | **Microstructure:** open and calibrate images, phase fraction, porosity, particles |
+| 0.3.11 | **Microstructure:** grain size (intercept, area), nodularity, coating thickness |
+| 0.3.12 | **Synthetic (2D):** grain generator with size spreads, aspect ratio, phases, pores |
+| 0.3.13 | **Synthetic (2D):** orientations and texture, orientation-coloured view |
+| 0.3.14 | **EBSD 1:** `.ang`/`.ctf`, orientation maths, orientation, phase and quality maps |
+| 0.3.15 | **EBSD 2:** grains, boundaries (twins), KAM / GND, Schmid factors |
+| 0.3.16 | **EBSD 3:** pole figures, inverse pole figures |
+| 0.3.17 | **DIC 1:** strain maps, statistics, profiles |
+| 0.3.18 | **DIC 2:** EBSD–DIC linking, strain per grain, slip traces |
+| 0.3.19 | **Corrosion** |
+| 0.3.20 | **Heat treatment and phase diagrams** |
+
+The earlier pending steps (display and export, processes by alloy type, metal and polymer grades and checks, equivalent designations, hybrids, restricted and critical substances) and fracture follow, or slot in where they are easiest. Later: mesh export to Datum Mesh, download-on-demand data, HDF5 and makers' formats, 3D.
