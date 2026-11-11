@@ -43,9 +43,20 @@
   ],
   "roadmap": [
     {
+      "v": "0.4.0",
+      "title": "Assistants and trusted data",
+      "when": "Next",
+      "items": [
+        "A command line and an assistant connection (Model Context Protocol) to search materials, run a selection, the eco audit and process selection.",
+        "About 500 materials with specific grades and many more values checked against published datasheets; search by equivalent designations.",
+        "Sandwich panels and lattices, and flags for restricted and critical substances.",
+        "A user guide and colour-blind safe colours."
+      ]
+    },
+    {
       "v": "1.0.0",
       "title": "Stable",
-      "when": "Next",
+      "when": "Goal",
       "items": [
         "About 1,000 materials, with pictures and microstructures.",
         "A user guide and a signed installer."
