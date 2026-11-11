@@ -1,7 +1,7 @@
 //! datum-atlas-cli: Datum Atlas without the window. Read the materials database, run a selection
 //! project's stages, eco audit and process selection, and change a project only through the
 //! engine's named operations (`datum-atlas-cli ops`), the same ones the window sends.
-use datum_atlas_core::{chart, db::{self, Db}, doc::{Doc, Op}, eco, elements, export, goals, model::*, ops, process, select, templates};
+use datum_atlas_core::{chart, db::{self, Db}, doc::{Doc, Op}, crystal, eco, elements, export, goals, model::*, ops, process, select, templates};
 use serde_json::{json, Value};
 use std::{io::{BufRead, Write}, path::Path};
 
@@ -12,6 +12,8 @@ const HELP: &str = "datum-atlas-cli: Datum Atlas on the command line
   datum-atlas-cli microstructure ID|NAME       its schematic microstructure as SVG (a schematic, not a micrograph)
   datum-atlas-cli element SYMBOL|NAME|Z        an element: mass, category, density, melting point, structure…
   datum-atlas-cli composition TEXT [--wt|--at] molar mass, wt % and at % of a formula (Fe2O3) or an alloy (--wt Al Cu 4.4 Mg 1.5)
+  datum-atlas-cli crystal ELEMENT [--lambda Å] [--max DEG]   its structure, density and X-ray peaks (Cu Kα unless --lambda)
+  datum-atlas-cli crystal --ask JSON           any structure, e.g. '{\"kind\":\"rocksalt\",\"cell\":{…},\"species\":[\"Na\",\"Cl\"],\"hkl\":[2,0,0]}'
   datum-atlas-cli props                        the property keys, names and units
   datum-atlas-cli goals                        the design goals and the index library
   datum-atlas-cli processes                    the process records
@@ -57,6 +59,13 @@ fn database(args: &[String]) -> Result<Db, String> {
     Ok(Db::new(db::builtin(), None).with_others(&others))
 }
 
+/// A crystal answer without the drawing.
+fn crystal_out(q: &crystal::Ask) -> Result<Value, String> {
+    let mut v = json!(crystal::answer(q)?);
+    if let Some(o) = v.as_object_mut() { o.remove("drawn"); o.remove("basis"); o.remove("poles"); }
+    Ok(v)
+}
+
 /// How `composition` reads its text: --wt, --at, or a formula.
 fn by(args: &[String]) -> &'static str { if args.iter().any(|a| a == "--wt") { "wt" } else if args.iter().any(|a| a == "--at") { "at" } else { "formula" } }
 
@@ -84,6 +93,12 @@ fn run(args: &[String]) -> Result<String, String> {
         Some("material") => { let d = database(args)?; Ok(pretty(&material(&d, arg(0, "a material id or name")?)?)) }
         Some("element") => Ok(pretty(&json!(elements::find(arg(0, "an element symbol, name or atomic number")?).ok_or("No such element.")?))),
         Some("composition") => { arg(0, "a formula or an alloy")?; Ok(pretty(&json!(elements::composition(&pl.join(" "), by(args))?))) }
+        Some("crystal") => {
+            let mut q: crystal::Ask = match flag(args, "--ask") { Some(j) => serde_json::from_str(j).map_err(|e| format!("Not a crystal question ({e}).")) ?, None => crystal::Ask { element: Some(arg(0, "an element, or --ask JSON")?.into()), ..Default::default() } };
+            if let Some(l) = flag(args, "--lambda") { q.lambda = l.parse().map_err(|_| "--lambda is a number in Å.")? }
+            if let Some(m) = flag(args, "--max") { q.max = m.parse().map_err(|_| "--max is a number of degrees.")? }
+            Ok(pretty(&crystal_out(&q)?))
+        }
         Some("microstructure") => { let d = database(args)?; Ok(datum_atlas_core::micro::draw(find(&d, arg(0, "a material id or name")?)?).svg) }
         Some("props") => Ok(PROPS.iter().map(|p| format!("{:<12} {:<38} {}", p.key, p.name, if p.unit.is_empty() { p.kind } else { p.unit })).collect::<Vec<_>>().join("\n")),
         Some("goals") => Ok(goals::GOALS.iter().map(|g| format!("{:<22} {:<46} {}{}", g.id, g.name, g.index, if g.library { "  (library)" } else { "" })).collect::<Vec<_>>().join("\n")),
@@ -233,6 +248,7 @@ fn tools() -> Value {
         { "name": "list_processes", "description": "Process records: what each suits and can make (mass, section, shapes, tolerance, roughness, economic batch) and indicative costs.", "inputSchema": none() },
         { "name": "get_element", "description": "One of the 118 elements: atomic mass (g/mol), category, group and period, state, density (kg/m³), melting and boiling points (°C), crystal structure, electronegativity, lattice parameters (Å), with sources; a missing value is unknown, never zero.", "inputSchema": obj(json!({ "element": s("a symbol (Fe), name (iron) or atomic number (26)") }), &["element"]) },
         { "name": "composition", "description": "Molar mass and each element's atom and weight percent, from a chemical formula (Fe2O3, Al2(SO4)3, CuSO4·5H2O) or an alloy in weight or atom percent (\"Al Cu 4.4 Mg 1.5\": the element without a number is the balance).", "inputSchema": obj(json!({ "text": s("the formula or the alloy"), "by": s("formula (default), wt or at") }), &["text"]) },
+        { "name": "crystal", "description": "Crystal calculators: a structure (an element's own, or bcc, fcc, hcp, diamond, sc, rocksalt, cscl, zincblende, fluorite, or any cell) with its volume, atoms per cell and theoretical density (kg/m³); the spacing d (Å) and Bragg angle of plane hkl; angles between planes hkl and hkl2 and between directions uvw and uvw2; four-index forms for hexagonal cells; and the X-ray powder peaks (2θ, d, multiplicity, approximate intensity) for wavelength lambda (Å, default Cu Kα 1.5418) up to max degrees 2θ.", "inputSchema": obj(json!({ "element": s("an element with a simple structure (Fe, Cu, Mg, Si…); or leave out and give kind, cell and species"), "kind": s("bcc, fcc, hcp, diamond, sc, rocksalt, cscl, zincblende, fluorite or cell"), "cell": { "type": "object", "description": "a, b, c (Å), alpha, beta, gamma (degrees)" }, "species": { "type": "array", "items": { "type": "string" } }, "lambda": { "type": "number" }, "max": { "type": "number" }, "hkl": { "type": "array", "items": { "type": "integer" } }, "hkl2": { "type": "array", "items": { "type": "integer" } }, "uvw": { "type": "array", "items": { "type": "integer" } }, "uvw2": { "type": "array", "items": { "type": "integer" } } }), &[]) },
         { "name": "list_templates", "description": "Starting points for a new project.", "inputSchema": none() },
         { "name": "new_project", "description": "Start a selection project from a template (see list_templates). Returns its facts.", "inputSchema": obj(json!({ "template": s("blank, beam, tie, panel, spring, hot or tough"), "name": s("optional name") }), &["template"]) },
         { "name": "open_project", "description": "Open a .datlas project file to work on. Returns its facts.", "inputSchema": obj(json!({ "path": s("a .datlas file") }), &["path"]) },
@@ -258,6 +274,7 @@ fn call(d: &Db, doc: &mut Option<Doc>, name: &str, a: &Value) -> Result<Value, S
         "list_goals" => Ok(json!(goals::GOALS.iter().map(|g| json!({ "id": g.id, "name": g.name, "group": g.group, "index": g.index, "x": g.x, "y": g.y, "slope": g.slope, "library": g.library, "why": g.why })).collect::<Vec<_>>())),
         "list_processes" => Ok(json!(process::processes())),
         "list_templates" => Ok(json!(templates::list())),
+        "crystal" => crystal_out(&serde_json::from_value(a.clone()).map_err(|e| format!("Not a crystal question ({e})."))?),
         "get_element" => Ok(json!(elements::find(&s("element").ok_or("element is needed")?).ok_or("No such element.")?)),
         "composition" => Ok(json!(elements::composition(&s("text").ok_or("text is needed")?, s("by").as_deref().unwrap_or("formula"))?)),
         "list_operations" => Ok(json!(ops::catalog())),
@@ -377,7 +394,7 @@ mod tests {
         ]);
         assert_eq!(r[0]["result"]["serverInfo"]["name"], "datum-atlas");
         assert_eq!(r.len(), 19, "the notification gets no answer");
-        assert_eq!(r[1]["result"]["tools"].as_array().map(Vec::len), Some(20));
+        assert_eq!(r[1]["result"]["tools"].as_array().map(Vec::len), Some(21));
         assert_eq!(r[2]["result"]["isError"], true, "results need a project");
         assert!(text(&r[3]).as_array().is_some_and(|a| a.iter().any(|m| m["id"] == "al-6061-t6")));
         assert!(text(&r[4])["values"].as_array().is_some_and(|v| v.iter().any(|x| x["key"] == "rho" && x["source"].is_string())));
@@ -404,6 +421,9 @@ mod tests {
         assert!(a(&["element", "iron"]).is_ok_and(|t| t.contains("\"symbol\": \"Fe\"") && t.contains("BCC")));
         assert!(a(&["composition", "Fe2O3"]).is_ok_and(|t| t.contains("159.6")));
         assert!(a(&["composition", "--wt", "Al", "Cu", "4.4", "Mg", "1.5"]).is_ok_and(|t| t.contains("\"by\": \"wt\"")));
+        assert!(a(&["crystal", "Fe"]).is_ok_and(|t| t.contains("\"twoTheta\": 44.70") && t.contains("bcc")));
+        assert!(a(&["crystal", "--ask", r#"{"kind":"rocksalt","cell":{"a":5.64,"b":5.64,"c":5.64,"alpha":90,"beta":90,"gamma":90},"species":["Na","Cl"]}"#]).is_ok_and(|t| t.contains("Rock salt")));
+        assert!(a(&["crystal", "Og"]).is_err() && a(&["crystal", "--ask", "{"]).is_err());
         assert!(a(&["element", "Xx"]).is_err() && a(&["composition", "Fe2O3)"]).is_err());
         assert!(a(&["search", "steel", "--family", "Polymers"]).is_ok_and(|t| t.trim() == "[]"));
         let m = a(&["material", "al-6061-t6"]).unwrap_or_default();

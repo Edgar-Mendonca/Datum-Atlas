@@ -23,7 +23,7 @@ import { ReportPage } from "./report";
 import { ComparePage } from "./compare";
 import { EcoPage } from "./eco";
 import { StructuresPage } from "./structures";
-import { ElementsPage } from "./crystal";
+import { CalcPage, ElementsPage } from "./crystal";
 import { MODULES, PLANNED, moduleOf } from "./modules";
 import { feature } from "./features";
 import { soon } from "./roadmap";
@@ -127,6 +127,7 @@ const App = () => {
               <Match when={view() === "eco"}><EcoPage /></Match>
               <Match when={view() === "micro"}><StructuresPage /></Match>
               <Match when={view() === "elements"}><ElementsPage /></Match>
+              <Match when={view() === "calc"}><CalcPage /></Match>
               <Match when={view() === "process"}><ProcessPage /></Match>
               <Match when={view() === "processes"}><ProcessesPage /></Match>
               <Match when={view() === "index"}><IndexPage /></Match>

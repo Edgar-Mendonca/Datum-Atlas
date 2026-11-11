@@ -840,3 +840,20 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .elpage .comprow { display: flex; gap: 6px; margin-bottom: 8px; }
 .elpage .compin { flex: 1; font-family: var(--mono); }
 .elpage .err { color: var(--bad, #C0392B); }
+
+/* Crystal › Calculators */
+.calcpage .calcgrid { display: grid; grid-template-columns: minmax(330px, 1fr) minmax(330px, 1fr); gap: 14px; max-width: 1200px; }
+.calcpage .panel.wide { grid-column: 1 / -1; }
+.calcpage .cform { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.calcpage .cform.crow { flex-direction: row; flex-wrap: wrap; gap: 14px; }
+.calcpage .cform label { display: flex; align-items: center; gap: 8px; }
+.calcpage .cform input[type=number] { width: 78px; }
+.calcpage .idx { display: inline-flex; gap: 3px; } .calcpage .idx input { width: 52px !important; }
+.calcpage .cellwrap { display: flex; gap: 14px; align-items: flex-start; flex-wrap: wrap; }
+.calcpage .cellview { display: flex; flex-direction: column; gap: 4px; }
+.calcpage .spk i { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 0 3px 0 6px; }
+.calcpage .cres { margin: 0 0 4px 0; font-size: 12.5px; }
+.calcpage .xrd { width: 100%; max-width: 760px; height: auto; }
+.calcpage .stereo { width: 280px; height: 280px; }
+.calcpage .peaks td, .calcpage .peaks th { text-align: right; } .calcpage .peaks td:first-child { text-align: left; font-family: var(--mono); }
+.calcpage .err { color: #C0392B; }

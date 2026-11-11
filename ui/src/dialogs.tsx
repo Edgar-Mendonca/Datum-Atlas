@@ -119,7 +119,7 @@ export const assistant = () => openDialog(() => {
   return (
     <Dialog title="Use with an AI assistant" wide>
       <div class="guide">
-        <p>An AI assistant that speaks the <b>Model Context Protocol</b> can use Datum Atlas: search the materials and read their datasheets, set up a selection, read the ranked results, run the eco audit and process selection, look up elements and compositions, and save the project. <Help k="assistant" /></p>
+        <p>An AI assistant that speaks the <b>Model Context Protocol</b> can use Datum Atlas: search the materials and read their datasheets, set up a selection, read the ranked results, run the eco audit and process selection, look up elements, compositions and crystals, and save the project. <Help k="assistant" /></p>
         <h4>1 · Get the command-line program</h4>
         <p>Download <code>datum-atlas-cli-{VERSION_NOW}.exe</code> from the same release as the installer (Help › Releases) and keep it in a folder of your choice, such as <code>C:\Tools</code>.</p>
         <h4>2 · Add it to the assistant's settings</h4>

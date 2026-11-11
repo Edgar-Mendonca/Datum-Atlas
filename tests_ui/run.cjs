@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -175,6 +175,22 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.fill(".compin", "Fe 60 C 30"); await p.press(".compin", "Enter"); await p.waitForTimeout(200);
   check("a composition that does not add up says why", (await p.textContent(".compbox .err").catch(() => "")).includes("not 100"));
   await shot("elements");
+  // Crystal › Calculators: from an element's card, a structure, spacings, angles, peaks, projection.
+  await p.click('.elpage .el:has(b:text-is("Al"))'); await p.click(".elcard .tocalc"); await p.waitForSelector(".calcpage .cfacts");
+  const facts = await p.textContent(".calcpage .cfacts");
+  check("an element opens in the calculators with its structure and density", facts.includes("Face-centred cubic") && facts.includes("Atoms per cell4") && /2,69\d kg/.test(facts), facts);
+  const pk = await p.$$eval(".calcpage .peaks tbody tr", rs => rs.map(r => r.textContent));
+  check("the X-ray pattern of FCC aluminium starts (111), (200) at 38.5° and 44.7°", pk[0].startsWith("(111)8") && pk[0].includes("38.50") && pk[1].startsWith("(200)6") && pk[1].includes("44.7"), pk.slice(0, 2).join(" | "));
+  await p.fill(".calcpage .h1 input >> nth=2", "1"); await p.press(".calcpage .h1 input >> nth=2", "Tab"); await p.waitForTimeout(200);
+  check("a plane's spacing and the angle between planes", (await p.textContent(".calcpage")).includes("2.3380") && (await p.textContent(".calcpage")).includes("54.736"), await p.textContent(".calcpage .cform"));
+  check("the stereographic projection draws the poles", (await p.$$(".calcpage .stereo circle")).length > 20);
+  await p.selectOption(".calcpage .csrc", "rocksalt"); await p.waitForTimeout(150);
+  await p.fill(".calcpage .ca", "5.64"); await p.press(".calcpage .ca", "Tab"); await p.fill(".calcpage .sp1", "Na"); await p.press(".calcpage .sp1", "Tab"); await p.fill(".calcpage .sp2", "Cl"); await p.press(".calcpage .sp2", "Tab"); await p.waitForTimeout(250);
+  check("a two-element structure (rock salt) works out its density", (await p.textContent(".calcpage .cdens")).includes("2,16"), await p.textContent(".calcpage .cdens"));
+  await p.fill(".calcpage .lam", "0"); await p.press(".calcpage .lam", "Tab"); await p.waitForTimeout(200);
+  check("a wrong wavelength says why", (await p.textContent(".calcpage .err").catch(() => "")).includes("wavelength"));
+  await p.fill(".calcpage .lam", "1.5418"); await p.press(".calcpage .lam", "Tab"); await p.waitForTimeout(150);
+  await shot("calculators");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

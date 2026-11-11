@@ -3,6 +3,7 @@
 //! No UI or OS code lives here.
 pub mod chart;
 pub mod compare;
+pub mod crystal;
 pub mod db;
 pub mod formula;
 pub mod doc;

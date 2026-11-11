@@ -160,6 +160,14 @@ fn elements() -> &'static [datum_atlas_core::elements::Element] { datum_atlas_co
 #[tauri::command]
 fn composition(text: String, by: String) -> R<datum_atlas_core::elements::Comp> { datum_atlas_core::elements::composition(&text, &by) }
 
+/// Crystal calculators: structure, density, spacings, angles, X-ray peaks, stereographic poles.
+#[tauri::command]
+fn crystal(ask: datum_atlas_core::crystal::Ask) -> R<datum_atlas_core::crystal::Answer> { datum_atlas_core::crystal::answer(&ask) }
+
+/// The structures and X-ray tubes the calculators know.
+#[tauri::command]
+fn crystal_info() -> serde_json::Value { serde_json::json!({ "kinds": datum_atlas_core::crystal::KINDS, "tubes": datum_atlas_core::crystal::TUBES }) }
+
 /// A material's schematic microstructure (SVG, caption, scale).
 #[tauri::command]
 fn microstructure(st: State<St>, id: String) -> R<datum_atlas_core::micro::Micro> {
@@ -674,7 +682,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

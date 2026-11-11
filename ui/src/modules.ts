@@ -17,8 +17,8 @@ export const MODULES: Module[] = [
     pages: [["process", "process", "Process"], ["processes", "list", "Processes"]], tabs: ["home", "report"] },
   { id: "micro", name: "Microstructure", short: "Micro", icon: "grains", about: "Typical structures of every class of material; image analysis, the generator, EBSD and DIC follow.",
     pages: [["micro", "grains", "Structures"]], tabs: ["home", "data"] },
-  { id: "crystal", name: "Crystal", short: "Crystal", icon: "crystal", about: "The elements on a periodic table, and the composition of formulas and alloys; crystal structures, X-ray peaks and projections follow.",
-    pages: [["elements", "crystal", "Elements"]], tabs: ["home", "data"] },
+  { id: "crystal", name: "Crystal", short: "Crystal", icon: "crystal", about: "The elements on a periodic table; compositions; crystal structures with spacings, angles, X-ray peaks and stereographic projections.",
+    pages: [["elements", "crystal", "Elements"], ["calc", "builder", "Lattice"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */

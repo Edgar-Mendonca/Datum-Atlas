@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.7 — 2026-11-11
+
+Crystal calculators: a crystal structure and everything that follows from it, from spacings and angles to the X-ray powder pattern and a stereographic projection.
+
+**Crystal › Lattice**
+- Start from an element's own structure (BCC iron, FCC aluminium, HCP magnesium, diamond silicon…), from a structure type (simple cubic, BCC, FCC, HCP, diamond, rock salt, caesium chloride, zinc blende, fluorite) with its lattice parameter and elements, or from any cell with all six lattice parameters.
+- A drawing of the unit cell that you can turn, the crystal system, atoms per cell, cell volume and the theoretical density.
+- **Planes and directions:** the spacing of any plane (hkl) and its Bragg angle, the angle between two planes and between two directions, and the four-index forms for hexagonal crystals. Negative indices show with a bar.
+- **X-ray powder pattern:** the lines for Cu, Co, Mo, Cr, Fe or Ag Kα radiation, or any wavelength, with indices, multiplicity, spacing, 2θ and a rough intensity, as a chart and a table. Lines the structure cancels are left out. Positions are exact; intensities are approximate and the page says why.
+- **Stereographic projection:** the plane normals seen down any plane's normal, up to indices 1, 2 or 3.
+- An element's card has a button that opens it here.
+
+**Command line and assistant**
+- `datum-atlas-cli crystal Fe` (or `--ask` with any structure); the assistant connection gains a `crystal` tool (21 tools).
+
+**Checked**
+- Against textbook values: the spacing of (110) in iron (2.027 Å) and its first three lines with Cu Kα (44.7°, 65.0°, 82.3°), the missing lines of FCC, diamond and HCP, the 54.74° between (100) and (111), the densities of iron, tungsten, magnesium and rock salt.
+
 ## 0.3.6 — 2026-11-11
 
 A new module, Crystal: the 118 elements on a clickable periodic table, and the composition of formulas and alloys.

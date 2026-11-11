@@ -348,3 +348,21 @@ fn random_formulas_never_panic() {
         }
     }
 }
+
+#[test]
+fn random_crystals_never_panic() {
+    use crate::crystal::{answer, Ask, Cell, KINDS};
+    let mut r = Rng(0xD6E8_FEB8_6659_FD93);
+    let len = [0.0, -1.0, 1e-9, 0.5, 2.87, 4.05, 5.64, 30.0, 999.0, 1e300, f64::NAN];
+    let deg = [0.0, 1.0, 60.0, 90.0, 120.0, 179.0, 180.0, 200.0, f64::NAN];
+    let ix = |_: &mut Rng| [0, 1, -1, 2, 3, 99, -100, i32::MAX];
+    for _ in 0..1500 {
+        let i = ix(&mut r);
+        let mut h = || [*r.pick(&i), *r.pick(&i), *r.pick(&i)];
+        let (a, b, c, d, e) = (h(), h(), h(), h(), h());
+        let q = Ask { element: r.pick(&[None, Some("Fe".to_string()), Some("He".to_string()), Some("x".to_string())]).clone(), kind: r.pick(KINDS).0.into(), cell: Cell { a: *r.pick(&len), b: *r.pick(&len), c: *r.pick(&len), alpha: *r.pick(&deg), beta: *r.pick(&deg), gamma: *r.pick(&deg) },
+            species: vec![r.pick(&["Fe", "Na", "Cl", "Og", "Xx", ""]).to_string(), r.pick(&["O", "Cl", "H"]).to_string()], lambda: *r.pick(&[0.0, 0.7107, 1.5406, 9.9, f64::NAN]), max: *r.pick(&[0.0, 90.0, 180.0, f64::NAN]),
+            hkl: a, hkl2: b, uvw: c, uvw2: d, centre: e, poles: *r.pick(&[0, 1, 3, 99]) };
+        if let Ok(x) = answer(&q) { assert!(x.density.is_finite() && x.peaks.iter().all(|p| p.two_theta.is_finite() && p.intensity.is_finite()), "{q:?}"); }
+    }
+}

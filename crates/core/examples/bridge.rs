@@ -36,6 +36,8 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "microstructure" => json!(datum_atlas_core::micro::draw(s.db.get(a["id"].as_str().unwrap_or("")).ok_or("That material is not in the database.")?)),
         "substitutes" => json!(eco::substitutes(&s.db.with_formulas(&s.doc.p.formulas), &s.doc.p, a["id"].as_str().unwrap_or(""), a["tol"].as_f64().unwrap_or(0.1))),
         "templates" => json!(templates::list()),
+        "crystal" => json!(datum_atlas_core::crystal::answer(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
+        "crystal_info" => json!({ "kinds": datum_atlas_core::crystal::KINDS, "tubes": datum_atlas_core::crystal::TUBES }),
         "elements" => json!(datum_atlas_core::elements::elements()),
         "composition" => json!(datum_atlas_core::elements::composition(a["text"].as_str().unwrap_or(""), a["by"].as_str().unwrap_or("formula"))?),
         "database" => json!({ "materials": s.db.materials, "sources": s.db.sources, "userCount": s.db.user_count, "props": db::props_out(), "tree": db::tree(&s.db.materials), "rev": s.db_rev }),

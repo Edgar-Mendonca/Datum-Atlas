@@ -787,3 +787,47 @@ fn the_elements_hold_together() {
         assert!(composition(t, by).is_err(), "{t} ({by}) should be refused");
     }
 }
+
+#[test]
+fn crystal_calculators_match_the_textbook() {
+    use crate::crystal::*;
+    let fe = of_element("Fe").unwrap();
+    assert_eq!((fe.kind.as_str(), fe.system.as_str(), fe.atoms.len()), ("bcc", "cubic", 2));
+    assert!((fe.cell.d([1, 1, 0]) - 2.0269).abs() < 1e-3 && (fe.density() - 7874.0).abs() < 15.0, "{}", fe.density());
+    // Iron with Cu Kα: (110), (200), (211) at about 44.7°, 65.0°, 82.3°; no (100) or (111).
+    let p = peaks(&fe, 1.5406, 90.0).unwrap();
+    let at: Vec<_> = p.iter().map(|x| (x.hkl, (x.two_theta * 10.0).round() / 10.0, x.mult)).collect();
+    assert_eq!(at, vec![([1, 1, 0], 44.7, 12), ([2, 0, 0], 65.0, 6), ([2, 1, 1], 82.3, 24)], "{at:?}");
+    assert!((p[0].intensity - 100.0).abs() < 1e-9);
+    // FCC: unmixed indices only; diamond also loses (200); hexagonal (0001) is missing, (0002) is there.
+    let al = of_element("Al").unwrap();
+    let hk: Vec<_> = peaks(&al, 1.5406, 85.0).unwrap().iter().map(|x| x.hkl).collect();
+    assert_eq!(hk, vec![[1, 1, 1], [2, 0, 0], [2, 2, 0], [3, 1, 1], [2, 2, 2]]);
+    assert!((peaks(&al, 1.5406, 40.0).unwrap()[0].two_theta - 38.47).abs() < 0.02);
+    let si: Vec<_> = peaks(&of_element("Si").unwrap(), 1.5406, 80.0).unwrap().iter().map(|x| x.hkl).collect();
+    assert_eq!(si, vec![[1, 1, 1], [2, 2, 0], [3, 1, 1], [4, 0, 0], [3, 3, 1]]);
+    let mg = of_element("Mg").unwrap();
+    assert_eq!(mg.system, "hexagonal");
+    let mp = peaks(&mg, 1.5406, 40.0).unwrap();
+    assert!(mp.iter().any(|x| x.hkil == Some([0, 0, 0, 2])) && !mp.iter().any(|x| x.hkl == [0, 0, 1]), "{mp:?}");
+    assert!((mg.density() - 1738.0).abs() < 25.0, "{}", mg.density());
+    // Rock salt: both species; angles; Miller–Bravais.
+    let nacl = build("rocksalt", Cell::cubic(5.64), &["Na".into(), "Cl".into()]).unwrap();
+    assert!((nacl.density() - 2165.0).abs() < 20.0 && nacl.atoms.len() == 8, "{}", nacl.density());
+    let c = Cell::cubic(1.0);
+    assert!((crate::crystal::answer(&Ask { kind: "cell".into(), cell: c, hkl: [1, 0, 0], hkl2: [1, 1, 1], ..Default::default() }).unwrap().angle_planes.unwrap() - 54.7356).abs() < 1e-3);
+    let w = crate::crystal::answer(&Ask { element: Some("tungsten".into()), ..Default::default() }).unwrap();
+    assert!(w.structure.kind == "bcc" && (w.density - 19250.0).abs() < 100.0 && w.bragg.is_some(), "{}", w.density);
+    assert!(crate::crystal::answer(&Ask { element: Some("Og".into()), ..Default::default() }).is_err());
+    assert_eq!((dir4([1, 0, 0]), dir4([0, 0, 1]), plane4([1, 0, 1])), ([2, -1, -1, 0], [0, 0, 0, 1], [1, 0, -1, 1]));
+    // Stereographic projection down [001]: (001) at the centre, (100) on the circle, (111) at 0.732 / √2… from it.
+    let s = stereo(&c, [0, 0, 1], 1).unwrap();
+    let at = |h: [i32; 3]| s.iter().find(|p| p.hkl == h).map(|p| (p.x * p.x + p.y * p.y).sqrt());
+    assert!(at([0, 0, 1]).unwrap() < 1e-9 && (at([1, 0, 0]).unwrap() - 1.0).abs() < 1e-9 && (at([1, 1, 1]).unwrap() - (54.7356f64.to_radians() / 2.0).tan()).abs() < 1e-6 && at([0, 0, -1]).is_none());
+    // Refusals.
+    assert!(build("fcc", Cell::cubic(-1.0), &["Cu".into()]).is_err() && build("rocksalt", Cell::cubic(5.0), &["Na".into()]).is_err() && build("nope", c, &["Fe".into()]).is_err());
+    assert!(build("cell", Cell { a: 1.0, b: 1.0, c: 1.0, alpha: 10.0, beta: 10.0, gamma: 100.0 }, &["Fe".into()]).is_err());
+    assert!(peaks(&fe, 0.0, 90.0).is_err() && stereo(&c, [0, 0, 0], 2).is_err());
+    let tri = build("cell", Cell { a: 5.0, b: 6.0, c: 7.0, alpha: 80.0, beta: 95.0, gamma: 105.0 }, &["C".into()]).unwrap();
+    assert_eq!(tri.system, "triclinic");
+}

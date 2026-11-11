@@ -94,7 +94,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Eco** | Eco audit | Energy and CO₂ through a product's life; greener substitutes |
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures | The typical structure of every class of material |
-| **Crystal** | Elements | The elements on a periodic table; the composition of formulas and alloys |
+| **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
 
@@ -226,7 +226,25 @@ Image analysis of your own micrographs, a structure generator, EBSD and DIC will
 3. **The element card:** atomic mass, category, group and period, state, density, melting and boiling points, crystal structure, lattice parameters and electronegativity, with their sources. A value nobody knows reliably, as for most of the heaviest elements, is left blank and the table hatches it; it is never shown as zero. **In the library** lists the materials built on the element.
 4. **Composition:** the molar mass and each element's atom and weight percent of a formula (Fe2O3, Al2(SO4)3, CuSO4·5H2O), or the change between weight and atom percent for an alloy: write each element and its percent, and leave one without a number as the balance (Al Cu 4.4 Mg 1.5 Mn 0.6).
 
-The command line does the same: `datum-atlas-cli element Fe` and `datum-atlas-cli composition --wt Fe C 0.8`. Crystal structures, Miller indices, X-ray peak positions and stereographic projections come next in this module.
+The command line does the same: `datum-atlas-cli element Fe` and `datum-atlas-cli composition --wt Fe C 0.8`. **Its crystal, X-ray peaks and projection** on the card of a metal or semiconductor opens it in the Lattice page.
+
+## Crystal: lattice calculators
+
+![Crystal › Lattice: a structure, its planes and directions, and a stereographic projection.](img/lattice.png)
+
+1. **From:** an element's own structure (BCC iron, FCC aluminium, HCP magnesium, diamond silicon…), a structure type (simple cubic, BCC, FCC, HCP, diamond, rock salt, caesium chloride, zinc blende, fluorite) with its lattice parameter and elements, or **Any cell** with all six lattice parameters for tetragonal, orthorhombic, monoclinic and triclinic crystals.
+2. **The cell:** every atom of the unit cell with its copies on the faces, edges and corners. The slider turns it.
+3. **The facts:** crystal system, cell, atoms per cell, cell volume and the theoretical density (the mass of the atoms in the cell over its volume).
+4. **Planes and directions:** type Miller indices. The page gives the spacing d of plane (hkl) and its Bragg angle, the angle between two planes and between two directions, and for hexagonal cells the four-index forms (hkil) and [UVTW]. Negative indices show with a bar.
+5. **Stereographic projection:** the plane normals seen down the normal of the centre plane, up to indices 1, 2 or 3; the {100}, {110} and {111} poles are labelled.
+
+![The X-ray powder pattern of BCC iron with Cu Kα radiation.](img/xrd.png)
+
+1. **Tube:** Cu, Co, Mo, Cr, Fe or Ag Kα, or type any wavelength.
+2. **The pattern:** a line for each family of planes at the 2θ of Bragg's law, as high as its rough intensity. Families the structure cancels, such as (100) in BCC or (200) in diamond, are left out.
+3. **The table:** indices, multiplicity, spacing, 2θ and intensity.
+
+The positions are exact for the cell; the intensities are approximate (each atom scatters in proportion to its atomic number, without the fall-off with angle), so they show which lines are there and roughly how strong. On the command line: `datum-atlas-cli crystal Fe`, or `--ask` with any structure.
 
 ## Compare
 
@@ -318,7 +336,7 @@ Every release has a small program beside the installer, `datum-atlas-cli-x.y.z.e
 
 ![Help › Use with an AI Assistant.](img/assistant.png)
 
-`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements and compositions, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
+`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements, compositions and crystals, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
 
 ## Help, options and shortcuts
 
