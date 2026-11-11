@@ -462,11 +462,15 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Data fix: 16 aluminium designations read "EN EN AW-…"; now "AW-…" under EN.
 - Roadmap: 0.3.5 elements; display/export to 0.3.6 … substances to 0.3.12. Released 0.3.4.
 
+### 2026-11-11: Session 16, continued (brainstorm: Atlas as a materials workbench)
+- The user asked whether Python tools exist for microstructures (DefDAP, DAMASK). Found: DefDAP (Manchester, Apache 2.0) analyses EBSD and HR-DIC; DAMASK (MPIE, GPL/AGPL) simulates crystal plasticity and builds Voronoi grids; generators MicroStructPy (MIT), Neper, DREAM.3D (6.5 for synthetics).
+- The user's new idea: Atlas becomes a materials workbench with modules; selection is one module; build analysis tools from scratch with open tools as references. Wrote [PLAN-0.5.md](PLAN-0.5.md): today's app as modules (Library, Select, Eco, Make), new modules (Microstructure image analysis, EBSD, DIC, Testing, Synthetic, Crystal), open data from Zenodo, licence approach (permissive code as reference with credit; copyleft only through papers), new crates, an order, nine questions. Nothing built yet.
+
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.5: the elements and a periodic table ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a).
+**Next:** answers to [PLAN-0.5.md](PLAN-0.5.md) §9 (the workbench); 0.3.5 elements waits on them.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
