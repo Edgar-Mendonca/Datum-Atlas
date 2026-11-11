@@ -27,6 +27,7 @@ const HELP: &str = "datum-atlas-cli: Datum Atlas on the command line
                                                change a project, e.g. --op '{\"Goal\":{\"chart\":1,\"goal\":\"tie-strong\"}}'
   datum-atlas-cli eco FILE                     the eco audit: energy and CO₂ by life phase for each option
   datum-atlas-cli process FILE                 process selection: what can make the part, and the cost
+  datum-atlas-cli tensile FILE [--csv]         the project's tensile tests: E, Rp0.2, Rm, Ag, A, n, K and statistics
   datum-atlas-cli substitutes FILE ID [--tol 0.1]   materials that do the job of ID with less CO₂
   datum-atlas-cli export FILE OUT              save as .datlas, or the results as .xlsx or .csv (OUT.eco.xlsx: the eco audit)
   datum-atlas-cli mcp [--db FILE.datdb]        serve these to an AI assistant (Model Context Protocol, stdio)
@@ -57,6 +58,13 @@ fn database(args: &[String]) -> Result<Db, String> {
         others.push(db::read_user(&text).map_err(|e| format!("{}: {e}", w[1]))?.0);
     }
     Ok(Db::new(db::builtin(), None).with_others(&others))
+}
+
+/// Tensile results without the curves.
+fn tensile_out(o: &datum_atlas_core::tensile::Out) -> Value {
+    let mut v = json!(o);
+    for r in v["rows"].as_array_mut().into_iter().flatten() { if let Some(m) = r.as_object_mut() { m.remove("curve"); m.remove("truec"); } }
+    v
 }
 
 /// A crystal answer without the drawing.
@@ -98,6 +106,11 @@ fn run(args: &[String]) -> Result<String, String> {
             if let Some(l) = flag(args, "--lambda") { q.lambda = l.parse().map_err(|_| "--lambda is a number in Å.")? }
             if let Some(m) = flag(args, "--max") { q.max = m.parse().map_err(|_| "--max is a number of degrees.")? }
             Ok(pretty(&crystal_out(&q)?))
+        }
+        Some("tensile") => {
+            let p = load(arg(0, "a .datlas project")?)?.p;
+            let o = datum_atlas_core::tensile::run(&p.tensile);
+            Ok(if args.iter().any(|a| a == "--csv") { export::csv(&datum_atlas_core::tensile::table(&o)) } else { pretty(&tensile_out(&o)) })
         }
         Some("microstructure") => { let d = database(args)?; Ok(datum_atlas_core::micro::draw(find(&d, arg(0, "a material id or name")?)?).svg) }
         Some("props") => Ok(PROPS.iter().map(|p| format!("{:<12} {:<38} {}", p.key, p.name, if p.unit.is_empty() { p.kind } else { p.unit })).collect::<Vec<_>>().join("\n")),
@@ -258,6 +271,7 @@ fn tools() -> Value {
         { "name": "undo", "description": "Undo the last change.", "inputSchema": none() },
         { "name": "get_results", "description": "Every material ranked by the selection (index and × best), and the reason each other one fails.", "inputSchema": obj(json!({ "top": { "type": "integer", "description": "how many passing materials to list (default all)" } }), &[]) },
         { "name": "get_chart", "description": "A chart's materials: each one's range on both axes (stored units) and whether it passes.", "inputSchema": obj(json!({ "chart": { "type": "integer" } }), &[]) },
+        { "name": "tensile_results", "description": "The open project's tensile tests: for each specimen E (GPa), Rp0.2, Rm (MPa), Ag and A (%), work to fracture (MJ/m³), n and K (MPa), with notes, and the mean, standard deviation and range. Add or change specimens with the Tensile operation.", "inputSchema": none() },
         { "name": "eco_audit", "description": "The eco audit of the open project: energy (MJ) and CO₂ (kg) by life phase as ranges for each option, the largest phase, notes for gaps, break-even. Set it up with the Eco operation.", "inputSchema": none() },
         { "name": "process_selection", "description": "Process selection for the open project's part: the processes that can make it, why each other one cannot, cost per part (USD, indicative) and the cheapest by batch size, joins and finishes. Set the part with the Process operation.", "inputSchema": none() },
         { "name": "greener_substitutes", "description": "Materials that pass the open project's stages, with an index at least (1 − tolerance) of this one's, and less CO₂ for the same job.", "inputSchema": obj(json!({ "material": s("a material id"), "tolerance": { "type": "number", "description": "0 to 1, default 0.1" } }), &["material"]) },
@@ -299,6 +313,7 @@ fn call(d: &Db, doc: &mut Option<Doc>, name: &str, a: &Value) -> Result<Value, S
                 "undo" => { doc.undo(); Ok(info(d, &doc.p)) }
                 "get_results" => Ok(results(d, &doc.p, a["top"].as_u64().map_or(usize::MAX, |n| n as usize))),
                 "get_chart" => { let id = a["chart"].as_u64().map(|n| n as u32).or(doc.p.charts.first().map(|c| c.id)).ok_or("The project has no chart.")?; chart_out(d, &doc.p, id) }
+                "tensile_results" => Ok(tensile_out(&datum_atlas_core::tensile::run(&doc.p.tensile))),
                 "eco_audit" => Ok(json!(eco::audit(&d.with_formulas(&doc.p.formulas), &doc.p.eco))),
                 "process_selection" => Ok(process_out(d, &doc.p)),
                 "greener_substitutes" => {
@@ -394,7 +409,7 @@ mod tests {
         ]);
         assert_eq!(r[0]["result"]["serverInfo"]["name"], "datum-atlas");
         assert_eq!(r.len(), 19, "the notification gets no answer");
-        assert_eq!(r[1]["result"]["tools"].as_array().map(Vec::len), Some(21));
+        assert_eq!(r[1]["result"]["tools"].as_array().map(Vec::len), Some(22));
         assert_eq!(r[2]["result"]["isError"], true, "results need a project");
         assert!(text(&r[3]).as_array().is_some_and(|a| a.iter().any(|m| m["id"] == "al-6061-t6")));
         assert!(text(&r[4])["values"].as_array().is_some_and(|v| v.iter().any(|x| x["key"] == "rho" && x["source"].is_string())));
@@ -458,6 +473,11 @@ mod tests {
         assert!(a(&["eco", &out]).is_ok_and(|t| t.contains("\"dominant\": \"Material\"")));
         assert!(a(&["process", &out]).is_ok_and(|t| t.contains("investment-cast") && t.contains("cheapest_by_batch")));
         assert!(a(&["substitutes", &f, "steel-1020", "--tol", "0.5"]).is_ok_and(|t| t.contains("same job")));
+        let ten = d.join("t.datlas").display().to_string();
+        let op = datum_atlas_core::ops::catalog().into_iter().find(|o| o.name == "Tensile").map(|o| o.example.to_string()).unwrap_or_default();
+        assert!(a(&["apply", &f, "--op", &op, "--save", &ten]).is_ok());
+        assert!(a(&["tensile", &ten]).is_ok_and(|t| t.contains("\"rm\": 500") && t.contains("\"stats\"")), "{:?}", a(&["tensile", &ten]));
+        assert!(a(&["tensile", &ten, "--csv"]).is_ok_and(|t| t.contains("Specimen,") && t.contains("Mean")));
         // Exports by extension only.
         for x in ["r.xlsx", "r.csv", "r.eco.xlsx", "copy.datlas"] { assert!(a(&["export", &out, &d.join(x).display().to_string()]).is_ok(), "{x}"); }
         assert!(std::fs::read_to_string(d.join("r.csv")).is_ok_and(|t| t.contains("Material")));

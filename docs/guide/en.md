@@ -2,7 +2,7 @@
 
 ## Welcome
 
-Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure** and **Crystal**; Testing, image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
+Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure**, **Crystal** and **Testing**; image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
 
 The Select module helps you choose a material and show why it is the right one. Every material is drawn on property charts as a bubble spanning its range of values; design goals and performance indices turn what the part must do into a line on the chart; limits, lines, boxes and shapes narrow the field; and the materials that pass are ranked, with the reason every other one fails. Then you compare the best, add up their energy and CO₂ through the product's life, find the processes that can make the part and what it costs, and print a report that documents the choice.
 
@@ -94,6 +94,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Eco** | Eco audit | Energy and CO₂ through a product's life; greener substitutes |
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures | The typical structure of every class of material |
+| **Testing** | Tensile | Your tensile test data: curves, modulus, proof stress, tensile strength, elongation, n and K, with statistics |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
@@ -246,6 +247,18 @@ The command line does the same: `datum-atlas-cli element Fe` and `datum-atlas-cl
 
 The positions are exact for the cell; the intensities are approximate (each atom scatters in proportion to its atomic number, without the fall-off with angle), so they show which lines are there and roughly how strong. On the command line: `datum-atlas-cli crystal Fe`, or `--ask` with any structure.
 
+## Testing: tensile tests
+
+![Testing › Tensile: three specimens of the made-up example, their curves and results.](img/tensile.png)
+
+1. **Import test data:** a test machine's export as CSV, text or a spreadsheet, with a column of extension or strain and one of load or stress. Lines of heading at the top are skipped and the columns are guessed from their headings; check them, say what they hold (extension in mm, strain, or strain in %; load in N or kN, or stress in MPa), give the section (round, rectangular or an area) and the gauge length, and **Add the specimen**. **Example (made-up data)** adds three invented steel-like specimens to try the page; they are not a measurement of any material.
+2. **Modulus window:** Young's modulus is fitted as a straight line to the loading part of the curve between two stresses, as percentages of the tensile strength (10 % to 40 % unless you change it). Where the line meets zero stress sets the strain origin, so slack at the start does not count.
+3. **Curves:** engineering stress against strain for every specimen that is on, with Rp0.2 (open circle), Rm (filled) and fracture (small); or true stress against true strain up to Rm.
+4. **Specimens:** rename, untick to leave one out of the statistics (a bad grip, a break outside the gauge length), or remove.
+5. **Results:** for each specimen E, Rp0.2, Rm, Ag (plastic strain at Rm), A (plastic strain at fracture), the work to fracture, and n and K of σ = K εⁿ fitted to true stress and true plastic strain between 0.2 % plastic strain and Ag; then the mean, standard deviation, lowest and highest. A value that cannot be worked out is blank, with a note saying why.
+
+A modulus from crosshead extension comes out low because the machine stretches too: use an extensometer for E. The specimens are saved in the project; **To a spreadsheet** and **CSV** export the results, and `datum-atlas-cli tensile FILE` prints them.
+
 ## Compare
 
 ![Compare: three materials side by side, and the radar chart.](img/compare.png)
@@ -336,7 +349,7 @@ Every release has a small program beside the installer, `datum-atlas-cli-x.y.z.e
 
 ![Help › Use with an AI Assistant.](img/assistant.png)
 
-`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements, compositions and crystals, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
+`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements, compositions and crystals, read tensile test results, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
 
 ## Help, options and shortcuts
 

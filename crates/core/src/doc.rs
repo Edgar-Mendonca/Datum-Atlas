@@ -26,6 +26,8 @@ pub enum Op {
     Eco { eco: crate::eco::Eco },
     /// Replaces the part for process selection.
     Process { sel: crate::process::ProcSel },
+    /// Replaces the tensile tests (specimens and their data, the modulus window).
+    Tensile { tensile: crate::tensile::Tensile },
     Name { name: String },
     Notes { text: String },
     /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
@@ -170,6 +172,7 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
             }
             p.eco = eco;
         }
+        Op::Tensile { tensile } => { tensile.validate()?; p.tensile = tensile; }
         Op::Process { sel } => {
             let nums = [sel.mass, sel.section, sel.tol, sel.rough, sel.batch, sel.price];
             if nums.iter().any(|v| !(v.is_finite() && *v >= 0.0)) || sel.mass <= 0.0 || sel.section <= 0.0 || sel.batch < 1.0 {

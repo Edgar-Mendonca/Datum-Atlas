@@ -857,3 +857,19 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .calcpage .stereo { width: 280px; height: 280px; }
 .calcpage .peaks td, .calcpage .peaks th { text-align: right; } .calcpage .peaks td:first-child { text-align: left; font-family: var(--mono); }
 .calcpage .err { color: #C0392B; }
+
+/* Testing › Tensile */
+.tenspage .ttools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.tenspage .ttools input[type=number] { width: 52px; }
+.tenspage .tmain { display: grid; grid-template-columns: minmax(420px, 1.3fr) minmax(320px, 1fr); gap: 14px; margin-bottom: 14px; }
+.tenspage .tcurve { width: 100%; height: auto; }
+.tenspage .tchead { display: flex; justify-content: space-between; align-items: baseline; }
+.tenspage .tspec input:not([type=checkbox]) { width: 150px; }
+.tenspage .sw { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
+.tenspage tr.off td { opacity: .5; }
+.tenspage .tres td, .tenspage .tres th { text-align: right; } .tenspage .tres td:first-child, .tenspage .tres th:first-child { text-align: left; }
+.tenspage .tres tr.stat td { background: var(--bg2); font-weight: 600; }
+.tenspage .tadd { margin-bottom: 14px; }
+.tenspage .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 16px; }
+.tenspage .tgrid label { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.tenspage .tgrid input[type=number] { width: 64px; }

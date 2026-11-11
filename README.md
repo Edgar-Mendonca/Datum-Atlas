@@ -37,7 +37,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
 4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Modules (0.3.7)
+## Modules (0.3.8)
 
 | Module | What it is for |
 | --- | --- |
@@ -46,11 +46,12 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 | **Eco** | Energy and CO₂ through a product's life; greener substitutes |
 | **Make** | Which processes can make your part, and the cost against batch size |
 | **Microstructure** | Typical structures of every class of material |
+| **Testing** | Your tensile test data: curves, modulus, proof stress, tensile strength, elongation, n and K, with statistics over the specimens |
 | **Crystal** | The elements on a periodic table, with referenced values; compositions (wt % and at %); crystal structures, plane spacings and angles, X-ray powder patterns and stereographic projections |
 
-On the way: Testing, image analysis, synthetic structures, EBSD, DIC, corrosion, heat treatment and phase diagrams.
+On the way: hardness, fatigue and creep, image analysis, synthetic structures, EBSD, DIC, corrosion, heat treatment and phase diagrams.
 
-## Features (0.3.7)
+## Features (0.3.8)
 
 - **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
 - **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
@@ -65,6 +66,7 @@ On the way: Testing, image analysis, synthetic structures, EBSD, DIC, corrosion,
 - **SI or imperial units** everywhere; derived properties such as specific stiffness, cost per volume and thermal diffusivity.
 - **Browse** with a family tree and a spreadsheet-like table, **datasheets** with numbered references, a micrograph box and a link to the material's **typical structure**, and a **Sources** page.
 - **The elements** (Crystal module): the 118 elements on a periodic table with referenced values, coloured by category or by a property, and the **composition** of a formula or an alloy in weight and atom percent. **Crystal calculators**: a structure's density, the spacing and angles of planes and directions, the X-ray powder pattern and a stereographic projection.
+- **Tensile tests** (Testing module): import a test machine's export and get E, Rp0.2, Rm, Ag, A, the work to fracture, n and K for each specimen, with statistics and the curves.
 - **? help** beside the tools, a Glossary, and **Tell Me** (Ctrl+K) for commands, goals and materials.
 - Print or save as PDF; export charts as SVG or PNG, or copy them as a picture. Light, dark and auto themes; the in-app updater; recovery of unsaved work; damaged files never crash the app.
 
@@ -83,7 +85,7 @@ On the way: Testing, image analysis, synthetic structures, EBSD, DIC, corrosion,
 
 ## Coming next
 
-0.3.8 Testing: tensile. 0.3.9 Testing: hardness, fatigue, creep. 0.3.10 Image analysis 1. 0.3.11 Image analysis 2. 0.3.12 Synthetic structures 1. Then synthetic structures, EBSD, DIC, corrosion and heat treatment, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+0.3.9 Testing: hardness, fatigue, creep. 0.3.10 Image analysis 1. 0.3.11 Image analysis 2. 0.3.12 Synthetic structures 1. 0.3.13 Synthetic structures 2. Then synthetic structures, EBSD, DIC, corrosion and heat treatment, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Command line
 

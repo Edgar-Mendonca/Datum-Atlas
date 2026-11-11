@@ -187,6 +187,8 @@ pub struct Project {
     pub eco: crate::eco::Eco,
     /// Process selection: the part to make (material, mass, section, shape, tolerance, batch…).
     pub process: crate::process::ProcSel,
+    /// Tensile tests: specimens with their curves, and the modulus window.
+    pub tensile: crate::tensile::Tensile,
 }
 
 /// A property of your own: a formula of other properties (`[E]^0.5/[rho]`), saved with the
@@ -212,7 +214,7 @@ pub fn pname(k: &str) -> String {
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![], eco: crate::eco::Eco::default(), process: crate::process::ProcSel::default() }
+        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![], eco: crate::eco::Eco::default(), process: crate::process::ProcSel::default(), tensile: crate::tensile::Tensile::default() }
     }
 }
 

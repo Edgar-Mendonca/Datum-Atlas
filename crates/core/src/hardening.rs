@@ -366,3 +366,17 @@ fn random_crystals_never_panic() {
         if let Ok(x) = answer(&q) { assert!(x.density.is_finite() && x.peaks.iter().all(|p| p.two_theta.is_finite() && p.intensity.is_finite()), "{q:?}"); }
     }
 }
+
+#[test]
+fn random_tensile_data_never_panics() {
+    use crate::tensile::{run, Specimen, Tensile};
+    let mut r = Rng(0xA076_1D64_78BD_642F);
+    for _ in 0..400 {
+        let n = r.below(60) as usize;
+        let data: Vec<[f64; 2]> = (0..n).map(|_| [r.num(), r.num()]).collect();
+        let s = Specimen { x: r.pick(&["ext", "strain", "strain%"]).to_string(), y: r.pick(&["N", "kN", "MPa"]).to_string(), shape: r.pick(&["rect", "round", "area"]).to_string(), w: r.num(), t: r.num(), d: r.num(), area: r.num(), l0: r.num(), data, ..Default::default() };
+        let t = Tensile { specimens: vec![s.clone(), s], fit: [*r.pick(&[0.0, 0.1, 0.5]), *r.pick(&[0.4, 0.9, 1.0])], ..Default::default() };
+        let o = run(&t);
+        for row in &o.rows { assert!([row.e, row.rp02, row.rm, row.ag, row.a, row.n, row.k].iter().flatten().all(|v| !v.is_nan()), "{row:?}") }
+    }
+}

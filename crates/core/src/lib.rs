@@ -19,6 +19,7 @@ pub mod process;
 pub mod select;
 pub mod sheet;
 pub mod templates;
+pub mod tensile;
 pub mod units;
 
 pub use model::*;

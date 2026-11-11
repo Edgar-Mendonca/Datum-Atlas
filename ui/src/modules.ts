@@ -3,7 +3,7 @@
 // dimmed with their release (features.ts, area H).
 import type { View } from "./store";
 
-export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal";
+export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing";
 export interface Module { id: ModId; name: string; short: string; icon: string; about: string; pages: [View, string, string][]; tabs: string[] }
 
 export const MODULES: Module[] = [
@@ -19,11 +19,13 @@ export const MODULES: Module[] = [
     pages: [["micro", "grains", "Structures"]], tabs: ["home", "data"] },
   { id: "crystal", name: "Crystal", short: "Crystal", icon: "crystal", about: "The elements on a periodic table; compositions; crystal structures with spacings, angles, X-ray peaks and stereographic projections.",
     pages: [["elements", "crystal", "Elements"], ["calc", "builder", "Lattice"]], tabs: ["home", "data"] },
+  { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your tensile test data: curves, modulus, proof stress, tensile strength, elongation, n and K, over several specimens; hardness, fatigue and creep follow.",
+    pages: [["tensile", "curve", "Tensile"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */
 export const PLANNED: [string, string, string][] = [
-  ["H2", "Testing", "curve"], ["H3", "Image analysis", "image"], ["H4", "Synthetic structures", "grid"],
+["H3", "Image analysis", "image"], ["H4", "Synthetic structures", "grid"],
   ["H5", "EBSD", "layout"], ["H6", "DIC", "xy"], ["H7", "Corrosion", "risk"], ["H8", "Heat treatment", "level"],
 ];
 

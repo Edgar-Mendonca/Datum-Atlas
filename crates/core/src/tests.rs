@@ -831,3 +831,43 @@ fn crystal_calculators_match_the_textbook() {
     let tri = build("cell", Cell { a: 5.0, b: 6.0, c: 7.0, alpha: 80.0, beta: 95.0, gamma: 105.0 }, &["C".into()]).unwrap();
     assert_eq!(tri.system, "triclinic");
 }
+
+#[test]
+fn tensile_results_match_a_known_curve() {
+    use crate::tensile::*;
+    // Hollomon steel: E = 200 GPa, σ = 800 εp^0.2 in true terms; necking from the Considère strain.
+    let (e_mod, k, n) = (200_000.0f64, 800.0f64, 0.2f64);
+    // Elastic up to the stress at 0.2 % plastic strain (a short plateau), Hollomon above it.
+    let s0 = k * 0.002f64.powf(n);
+    let tr = |e: f64| { let et = (1.0 + e).ln(); let (mut lo, mut hi) = (0.0, 3000.0); for _ in 0..80 { let s = (lo + hi) / 2.0; if s / e_mod + if s < s0 { 0.0 } else { (s / k).powf(1.0 / n) } > et { hi = s } else { lo = s } } lo };
+    let eu = n.exp() - 1.0;
+    let su = tr(eu) / (1.0 + eu);
+    let mut data: Vec<[f64; 2]> = (0..=6000).map(|i| { let e = 0.30 * i as f64 / 6000.0; [e, if e <= eu { tr(e) / (1.0 + e) } else { su * (1.0 - 0.5 * ((e - eu) / (0.30 - eu)).powi(2)) }] }).collect();
+    data.push([0.3001, 0.0]);
+    let s = Specimen { name: "H".into(), x: "strain".into(), y: "MPa".into(), shape: "area".into(), area: 1.0, data: data.clone(), ..Default::default() };
+    let r = analyse(&s, [0.1, 0.4]);
+    let near = |v: Option<f64>, x: f64, tol: f64| v.is_some_and(|v| (v - x).abs() <= tol);
+    assert!(near(r.e, 200.0, 0.5) && near(r.rm, su, 0.1) && near(r.n, 0.2, 0.005) && near(r.k, 800.0, 8.0), "{r:?}");
+    assert!(near(r.rp02, 800.0 * 0.002f64.powf(0.2), 3.0) && near(r.ag, (eu - su / e_mod) * 100.0, 0.05) && near(r.a, (0.30 - 0.5 * su / e_mod) * 100.0, 0.3), "{:?} {:?} {:?}", r.rp02, r.ag, r.a);
+    assert!(r.work.is_some_and(|w| w > 100.0 && w < 150.0) && r.toe.abs() < 1e-6 && r.notes.is_empty(), "{:?} {:?}", r.work, r.notes);
+    // Slack at the start moves the curve, not the results; kN and extension convert.
+    let shifted = Specimen { x: "ext".into(), y: "kN".into(), shape: "round".into(), d: 10.0, l0: 50.0, data: data.iter().map(|p| [(p[0] + 0.001) * 50.0, p[1] * std::f64::consts::PI * 25.0 / 1000.0]).collect(), ..s.clone() };
+    let q = analyse(&shifted, [0.1, 0.4]);
+    assert!(near(q.e, 200.0, 0.5) && near(Some(q.toe), 0.001, 1e-6) && near(q.ag, r.ag.unwrap(), 1e-6) && near(q.rp02, r.rp02.unwrap(), 1e-6) && q.notes.len() == 1, "{q:?}");
+    // Statistics, gaps and refusals.
+    let t = Tensile { specimens: vec![s.clone(), s.clone(), Specimen { on: false, ..shifted.clone() }, Specimen { area: 0.0, y: "N".into(), ..s.clone() }], ..Default::default() };
+    let o = run(&t);
+    let rm = o.stats.iter().find(|x| x.key == "rm").unwrap();
+    assert!(rm.n == 2 && rm.sd == Some(0.0) && near(rm.mean, su, 0.1) && o.rows[3].rm.is_none() && !o.rows[3].notes.is_empty());
+    assert_eq!(crate::tensile::table(&o).rows.len(), 4 + 4);
+    assert!(Tensile { fit: [0.5, 0.2], ..Default::default() }.validate().is_err() && Tensile { specimens: vec![Specimen { l0: -1.0, ..Default::default() }], ..Default::default() }.validate().is_err());
+    // The example is made-up data, named so, and works out.
+    let ex = run(&example());
+    assert!(ex.rows.len() == 3 && ex.rows.iter().all(|r| r.name.contains("made-up") && near(r.e, 205.0, 3.0) && r.n.is_some() && r.rp02.is_some()), "{:?}", ex.rows.iter().map(|r| (r.e, r.n, &r.notes)).collect::<Vec<_>>());
+    // A machine export: header lines, headings, decimal commas, kN.
+    let raw: Vec<Vec<String>> = [vec!["Test report"], vec!["Operator", "A"], vec![], vec!["Time (s)", "Extension (mm)", "Load (kN)"], vec!["0", "0,000", "0,01"], vec!["0,1", "0,010", "1,5"], vec!["0,2", "x", "2,9"]].iter().map(|r| r.iter().map(|c| c.to_string()).collect()).collect();
+    let c = columns(&raw).unwrap();
+    assert!(c.x == 1 && c.y == 2 && c.xk == "ext" && c.yk == "kN" && c.skipped == 4 && c.head[2] == "Load (kN)", "{c:?}");
+    assert_eq!(pick(&c, c.x, c.y), vec![[0.0, 0.01], [0.01, 1.5]]);
+    assert!(columns(&[vec!["a".to_string(), "b".to_string()]]).is_err());
+}

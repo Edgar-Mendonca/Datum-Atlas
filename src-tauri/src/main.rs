@@ -92,6 +92,7 @@ struct Out<'a> {
     compare: compare::Compare,
     eco: eco::Audit,
     process: process::Out,
+    tensile: datum_atlas_core::tensile::Out,
     db_rev: u64,
 }
 
@@ -102,7 +103,7 @@ fn out(a: &App) -> Value {
     let charts = d.p.charts.iter().map(|c| chart::build(&db, c)).collect();
     serde_json::to_value(Out {
         project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
-        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), process: process::select(&db, &d.p), db_rev: a.db_rev,
+        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), process: process::select(&db, &d.p), tensile: datum_atlas_core::tensile::run(&d.p.tensile), db_rev: a.db_rev,
     })
     .unwrap_or_default()
 }
@@ -151,6 +152,20 @@ fn substitutes(st: State<St>, id: String, tol: f64) -> Value {
     let a = st.lock();
     serde_json::to_value(eco::substitutes(&a.db.with_formulas(&a.doc.p.formulas), &a.doc.p, &id, tol)).unwrap_or_default()
 }
+
+/// A test machine's export (CSV, text or spreadsheet): its columns of numbers and a guess at which
+/// hold strain or extension and stress or load.
+#[tauri::command]
+async fn tensile_read(app: AppHandle, path: Option<String>) -> R<Option<Value>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Test data", &["csv", "txt", "xlsx", "xls", "ods"])) else { return Ok(None) };
+    let t = sheet::read(&path)?;
+    let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect();
+    Ok(Some(json!({ "path": path.display().to_string(), "name": path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default(), "cols": datum_atlas_core::tensile::columns(&raw)? })))
+}
+
+/// Made-up example tensile data, to try the page.
+#[tauri::command]
+fn tensile_example() -> datum_atlas_core::tensile::Tensile { datum_atlas_core::tensile::example() }
 
 /// The 118 elements.
 #[tauri::command]
@@ -419,12 +434,13 @@ async fn save(app: AppHandle, st: State<'_, St>, as_new: bool) -> R<Option<Value
 #[tauri::command]
 async fn export_results(app: AppHandle, st: State<'_, St>, fmt: String, what: Option<String>) -> R<Option<String>> {
     let eco = what.as_deref() == Some("eco");
+    let ten = what.as_deref() == Some("tensile");
     let (name, bytes) = {
         let a = st.lock();
         let db = a.db.with_formulas(&a.doc.p.formulas);
-        let t = if eco { export::eco(&eco::audit(&db, &a.doc.p.eco)) } else { export::results(&db, &a.doc.p) };
+        let t = if ten { datum_atlas_core::tensile::table(&datum_atlas_core::tensile::run(&a.doc.p.tensile)) } else if eco { export::eco(&eco::audit(&db, &a.doc.p.eco)) } else { export::results(&db, &a.doc.p) };
         let bytes = if fmt == "csv" { export::csv(&t).into_bytes() } else { export::xlsx(&t, &a.doc.p.name)? };
-        (format!("{} {}.{}", a.doc.p.name, if eco { "eco audit" } else { "results" }, if fmt == "csv" { "csv" } else { "xlsx" }), bytes)
+        (format!("{} {}.{}", a.doc.p.name, if ten { "tensile tests" } else if eco { "eco audit" } else { "results" }, if fmt == "csv" { "csv" } else { "xlsx" }), bytes)
     };
     let ext = if fmt == "csv" { "csv" } else { "xlsx" };
     let Some(path) = app.dialog().file().add_filter(if fmt == "csv" { "CSV" } else { "Spreadsheet" }, &[ext]).set_file_name(&name).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
@@ -682,7 +698,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

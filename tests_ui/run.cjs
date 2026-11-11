@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -191,6 +191,25 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("a wrong wavelength says why", (await p.textContent(".calcpage .err").catch(() => "")).includes("wavelength"));
   await p.fill(".calcpage .lam", "1.5418"); await p.press(".calcpage .lam", "Tab"); await p.waitForTimeout(150);
   await shot("calculators");
+  // Testing › Tensile: import a machine export, results, the example, leaving one out, true curves.
+  await goTo(p, "Tensile");
+  check("Testing › Tensile starts empty and says how to begin", (await p.textContent(".tenspage .tempty")).includes("Import"));
+  await p.click(".tenspage .timport"); await p.waitForSelector(".tenspage .tadd");
+  check("an export's heading lines are skipped and its columns guessed", (await p.textContent(".tadd")).includes("after 3 lines of heading") && (await p.$eval(".tadd .txcol", s => s.selectedOptions[0].textContent)) === "Extension (mm)" && (await p.$eval(".tadd .tycol", s => s.selectedOptions[0].textContent)) === "Load (kN)", await p.textContent(".tadd"));
+  await p.fill(".tadd .td", "5"); await p.press(".tadd .td", "Tab"); await p.fill(".tadd .tl0", "25"); await p.press(".tadd .tl0", "Tab");
+  await p.click(".tadd .tok"); await p.waitForSelector(".tenspage .tres");
+  const row = await p.$$eval(".tenspage .tres tbody tr:first-child td", t => t.map(x => x.textContent));
+  check("the specimen's results come out of its curve (E 200 GPa, n 0.18)", row[1].startsWith("199.") || row[1].startsWith("200."), row.join(" | "));
+  check("…and n is the one the curve was made with", row[7] === "0.180", row.join(" | "));
+  await p.click(".tenspage .texample"); await p.waitForTimeout(300);
+  check("the made-up example adds three specimens, named so", (await p.$$(".tenspage .tspec tbody tr")).length === 4 && (await p.$$eval(".tenspage .tspec input:not([type=checkbox])", x => x.map(i => i.value).join())).includes("made-up data"), String((await p.$$(".tenspage .tspec tbody tr")).length));
+  const sd0 = await p.textContent(".tenspage .tres tr.stat:nth-of-type(6)");
+  await p.click(".tenspage .tspec tbody tr:first-child input[type=checkbox]"); await p.waitForTimeout(300);
+  check("leaving a specimen out changes the statistics", (await p.textContent(".tenspage .tres tr.stat:nth-of-type(6)")) !== sd0 && !!(await p.$(".tenspage .tres tr.off")));
+  await p.click(".tenspage .ttrue"); await p.waitForTimeout(150);
+  check("true stress and strain can be drawn", (await p.textContent(".tenspage .tcurve")).includes("True stress") && (await p.$$(".tenspage .tcurve polyline")).length === 3);
+  await p.click(".tenspage .ttrue");
+  await shot("tensile");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");
@@ -415,7 +434,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
   const at = t => tiles.indexOf(t);
-  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
+  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Testing", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
   await p.click(".bs aside .back");
   await p.waitForTimeout(200);
 

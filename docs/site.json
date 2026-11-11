@@ -7,8 +7,8 @@
   "tagline": "A materials workbench: referenced materials data, property charts and selection, eco audit, process selection and microstructures, in one app for Windows.",
   "for": "Design and materials engineers, and students.",
   "about": [
-    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns.",
-    "Every material is a bubble spanning its range of values. Limits, index lines, bands, boxes and shapes narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best, print a report, and add, import and share your own materials. Testing, image analysis, EBSD, DIC, corrosion and heat treatment modules are on the way."
+    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; Testing turns your tensile test data into results.",
+    "Every material is a bubble spanning its range of values. Limits, index lines, bands, boxes and shapes narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best, print a report, and add, import and share your own materials. Hardness, fatigue and creep, image analysis, EBSD, DIC, corrosion and heat treatment modules are on the way."
   ],
   "steps": [
     {
@@ -35,7 +35,8 @@
     "A command line beside the app, and a connection for AI assistants (Model Context Protocol): search materials, read datasheets with their sources, run a selection, the eco audit and process selection.",
     "A guide of about thirty pages with numbered pictures, in the app and on every release page.",
     "Modules sharing one library: Library, Select, Eco, Make, Microstructure and Crystal, with a switcher.",
-    "The 118 elements on a periodic table, compositions in weight and atom percent, and crystal calculators: spacings, angles, X-ray powder patterns and stereographic projections."
+    "The 118 elements on a periodic table, compositions in weight and atom percent, and crystal calculators: spacings, angles, X-ray powder patterns and stereographic projections.",
+    "Testing: tensile test data from your machine's export, with modulus, proof stress, tensile strength, elongation, n and K for every specimen, and their statistics."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -47,17 +48,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.8",
-      "title": "Testing: tensile",
-      "when": "Next",
-      "items": [
-        "Tensile test data: modulus, proof stress, tensile strength, elongation and hardening exponent, for several specimens."
-      ]
-    },
-    {
       "v": "0.3.9",
       "title": "Testing: hardness, fatigue, creep",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Hardness statistics, S–N fitting, Larson–Miller; test results become your own materials."
       ]

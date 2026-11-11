@@ -21,8 +21,11 @@ pub struct Table {
 }
 
 fn csv_rows(text: &str) -> Vec<Vec<String>> {
-    let first = text.trim_start_matches('\u{feff}').lines().next().unwrap_or("");
-    let sep = [',', ';', '\t'].into_iter().max_by_key(|c| first.matches(*c).count()).unwrap_or(',');
+    // The separator: tab or semicolon when at least half the first lines have one (a semicolon file
+    // often has decimal commas), else comma.
+    let head: Vec<&str> = text.trim_start_matches('\u{feff}').lines().take(30).collect();
+    let on = |c: char| head.iter().filter(|l| l.contains(c)).count() * 2 >= head.iter().filter(|l| !l.trim().is_empty()).count().max(1);
+    let sep = if on('\t') { '\t' } else if on(';') { ';' } else { ',' };
     let (mut rows, mut row, mut cell, mut q) = (vec![], vec![], String::new(), false);
     let mut it = text.trim_start_matches('\u{feff}').chars().peekable();
     while let Some(c) = it.next() {

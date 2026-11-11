@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.8 — 2026-11-11
+
+A new module, Testing: import your tensile test data and get the curves and results of every specimen, with statistics.
+
+**Testing › Tensile**
+- **Import test data** from a test machine's export (CSV, text or a spreadsheet). Heading lines are skipped, semicolon files with decimal commas are read, and the columns of extension or strain and of load or stress are guessed from their headings; you check them and give the specimen's section and gauge length.
+- **Results for each specimen**, after the usual test-standard definitions: Young's modulus E (a straight line fitted between two stresses you can change), 0.2 % proof stress Rp0.2, tensile strength Rm, uniform elongation Ag, elongation after fracture A, the work to fracture, and the strain-hardening exponent n and strength coefficient K. Slack at the start of the test is taken out.
+- **Statistics:** mean, standard deviation, lowest and highest over the specimens that are on; untick a specimen to leave it out.
+- **Curves:** engineering stress–strain for every specimen with Rp0.2, Rm and fracture marked, or true stress–strain up to Rm.
+- A note says why a value could not be worked out, and warns that a modulus from crosshead extension comes out low.
+- The specimens are saved in the project. Export the results to a spreadsheet or CSV.
+- **Example (made-up data)** adds three invented steel-like specimens to try the page, named as made up.
+
+**Command line and assistant**
+- `datum-atlas-cli tensile FILE [--csv]`; the Tensile operation adds specimens; the assistant connection gains `tensile_results` (22 tools).
+
+**Checked**
+- On a curve made with known values (E = 200 GPa, K = 800 MPa, n = 0.2): the page gives them back, with Rp0.2, Rm and Ag where the curve puts them; slack at the start, kN and extension change nothing.
+
+**Smaller things**
+- CSV files whose first line is a title are read with the right separator.
+
 ## 0.3.7 — 2026-11-11
 
 Crystal calculators: a crystal structure and everything that follows from it, from spacings and angles to the X-ray powder pattern and a stereographic projection.
