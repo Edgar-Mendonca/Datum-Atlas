@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.9** (released 2026-11-11: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.9). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.9** (built and pushed 2026-11-11; the release run is waiting on GitHub Actions; 0.3.8 is the latest published: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.8). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -515,7 +515,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - `lab.rs` from the formulas: sample statistics with a Student t table to 30 degrees of freedom; Tabor σy ≈ H/3 for HV only; Basquin on log σa against log 2N; Larson–Miller P = T(C + log t)/1000 with log σ linear in P, C scanned from 5 to 60 for the best R² when 0. Scales are never converted (conversions depend on the material).
 - `to_material`: E, sy (Rp0.2), ts, elong (A) from tensile specimens that are on, hv from HV sets, fat at 10⁷ only; values carry the dialog's own-source id so the Add Material dialog asks for nothing more than the density. `editMaterial` takes a prefilled source.
 - UI: Testing › Hardness, Fatigue, Creep; help topics hardness, fatigue, creep, mkmat; superscript powers of ten; UI tests (statistics, Basquin from exact points, the example's creep fit, C found, a saved material). Guide chapter with three screenshots.
-- Released 0.3.9.
+- 0.3.9 committed and pushed; the release run failed twice at startup on GitHub (before any step ran; the workflow is unchanged since 0.3.8 released fine). To publish: re-run release.yml once GitHub Actions starts jobs again.
 
 ---
 
