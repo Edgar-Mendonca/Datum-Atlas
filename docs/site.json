@@ -43,29 +43,91 @@
   ],
   "roadmap": [
     {
-      "v": "0.4.0",
-      "title": "Assistants",
+      "v": "0.3.1",
+      "title": "Command line",
       "when": "Next",
       "items": [
-        "A command line and an assistant connection (Model Context Protocol) to search materials, run a selection, the eco audit and process selection."
+        "A command line: search materials, read datasheets, run a selection, the eco audit and process selection, and export."
       ]
     },
     {
-      "v": "0.4.1",
-      "title": "Polish",
+      "v": "0.3.2",
+      "title": "Assistant connection",
       "when": "Soon",
       "items": [
-        "A user guide, colour-blind safe colours, imperial units on the eco and process pages, and .ods export.",
+        "Connect an AI assistant (Model Context Protocol) to search materials and run selections, audits and process selection."
+      ]
+    },
+    {
+      "v": "0.3.3",
+      "title": "User guide",
+      "when": "Soon",
+      "items": [
+        "A user guide, in the app and as a PDF."
+      ]
+    },
+    {
+      "v": "0.3.4",
+      "title": "Display and export",
+      "when": "Soon",
+      "items": [
+        "Colour-blind safe colours, imperial units on the eco and process pages, .ods export."
+      ]
+    },
+    {
+      "v": "0.3.5",
+      "title": "Processes by alloy type",
+      "when": "Soon",
+      "items": [
         "Processes matched by alloy type, so cast and wrought alloys are told apart."
       ]
     },
     {
-      "v": "0.4.2",
-      "title": "Trusted data",
+      "v": "0.3.6",
+      "title": "Metals: grades and checks",
       "when": "Soon",
       "items": [
-        "About 500 materials with specific grades, many more values checked against published datasheets, and search by equivalent designations.",
-        "Sandwich panels and lattices, and flags for restricted and critical substances."
+        "More metal grades, and many more values checked against published datasheets."
+      ]
+    },
+    {
+      "v": "0.3.7",
+      "title": "Polymers and others: grades and checks",
+      "when": "Soon",
+      "items": [
+        "More polymer and other grades, and their values checked."
+      ]
+    },
+    {
+      "v": "0.3.8",
+      "title": "Equivalent designations",
+      "when": "Soon",
+      "items": [
+        "Search by equivalent designations, shown on every datasheet."
+      ]
+    },
+    {
+      "v": "0.3.9",
+      "title": "Hybrid materials",
+      "when": "Soon",
+      "items": [
+        "Sandwich panels and lattices, worked out and plotted beside the materials."
+      ]
+    },
+    {
+      "v": "0.3.10",
+      "title": "Restricted and critical substances",
+      "when": "Soon",
+      "items": [
+        "Flags for restricted and critical substances, usable as limits."
+      ]
+    },
+    {
+      "v": "0.4.0",
+      "title": "Data at temperature",
+      "when": "Soon",
+      "items": [
+        "Properties against temperature, simple curves, more processes with process charts."
       ]
     },
     {
@@ -73,8 +135,7 @@
       "title": "Stable",
       "when": "Goal",
       "items": [
-        "About 1,000 materials, with pictures and microstructures.",
-        "A user guide and a signed installer."
+        "About 1,000 materials with pictures and microstructures, and a signed installer."
       ]
     }
   ]

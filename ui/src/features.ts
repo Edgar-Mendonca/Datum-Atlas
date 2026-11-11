@@ -3,14 +3,13 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.3.1";
+export const VERSION_NOW = "0.3.0";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
   "0.2.0": "The big update: sturdier, indices and formulas, compare and report, 250 materials, your own data",
   "0.2.1": "Windows lists the publisher as Datum",
   "0.3.0": "Eco and process: eco audit, greener substitutes, process selection and cost",
-  "0.3.1": "Wording: the project describes itself on its own terms",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */
@@ -75,7 +74,7 @@ export const FEATURES: Feature[] = [
   ["G5", "Sturdy files", "0.2.0", "A damaged file never crashes the app or loses your materials; every save is safe if the computer stops mid-save."],
   ["A15", "Durability ratings", "0.2.0", "Fresh water, weak acids, weak alkalis, UV and fire resistance for every material."],
   ["G4", "“?” help on every tool", "0.1.1", "A small ? beside each tool opens a card saying what it is for and how to use it."],
-  ["G2", "User guide", "1.0.0", "A full guide with worked examples for teaching and design."],
+  ["G2", "User guide", "0.3.3", "A full guide with worked examples for teaching and design."],
   ["G3", "Signed installer", "1.0.0", "No SmartScreen warning on install."],
 ];
 export const feature = (id: string) => FEATURES.find(f => f[0] === id);

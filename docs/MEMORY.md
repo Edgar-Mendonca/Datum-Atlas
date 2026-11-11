@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.0** released (https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.0); 0.3.1 (wording only) is ready in the code and ships with the next release. Plans and answers: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md) |
+| **Current version** | **0.3.0** (released 2026-11-01: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.0). Next: 0.3.1 (wording done in code, command line to come). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (violet log–log axes, family bubbles, dotted index line, amber `#F2B233` diamond) |
@@ -160,6 +160,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | 2026-10-29 | Windows publisher "Datum" for every Datum app (hub FAMILY §9); copyright stays "© 2026 Edgar Mendonca" | One family name in Windows Apps and the installer. |
 | 2026-11-01 | Eco and process values are compiled by class from open sources and labelled drafts; a value no open source supports stays a gap (beryllium, zirconium, leather and bone energy; water use) | The open-sources rule; gaps, never zero. |
 | 2026-11-01 | The eco audit and process selection live in the engine (`eco.rs`, `process.rs`) and in the project file (`eco`, `process`), so they undo, save and go into the report | Engine logic in `crates/core`; older files open with empty ones. |
+| 2026-11-11 | Small releases: 0.3.1 to 0.3.10 before 0.4.0, one item each (the user: "let's not jump version"); the code version stays at the last release until the next one ships | Every release in the updater, no jumps. |
+| 2026-11-11 | Every Datum app's README ends with the Datum family section and table of apps (the user's) | Show the whole family from every app. |
 | 2026-11-02 | The whole repository is public text: docs, plans, MEMORY and code comments never name commercial products or say Atlas copies, combines, replaces or targets one; file-format names only where they name a file Atlas reads or writes. Kept on purpose: the blocklist in `db.rs` (`BARRED`) and its test, which make the build refuse those sites as sources | Hub FAMILY §13; the blocklist enforces the open-sources rule. |
 
 ---
@@ -176,10 +178,17 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.0** | The big update ([PLAN-0.2.0.md](PLAN-0.2.0.md)) | Hardening (safe writes, damaged files set aside, fuzz tests, cargo deny, Windows/macOS CI); several lines, bands, polygons, two-chart goals, keyboard, weighted ranking; 25 goals + 47-index library and builder; expression axes and formula properties; charts side by side, best labels, label placement, styles; compare, radar, selection report, results to xlsx/CSV; 252 materials from open sources, durability ratings, 73 values checked; several databases, spreadsheet/CSV import and export; roadmap read from site.json | ✅ |
 | **0.2.1** | Publisher | Windows publisher "Datum" for the whole family (hub FAMILY §9); copyright unchanged | ✅ |
 | **0.3.0** | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | End-of-life data for every material (recycling energy and CO₂, recycled fraction, heat of combustion, combustion CO₂, downcycle/burn/biodegrade flags), 60 primary-energy gaps filled; `data/eco.json` factors; eco audit (parts, transport, use, years; five phases as ranges; up to four options; break-even; to a spreadsheet); greener substitutes; 5 more eco indices (52); 55 processes, cast/mach/weld ratings; process selection with reasons, cost against batch, shortlist matrix, joins and finishes; report sections | ✅ |
-| **0.3.1** | Wording | Public-repo cleanup (hub FAMILY §13): docs, plans, CLAUDE.md and code comments describe Atlas on its own terms; trademark line in README and NOTICE; UI test that no product name appears in the window | ✅ |
-| 0.4.0 | Assistants ([PLAN-0.4.0.md](PLAN-0.4.0.md) step 1) | `datum-atlas-cli`, ops catalogue, MCP server, Help card; 0.3.1 wording | 🔜 |
-| 0.4.1 | Polish (step 2) | User guide, colour-blind colours, imperial eco/process, .ods, Copy Picture on eco/process, bench; processes by alloy type | ⬜ |
-| 0.4.2 | Trusted data (step 3) | ~500 materials with grades, ~300 values checked, search by equivalents; hybrids; restricted/critical flags | ⬜ |
+| 0.3.1 | Command line ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a) | The wording cleanup (done in code), and `datum-atlas-cli`: search materials, datasheets, results, eco audit, process selection, apply edits and export from the command line; the operations catalogue. | 🔜 |
+| 0.3.2 | Assistant connection | `datum-atlas-cli mcp`: the MCP server (Datum Plan's rules), tests that drive an assistant session, and Help › Use with an AI assistant. | ⬜ |
+| 0.3.3 | User guide | The user guide in the app and as a PDF in the release. | ⬜ |
+| 0.3.4 | Display and export | Colour-blind safe colours, imperial units on the eco and process pages, .ods export, Copy Picture on the eco and process charts. | ⬜ |
+| 0.3.5 | Processes by alloy type | Processes tell cast and wrought alloys, thermoplastics and thermosets apart; a speed bench. | ⬜ |
+| 0.3.6 | Metals: grades and checks | Specific metal grades and tempers from public datasheets, and many more metal values checked. | ⬜ |
+| 0.3.7 | Polymers and others: grades and checks | Polymer types and other families' grades, and their values checked. | ⬜ |
+| 0.3.8 | Equivalent designations | Search by UNS, EN, JIS, ASTM and common names in one box; equivalents on the datasheet. | ⬜ |
+| 0.3.9 | Hybrid materials | Sandwich panels and lattices worked out from the database, plotted beside the materials. | ⬜ |
+| 0.3.10 | Restricted and critical substances | Flags from public lists of restricted substances and critical raw materials, on datasheets and as limits. | ⬜ |
+| 0.4.0 | Data at temperature | Properties against temperature, simple curves, more processes with process charts, material cards for simulation | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials with pictures, signed installer | ⬜ |
 
 ---
@@ -419,13 +428,13 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-11-11: Session 16 (plan for 0.4.0)
 - The user asked what is left and for an MCP server "as a default in all our apps". Read Datum Plan's `crates/cli` (`datum-cli` + `mcp`, 11 tools, tests drive an assistant session, release ships the exe) to copy.
 - Wrote [PLAN-0.4.0.md](PLAN-0.4.0.md): CLI and MCP first, then family polish, trusted data, hybrids and compliance; six questions. 0.3.1 wording ships inside 0.4.0.
-- The user asked for steps of three: the plan is now three releases (§2a): 0.4.0 assistants, 0.4.1 polish, 0.4.2 trusted data.
+- The user asked for small steps without jumping the version: ten releases 0.3.1 to 0.3.10 (§2a), then 0.4.0. Code version set back to 0.3.0 until 0.3.1 is released (the site roadmap must start above the code version). The README family section was the user's own push: keep it in every app.
 
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** answers to [PLAN-0.4.0.md](PLAN-0.4.0.md) §6, then build it in three releases: 0.4.0 assistants, 0.4.1 polish, 0.4.2 trusted data.
+**Next:** the user is reading the plan; then 0.3.1 (command line) and on, one step per release to 0.3.10 ([PLAN-0.4.0.md](PLAN-0.4.0.md) §2a), then 0.4.0.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
