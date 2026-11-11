@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -210,6 +210,29 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("true stress and strain can be drawn", (await p.textContent(".tenspage .tcurve")).includes("True stress") && (await p.$$(".tenspage .tcurve polyline")).length === 3);
   await p.click(".tenspage .ttrue");
   await shot("tensile");
+  // Testing › Hardness, Fatigue, Creep, and a material of the results.
+  await goTo(p, "Hardness");
+  await p.fill(".labpage .hname", "Plate A"); await p.fill(".labpage .hvals", "200, 210\n220"); await p.click(".labpage .hadd"); await p.waitForTimeout(250);
+  const hr = await p.$$eval(".labpage .hres tbody tr:first-child td", t => t.map(x => x.textContent));
+  check("hardness readings give their mean, spread, interval and Tabor's estimate", hr[3] === "210.0" && hr[4] === "10.0" && hr[6] === "185.2 to 234.8" && hr[9] === "686", hr.join(" | "));
+  await goTo(p, "Fatigue");
+  await p.fill(".labpage .fvals", "500 512\n400 4768\n300 84668\n150 10000000 r"); await p.click(".labpage .fadd"); await p.waitForTimeout(250);
+  const ft = await p.textContent(".labpage .fres");
+  check("an S–N fit gives Basquin's constants and the strength at 10^7 cycles", ft.includes("1,000") && ft.includes("-0.1000") && ft.includes("186 MPa") && (await p.$$(".labpage .lplot circle")).length >= 3, ft);
+  await goTo(p, "Creep");
+  await p.click(".labpage .labex"); await p.waitForTimeout(300);
+  const ct = await p.textContent(".labpage .cres2");
+  check("the made-up example gives a Larson–Miller fit and a stress to rupture", ct.includes("C = 20.0") && /rupture at 600 °C in 1\.00 × 10⁵ h: \d+ MPa/.test(ct), ct);
+  await p.fill(".labpage .lmpc", "0"); await p.press(".labpage .lmpc", "Tab"); await p.waitForTimeout(250);
+  check("C can be found from the tests", (await p.textContent(".labpage .cres2")).includes("(found: the best fit)"));
+  await shot("creep");
+  await p.click(".labpage .mkmat"); await p.waitForSelector(".addmat");
+  const src = await p.inputValue('.amform input[placeholder^="e.g. Supplier"]');
+  check("the results become a material of your own, with the tests as its source", src.includes("Tests in the project") && (await p.inputValue(".addmat input >> nth=0")).includes("(tested)"), src);
+  await p.fill('.amvals tbody tr:nth-child(1) td:nth-child(2) input', "7850");
+  await p.click(".dlg footer .btn.pri"); await p.waitForTimeout(400);
+  check("…and it is saved with its values", (await p.textContent(".sheetpage h1").catch(() => "")).includes("(tested)"), await p.textContent("#toast").catch(() => "") + " / " + (await p.textContent(".dlg").catch(() => "")).slice(0, 400));
+  if (await p.$(".dlg")) { await p.keyboard.press("Escape"); await p.waitForTimeout(200); }
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

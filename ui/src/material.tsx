@@ -20,12 +20,12 @@ export const deleteMaterial = (m: Material) => {
 };
 
 /** Opens the Add Material window, empty, to edit one of yours, or (copy) starting from any material. */
-export const editMaterial = (base?: Material, copy = false) => openDialog(() => {
+export const editMaterial = (base?: Material, copy = false, from?: { title: string; kind: string; year: string }) => openDialog(() => {
   const props = db().props, mine = base?.user && !copy;
   const [f, setF] = createStore({
     name: base ? (copy ? `${base.name} (my copy)` : base.name) : "", fam: base?.family[0] ?? "Metals", cls: base?.family.slice(1).join(" › ") ?? "",
     des: base ? Object.entries(base.des).map(([k, v]) => `${k} ${v}`).join(", ") : "", syn: base?.syn.join(", ") ?? "", uses: base?.uses ?? "", notes: base?.notes ?? "",
-    srcTitle: "", srcYear: "", srcKind: "datasheet", recyclable: base?.props.recyclable ? String(base.props.recyclable[0]) : "",
+    srcTitle: from?.title ?? "", srcYear: from?.year ?? "", srcKind: from?.kind ?? "datasheet", recyclable: base?.props.recyclable ? String(base.props.recyclable[0]) : "",
   });
   const [rows, setRows] = createStore<Record<string, Row>>(Object.fromEntries(props.filter(p => p.kind === "range" && p.group !== "Derived").map(p => {
     const v = base?.props[p.key];

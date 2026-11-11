@@ -29,7 +29,7 @@ export interface Limit { prop: string; min: number | null; max: number | null; f
 export interface Stages { limits: Limit[]; exclude: string[]; rule: string; missing: string; rankChart: number; rankLine: number; ranking: string; weights: Weight[] }
 /** A property of your own: a formula of other properties, saved with the project; its key is "f:" + name. */
 export interface Formula { name: string; expr: string; unit: string; log: boolean }
-export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[]; compare: string[]; radar: string[]; eco: Eco; process: ProcSel; tensile: import("./testing").Tensile }
+export interface Project { format: number; name: string; notes: string; charts: Chart[]; stages: Stages; nextId: number; ui: any; formulas: Formula[]; compare: string[]; radar: string[]; eco: Eco; process: ProcSel; tensile: import("./testing").Tensile; lab: import("./lab").Lab }
 
 /** The eco audit (crates/core eco.rs): design options, each with parts, transport, use and years. */
 export type R2 = [number, number];
@@ -57,7 +57,7 @@ export interface Row { id: string; name: string; family: string; pass: boolean; 
 export interface Results { total: number; pass: number; stages: { kind: string; name: string; chart: number; pass: number }[]; rows: Row[]; indexName: string; rankChart: number; rankLine: number; lines: { chart: number; k: number; name: string; value: number }[] }
 /** Compare: per property each material's typical value, which is highest and lowest, and the radar positions (0–1 across the database). */
 export interface Compare { ids: string[]; rows: { key: string; vals: (number | null)[]; hi: number | null; lo: number | null; spread: number | null }[]; radar: { keys: string[]; vals: (number | null)[][] } }
-export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; compare: Compare; eco: Audit; process: ProcOut; tensile: import("./testing").TensileOut; dbRev: number }
+export interface Out { project: Project; path: string | null; dirty: boolean; undo: boolean; redo: boolean; rev: number; charts: ChartOut[]; results: Results; compare: Compare; eco: Audit; process: ProcOut; tensile: import("./testing").TensileOut; lab: import("./lab").LabOut; dbRev: number }
 /** Colours of the materials compared (and their radar outlines). */
 export const CMP_COLORS = ["#6C4AB6", "#E69F00", "#009E73", "#D55E00", "#0072B2", "#CC79A7"];
 export interface Goal {

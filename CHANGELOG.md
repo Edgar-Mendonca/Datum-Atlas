@@ -1,5 +1,28 @@
 # Changelog
 
+## 0.3.9 — 2026-11-11
+
+Testing grows: hardness statistics, S–N curves with Basquin's law, creep rupture on a Larson–Miller plot, and a material of your own made from all the results.
+
+**Testing › Hardness**
+- Sets of readings on any common scale (HV, HB, HK, HRC, HRB, HR15N, Shore A and D) with their mean, standard deviation, coefficient of variation, 95 % interval of the mean, lowest and highest.
+- For Vickers hardness of a metal, a rough yield strength by Tabor's relation (σy ≈ H/3), labelled as an estimate.
+
+**Testing › Fatigue**
+- Paste your tests (stress amplitude, cycles, run-outs). The S–N curve on log scales with Basquin's law σa = σf′ (2N)^b fitted to the broken specimens, R², and the fatigue strength at the cycles you choose. Run-outs are drawn but not fitted; a strength beyond the data is flagged.
+
+**Testing › Creep**
+- Paste your rupture tests (stress, temperature, hours). A Larson–Miller plot with a fitted line, the constant C given or found from the data, and the stress to rupture at any temperature and life, flagged when it lies outside the tests.
+
+**Make a material of the results**
+- One click turns every result in the project into a material of your own: modulus, proof stress, tensile strength and elongation from the tensile specimens, Vickers hardness, and the fatigue strength at 10⁷ cycles, each as the range over the specimens, with this project's tests as the source. It opens in the Add Material dialog to check and complete.
+
+**Command line and assistant**
+- `datum-atlas-cli lab FILE`; the Lab operation adds the data; the assistant connection gains `lab_results` (23 tools).
+
+**Checked**
+- Against their formulas: the statistics and t-interval of a small set, Tabor's estimate, Basquin's constants of an exact S–N line, and the Larson–Miller line and constant of exact creep data.
+
 ## 0.3.8 — 2026-11-11
 
 A new module, Testing: import your tensile test data and get the curves and results of every specimen, with statistics.

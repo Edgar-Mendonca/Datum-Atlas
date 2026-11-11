@@ -380,3 +380,17 @@ fn random_tensile_data_never_panics() {
         for row in &o.rows { assert!([row.e, row.rp02, row.rm, row.ag, row.a, row.n, row.k].iter().flatten().all(|v| !v.is_nan()), "{row:?}") }
     }
 }
+
+#[test]
+fn random_lab_data_never_panics() {
+    use crate::lab::{run, CreepPoint, FatPoint, HardSet, Lab};
+    let mut r = Rng(0x5851_F42D_4C95_7F2D);
+    for _ in 0..500 {
+        let k = r.below(8) as usize;
+        let l = Lab { hardness: vec![HardSet { name: "x".into(), scale: "HV".into(), values: (0..k).map(|_| r.num()).collect() }],
+            fatigue: (0..k).map(|_| FatPoint { s: r.num(), n: r.num(), runout: r.below(4) == 0 }).collect(), fat_at: r.num(),
+            creep: (0..k).map(|_| CreepPoint { s: r.num(), t: r.num(), h: r.num() }).collect(), lmp_c: *r.pick(&[0.0, 20.0, 5.0]), creep_at: [r.num(), r.num()] };
+        let o = run(&l);
+        if l.validate().is_ok() { assert!(o.fatigue.strength.is_none_or(|v| !v.is_nan()) && o.creep.stress.is_none_or(|v| !v.is_nan()), "{l:?}"); }
+    }
+}

@@ -15,7 +15,7 @@ fn rebuild(s: &mut St) { s.db = Db::new(db::builtin(), Some(&s.user)).with_other
 fn out(s: &St) -> Value {
     let db = s.db.with_formulas(&s.doc.p.formulas);
     let charts: Vec<_> = s.doc.p.charts.iter().map(|c| chart::build(&db, c)).collect();
-    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "eco": eco::audit(&db, &s.doc.p.eco), "process": process::select(&db, &s.doc.p), "tensile": datum_atlas_core::tensile::run(&s.doc.p.tensile), "dbRev": s.db_rev })
+    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "eco": eco::audit(&db, &s.doc.p.eco), "process": process::select(&db, &s.doc.p), "tensile": datum_atlas_core::tensile::run(&s.doc.p.tensile), "lab": datum_atlas_core::lab::run(&s.doc.p.lab), "dbRev": s.db_rev })
 }
 
 fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
@@ -39,6 +39,8 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "crystal" => json!(datum_atlas_core::crystal::answer(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "crystal_info" => json!({ "kinds": datum_atlas_core::crystal::KINDS, "tubes": datum_atlas_core::crystal::TUBES }),
         "tensile_read" => { let p = fixture(a, "tensile.csv"); let t = sheet::read(std::path::Path::new(&p))?; let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect(); json!({ "path": p, "name": "tensile", "cols": datum_atlas_core::tensile::columns(&raw)? }) }
+        "lab_example" => json!(datum_atlas_core::lab::example()),
+        "test_material" => json!(datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&s.doc.p.tensile), &datum_atlas_core::lab::run(&s.doc.p.lab), a["name"].as_str().unwrap_or(""), a["src"].as_str().unwrap_or(""))),
         "tensile_example" => json!(datum_atlas_core::tensile::example()),
         "elements" => json!(datum_atlas_core::elements::elements()),
         "composition" => json!(datum_atlas_core::elements::composition(a["text"].as_str().unwrap_or(""), a["by"].as_str().unwrap_or("formula"))?),

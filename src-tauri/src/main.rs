@@ -93,6 +93,7 @@ struct Out<'a> {
     eco: eco::Audit,
     process: process::Out,
     tensile: datum_atlas_core::tensile::Out,
+    lab: datum_atlas_core::lab::Out,
     db_rev: u64,
 }
 
@@ -103,7 +104,7 @@ fn out(a: &App) -> Value {
     let charts = d.p.charts.iter().map(|c| chart::build(&db, c)).collect();
     serde_json::to_value(Out {
         project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
-        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), process: process::select(&db, &d.p), tensile: datum_atlas_core::tensile::run(&d.p.tensile), db_rev: a.db_rev,
+        charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), process: process::select(&db, &d.p), tensile: datum_atlas_core::tensile::run(&d.p.tensile), lab: datum_atlas_core::lab::run(&d.p.lab), db_rev: a.db_rev,
     })
     .unwrap_or_default()
 }
@@ -161,6 +162,17 @@ async fn tensile_read(app: AppHandle, path: Option<String>) -> R<Option<Value>> 
     let t = sheet::read(&path)?;
     let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect();
     Ok(Some(json!({ "path": path.display().to_string(), "name": path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default(), "cols": datum_atlas_core::tensile::columns(&raw)? })))
+}
+
+/// Made-up example hardness, fatigue and creep data, to try the pages.
+#[tauri::command]
+fn lab_example() -> datum_atlas_core::lab::Lab { datum_atlas_core::lab::example() }
+
+/// A material of your own from the project's test results (its values carry `src`).
+#[tauri::command]
+fn test_material(st: State<St>, name: String, src: String) -> Material {
+    let a = st.lock();
+    datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&a.doc.p.tensile), &datum_atlas_core::lab::run(&a.doc.p.lab), &name, &src)
 }
 
 /// Made-up example tensile data, to try the page.
@@ -698,7 +710,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

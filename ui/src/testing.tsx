@@ -5,6 +5,7 @@ import { For, Show, createSignal } from "solid-js";
 import { act, call, out, P, toast } from "./store";
 import { CMP_COLORS } from "./api";
 import { Help } from "./help";
+import { makeMaterial } from "./lab";
 
 export interface Specimen { name: string; x: string; y: string; shape: string; w: number; t: number; d: number; area: number; l0: number; on: boolean; data: [number, number][] }
 export interface Tensile { specimens: Specimen[]; fit: [number, number]; material: string }
@@ -88,7 +89,7 @@ export const TensilePage = () => {
         <button class="btn timport" onClick={open}>Import test data…</button>
         <button class="btn texample" onClick={example} title="Three made-up specimens of a steel-like curve, to try the page">Example (made-up data)</button>
         <label>Modulus fitted from <input type="number" class="tfit0" value={Math.round(T().fit[0] * 100)} onChange={e => save(t => { t.fit[0] = +e.currentTarget.value / 100; })} /> to <input type="number" class="tfit1" value={Math.round(T().fit[1] * 100)} onChange={e => save(t => { t.fit[1] = +e.currentTarget.value / 100; })} /> % of Rm <Help k="tfit" /></label>
-        <Show when={T().specimens.length}><button class="btn sm" onClick={() => exp("xlsx")}>To a spreadsheet</button><button class="btn sm" onClick={() => exp("csv")}>CSV</button></Show>
+        <Show when={T().specimens.length}><button class="btn mkmat" title="A material of your own from every test result in this project" onClick={makeMaterial}>Make a material of the results</button><button class="btn sm" onClick={() => exp("xlsx")}>To a spreadsheet</button><button class="btn sm" onClick={() => exp("csv")}>CSV</button></Show>
       </div>
       <Show when={file()}>{f => <Adder file={f()} done={() => setFile(null)} />}</Show>
       <Show when={T().specimens.length} fallback={<p class="muted tempty">No specimens yet. Import a test machine's export (CSV, text or a spreadsheet with a column of extension or strain and one of load or stress), or try the made-up example.</p>}>

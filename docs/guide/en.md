@@ -94,7 +94,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Eco** | Eco audit | Energy and CO₂ through a product's life; greener substitutes |
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures | The typical structure of every class of material |
-| **Testing** | Tensile | Your tensile test data: curves, modulus, proof stress, tensile strength, elongation, n and K, with statistics |
+| **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
@@ -259,6 +259,31 @@ The positions are exact for the cell; the intensities are approximate (each atom
 
 A modulus from crosshead extension comes out low because the machine stretches too: use an extensometer for E. The specimens are saved in the project; **To a spreadsheet** and **CSV** export the results, and `datum-atlas-cli tensile FILE` prints them.
 
+## Testing: hardness, fatigue and creep
+
+![Testing › Hardness: readings, their statistics and Make a material of the results.](img/hardness.png)
+
+1. **Readings:** name the set, pick the scale (HV, HB, HK, HRC, HRB, HR15N, Shore A or D) and paste or type the readings, then **Add the set**.
+2. **Results:** the mean, standard deviation, coefficient of variation, the 95 % interval of the mean (Student's t), lowest and highest; for Vickers hardness, a rough yield strength by Tabor's relation, σy ≈ H/3. Scales are not converted into one another.
+3. **Make a material of the results:** a material of your own from every result in the project (modulus, Rp0.2, tensile strength and elongation from the tensile specimens that are on, Vickers hardness, the fatigue strength at 10⁷ cycles), each value the range over the specimens. The Add Material dialog opens filled in, with this project's tests as the source; add the density and Save.
+
+![Testing › Fatigue: an S–N curve fitted with Basquin's law.](img/fatigue.png)
+
+1. **Tests:** one per line: stress amplitude in MPa, cycles, and r for a run-out (a specimen that did not break).
+2. **Strength at:** the cycles for the fatigue strength (10⁷ unless you change it).
+3. **S–N curve:** the tests on log scales, run-outs as arrows, and the line of Basquin's law σa = σf′ (2N)^b fitted to the broken specimens; the amber ring is the strength asked for.
+4. **The fit:** σf′, b, R², and the strength. When the strength lies beyond the longest broken test the page says so: many steels level off at an endurance limit.
+
+![Testing › Creep: rupture tests on a Larson–Miller plot.](img/creep.png)
+
+1. **Tests:** one per line: stress in MPa, temperature in °C, hours to rupture.
+2. **Larson–Miller C:** the constant in P = T (C + log10 t), with T in kelvin and t in hours; often near 20. Type 0 and the page finds the C that fits your tests best.
+3. **The question:** the stress to rupture at a temperature and a time.
+4. **The plot:** stress (log scale) against P, with the fitted line; the amber ring is the answer.
+5. **The fit:** C, the line, R² and the stress to rupture, with a warning when the question lies outside your tests.
+
+**Example (made-up data)** on these pages fills them with invented data to try them. `datum-atlas-cli lab FILE` prints the results.
+
 ## Compare
 
 ![Compare: three materials side by side, and the radar chart.](img/compare.png)
@@ -349,7 +374,7 @@ Every release has a small program beside the installer, `datum-atlas-cli-x.y.z.e
 
 ![Help › Use with an AI Assistant.](img/assistant.png)
 
-`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements, compositions and crystals, read tensile test results, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
+`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements, compositions and crystals, read test results, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
 
 ## Help, options and shortcuts
 

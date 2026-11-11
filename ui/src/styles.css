@@ -873,3 +873,14 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .tenspage .tgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 8px 16px; }
 .tenspage .tgrid label { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .tenspage .tgrid input[type=number] { width: 64px; }
+
+/* Testing › Hardness, Fatigue, Creep */
+.labpage .ttools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.labpage .ttools input[type=number] { width: 90px; }
+.labpage .labgrid { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(420px, 1.6fr); gap: 14px; }
+.labpage textarea { width: 100%; font-family: var(--mono); }
+.labpage .lrow { display: flex; gap: 14px; flex-wrap: wrap; margin-bottom: 6px; }
+.labpage .lscroll { max-height: 300px; overflow-y: auto; }
+.labpage .lplot { width: 100%; height: auto; }
+.labpage .hres td, .labpage .hres th { text-align: right; } .labpage .hres td:first-child, .labpage .hres th:first-child { text-align: left; }
+.labpage .panel + .panel { margin-top: 14px; } .labpage .labgrid .panel + .panel { margin-top: 0; }

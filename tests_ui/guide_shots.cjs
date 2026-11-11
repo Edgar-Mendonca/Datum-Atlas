@@ -13,7 +13,7 @@ const srv = http.createServer((q, r) => {
 const exe = path.join(__dirname, "../target/debug/examples/bridge" + (process.platform === "win32" ? ".exe" : ""));
 const eng = spawn(exe, [], { stdio: ["pipe", "pipe", "inherit"] }), waiting = [];
 readline.createInterface({ input: eng.stdout }).on("line", l => waiting.shift()(JSON.parse(l)));
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -32,7 +32,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "Northwind Engineering", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "0.3.3", copy_text: null, save_file: null };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material"];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (engine.includes(c)) { const r = await window.__engine(c, a); if ("err" in r) throw r.err; return r.ok; }
       if (c === "set_options") return (await window.__engine("state", {})).ok;
@@ -132,6 +132,12 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await shot("xrd", [[".calcpage .tube", 1], [".calcpage .xrd", 2], [".calcpage .peaks", 3]], ".calcpage .panel.wide");
   await side("Tensile"); await p.click(".tenspage .texample"); await wait(700);
   await shot("tensile", [[".tenspage .timport", 1], [".tenspage .tfit0", 2], [".tenspage .tcurve", 3], [".tenspage .tspec", 4], [".tenspage .tres", 5]]);
+  await side("Fatigue"); await p.click(".labpage .labex"); await wait(600);
+  await shot("fatigue", [[".labpage .fvals", 1], [".labpage .fatat", 2], [".labpage .lplot", 3], [".labpage .fres", 4]]);
+  await side("Creep"); await wait(500);
+  await shot("creep", [[".labpage .cvals", 1], [".labpage .lmpc", 2], [".labpage .cat0", 3], [".labpage .lplot", 4], [".labpage .cres2", 5]]);
+  await side("Hardness"); await wait(400);
+  await shot("hardness", [[".labpage .hvals", 1], [".labpage .hres", 2], [".labpage .mkmat", 3]]);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

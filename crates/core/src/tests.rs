@@ -871,3 +871,34 @@ fn tensile_results_match_a_known_curve() {
     assert_eq!(pick(&c, c.x, c.y), vec![[0.0, 0.01], [0.01, 1.5]]);
     assert!(columns(&[vec!["a".to_string(), "b".to_string()]]).is_err());
 }
+
+#[test]
+fn hardness_fatigue_and_creep_match_their_formulas() {
+    use crate::lab::*;
+    let near = |v: Option<f64>, x: f64, tol: f64| v.is_some_and(|v| (v - x).abs() <= tol);
+    let h = hardness(&HardSet { name: "A".into(), scale: "HV".into(), values: vec![200.0, 210.0, 220.0] });
+    assert!(near(h.mean, 210.0, 1e-9) && near(h.sd, 10.0, 1e-9) && near(h.cov, 4.7619, 1e-3) && near(h.tabor, 686.47, 0.01), "{h:?}");
+    assert!(h.ci.is_some_and(|c| (c[0] - 185.157).abs() < 0.01 && (c[1] - 234.843).abs() < 0.01), "{h:?}");
+    assert!(hardness(&HardSet { scale: "HRC".into(), values: vec![40.0], ..Default::default() }).tabor.is_none());
+    assert!(hardness(&HardSet::default()).mean.is_none());
+    // Basquin: σa = 1000 (2N)^−0.1 comes back; a run-out is not fitted.
+    let pts: Vec<FatPoint> = [500.0, 450.0, 400.0, 350.0, 300.0].iter().map(|&s: &f64| FatPoint { s, n: 0.5 * (s / 1000.0).powf(-10.0), runout: false }).chain([FatPoint { s: 150.0, n: 1e7, runout: true }]).collect();
+    let mut l = Lab { fatigue: pts, ..Default::default() };
+    let f = fatigue(&l);
+    assert!(near(f.sf, 1000.0, 1e-6) && near(f.b, -0.1, 1e-9) && near(f.r2, 1.0, 1e-9) && near(f.strength, 1000.0 * 2e7f64.powf(-0.1), 1e-6) && f.broken == 5 && !f.note.is_empty(), "{f:?}");
+    // Larson–Miller: log σ = 6 − 0.18 P (C = 20) comes back, and C is found when asked.
+    l.creep = [(300.0, 550.0), (220.0, 550.0), (160.0, 600.0), (120.0, 600.0), (80.0, 650.0), (55.0, 650.0)].iter().map(|&(s, t): &(f64, f64)| CreepPoint { s, t, h: 10f64.powf((s.log10() - 6.0) / -0.18 * 1000.0 / (t + 273.15) - 20.0) }).collect();
+    let c = creep(&l);
+    assert!(c.a.is_some_and(|a| (a[0] - 6.0).abs() < 1e-6 && (a[1] + 0.18).abs() < 1e-8) && near(c.stress, 10f64.powf(6.0 - 0.18 * 873.15 * 25.0 / 1000.0), 1e-6), "{c:?}");
+    l.lmp_c = 0.0;
+    let c = creep(&l);
+    assert!(c.found && near(c.c, 20.0, 0.051), "{c:?}");
+    // A material of your own from the example tests, with ranges and no zeros.
+    let t = crate::tensile::run(&crate::tensile::example());
+    let o = run(&example());
+    assert!(o.fatigue.strength.is_some() && o.creep.stress.is_some() && o.hardness[0].mean.is_some(), "{:?} {:?}", o.fatigue, o.creep);
+    let m = to_material(&t, &o, "My steel", "u-src");
+    for k in ["E", "sy", "ts", "elong", "hv", "fat"] { assert!(matches!(m.props.get(k), Some(Val::Range(lo, hi, s)) if *lo > 0.0 && hi >= lo && s == "u-src"), "{k}: {:?}", m.props.get(k)); }
+    assert!(Lab { lmp_c: 2.0, ..Default::default() }.validate().is_err() && Lab { fatigue: vec![FatPoint { s: -1.0, n: 10.0, runout: false }], ..Default::default() }.validate().is_err() && Lab { hardness: vec![HardSet { scale: "XX".into(), ..Default::default() }], ..Default::default() }.validate().is_err());
+    assert!(example().validate().is_ok());
+}

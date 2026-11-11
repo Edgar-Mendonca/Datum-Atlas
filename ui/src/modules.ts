@@ -19,8 +19,8 @@ export const MODULES: Module[] = [
     pages: [["micro", "grains", "Structures"]], tabs: ["home", "data"] },
   { id: "crystal", name: "Crystal", short: "Crystal", icon: "crystal", about: "The elements on a periodic table; compositions; crystal structures with spacings, angles, X-ray peaks and stereographic projections.",
     pages: [["elements", "crystal", "Elements"], ["calc", "builder", "Lattice"]], tabs: ["home", "data"] },
-  { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your tensile test data: curves, modulus, proof stress, tensile strength, elongation, n and K, over several specimens; hardness, fatigue and creep follow.",
-    pages: [["tensile", "curve", "Tensile"]], tabs: ["home", "data"] },
+  { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your test data: tensile curves and results, hardness statistics, S–N curves and creep rupture on a Larson–Miller plot; the results become a material of your own.",
+    pages: [["tensile", "curve", "Tensile"], ["hardness", "level", "Hardness"], ["fatigue", "xy", "Fatigue"], ["creep", "risk", "Creep"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */
