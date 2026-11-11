@@ -7,6 +7,7 @@ pub mod db;
 pub mod formula;
 pub mod doc;
 pub mod eco;
+pub mod elements;
 pub mod export;
 pub mod geometry;
 pub mod goals;

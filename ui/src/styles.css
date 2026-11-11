@@ -814,6 +814,29 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .structpage .scard .micro.small { float: none; margin: 0; }
 .structpage .famh { margin: 18px 0 8px; }
 .structpage .focus .fwrap { display: flex; gap: 16px; align-items: flex-start; }
-.tile.later { opacity: .75; }
+.tile.later { opacity: .75; margin-top: 0; justify-content: flex-start; gap: 0; }
 .menu button.dim { opacity: .55; }
 .structpage .scard b, .structpage .scard span { text-align: left; }
+
+/* Crystal › Elements */
+.elpage .eltools { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 10px; }
+.elpage .ellegend { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 11px; color: var(--text2); }
+.elpage .ellegend i { display: inline-block; width: 10px; height: 10px; margin-right: 4px; vertical-align: -1px; }
+.elpage .pt { display: grid; grid-template-columns: repeat(18, minmax(34px, 1fr)); grid-template-rows: repeat(7, auto) 10px repeat(2, auto); gap: 2px; max-width: 1100px; }
+.elpage .el { display: flex; flex-direction: column; align-items: flex-start; padding: 2px 4px; border: 1px solid var(--line); background: var(--bg2); color: var(--text); min-height: 44px; text-align: left; cursor: pointer; }
+.elpage .el small { font-size: 9px; color: var(--muted); }
+.elpage .el b { font: 600 15px var(--mono); line-height: 1.1; }
+.elpage .el span { font-size: 9px; color: var(--text2); white-space: nowrap; overflow: hidden; max-width: 100%; }
+.elpage .el:hover { border-color: var(--blue); }
+.elpage .el.on { outline: 2px solid var(--blue); outline-offset: -1px; }
+.elpage .el.gap { background: repeating-linear-gradient(135deg, var(--bg2) 0 4px, var(--line) 4px 5px); }
+.elpage .ptgap { font-size: 9px; color: var(--muted); display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line); }
+.elpage .elbottom { display: flex; flex-wrap: wrap; gap: 16px; margin-top: 16px; align-items: flex-start; }
+.elpage .elcard { flex: 1 1 380px; max-width: 560px; }
+.elpage .elcard h2 { display: flex; align-items: center; gap: 10px; }
+.elpage .elsym { font: 600 22px var(--mono); padding: 4px 10px; border: 1px solid var(--line); }
+.elpage .elmats { display: flex; flex-wrap: wrap; gap: 4px; }
+.elpage .compbox { flex: 1 1 340px; max-width: 520px; }
+.elpage .comprow { display: flex; gap: 6px; margin-bottom: 8px; }
+.elpage .compin { flex: 1; font-family: var(--mono); }
+.elpage .err { color: var(--bad, #C0392B); }

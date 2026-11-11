@@ -152,6 +152,14 @@ fn substitutes(st: State<St>, id: String, tol: f64) -> Value {
     serde_json::to_value(eco::substitutes(&a.db.with_formulas(&a.doc.p.formulas), &a.doc.p, &id, tol)).unwrap_or_default()
 }
 
+/// The 118 elements.
+#[tauri::command]
+fn elements() -> &'static [datum_atlas_core::elements::Element] { datum_atlas_core::elements::elements() }
+
+/// Molar mass, at % and wt % of a formula or an alloy (`by`: formula, wt or at).
+#[tauri::command]
+fn composition(text: String, by: String) -> R<datum_atlas_core::elements::Comp> { datum_atlas_core::elements::composition(&text, &by) }
+
 /// A material's schematic microstructure (SVG, caption, scale).
 #[tauri::command]
 fn microstructure(st: State<St>, id: String) -> R<datum_atlas_core::micro::Micro> {
@@ -666,7 +674,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

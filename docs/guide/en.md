@@ -2,7 +2,7 @@
 
 ## Welcome
 
-Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make** and **Microstructure**; Crystal, Testing, image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
+Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure** and **Crystal**; Testing, image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
 
 The Select module helps you choose a material and show why it is the right one. Every material is drawn on property charts as a bubble spanning its range of values; design goals and performance indices turn what the part must do into a line on the chart; limits, lines, boxes and shapes narrow the field; and the materials that pass are ranked, with the reason every other one fails. Then you compare the best, add up their energy and CO₂ through the product's life, find the processes that can make the part and what it costs, and print a report that documents the choice.
 
@@ -94,6 +94,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Eco** | Eco audit | Energy and CO₂ through a product's life; greener substitutes |
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures | The typical structure of every class of material |
+| **Crystal** | Elements | The elements on a periodic table; the composition of formulas and alloys |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
 
@@ -216,6 +217,17 @@ These are **schematics** drawn by Datum Atlas from a recipe for each class, neve
 
 Image analysis of your own micrographs, a structure generator, EBSD and DIC will join this module.
 
+## Crystal: the elements
+
+![Crystal › Elements: the periodic table, an element card and the composition box.](img/elements.png)
+
+1. **Colour by:** colour the table by category, or by density, melting point, electronegativity or atomic mass to see how a property runs across it (pale is low, deep is high).
+2. **The table:** click an element, or type its symbol, name or number in **Find** and press Enter.
+3. **The element card:** atomic mass, category, group and period, state, density, melting and boiling points, crystal structure, lattice parameters and electronegativity, with their sources. A value nobody knows reliably, as for most of the heaviest elements, is left blank and the table hatches it; it is never shown as zero. **In the library** lists the materials built on the element.
+4. **Composition:** the molar mass and each element's atom and weight percent of a formula (Fe2O3, Al2(SO4)3, CuSO4·5H2O), or the change between weight and atom percent for an alloy: write each element and its percent, and leave one without a number as the balance (Al Cu 4.4 Mg 1.5 Mn 0.6).
+
+The command line does the same: `datum-atlas-cli element Fe` and `datum-atlas-cli composition --wt Fe C 0.8`. Crystal structures, Miller indices, X-ray peak positions and stereographic projections come next in this module.
+
 ## Compare
 
 ![Compare: three materials side by side, and the radar chart.](img/compare.png)
@@ -306,7 +318,7 @@ Every release has a small program beside the installer, `datum-atlas-cli-x.y.z.e
 
 ![Help › Use with an AI Assistant.](img/assistant.png)
 
-`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
+`datum-atlas-cli mcp` connects an AI assistant that speaks the Model Context Protocol. The assistant can search the materials and read their datasheets, set up a selection with the same edits as the window, read the ranked results, run the eco audit and process selection, look up elements and compositions, and save the project when you ask. **Help › Use with an AI Assistant** has the settings to copy into the assistant.
 
 ## Help, options and shortcuts
 

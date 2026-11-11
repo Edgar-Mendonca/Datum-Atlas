@@ -13,7 +13,7 @@ const srv = http.createServer((q, r) => {
 const exe = path.join(__dirname, "../target/debug/examples/bridge" + (process.platform === "win32" ? ".exe" : ""));
 const eng = spawn(exe, [], { stdio: ["pipe", "pipe", "inherit"] }), waiting = [];
 readline.createInterface({ input: eng.stdout }).on("line", l => waiting.shift()(JSON.parse(l)));
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -32,7 +32,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "Northwind Engineering", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "0.3.3", copy_text: null, save_file: null };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition"];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (engine.includes(c)) { const r = await window.__engine(c, a); if ("err" in r) throw r.err; return r.ok; }
       if (c === "set_options") return (await window.__engine("state", {})).ok;
@@ -123,6 +123,9 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.click(".side .modsw"); await wait(300);
   await shot("modules", [], { x: 0, y: 150, width: 420, height: 520 });
   await p.keyboard.press("Escape"); await p.mouse.click(700, 600); await wait(200);
+  await side("Elements"); await wait(400);
+  await p.click('.elpage .el:has(b:text-is("Ti"))'); await p.fill(".compin", "TiO2"); await p.press(".compin", "Enter"); await wait(300);
+  await shot("elements", [[".eltools select", 1], [".elpage .pt", 2], [".elcard", 3], [".compbox", 4]]);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

@@ -333,3 +333,18 @@ fn damaged_spreadsheets_never_panic() {
     }
     let _ = std::fs::remove_dir_all(&dir);
 }
+
+#[test]
+fn random_formulas_never_panic() {
+    let mut r = Rng(0x94D0_49BB_1331_11EB);
+    let bits = ["Fe", "O", "2", "3", "0.5", "(", ")", "[", "]", "·", "*", "5", "H", "Qq", " ", "C", "100", "-1", "%", ",", "1e309", "NaN", "Al", "x"];
+    for _ in 0..3000 {
+        let s: String = (0..r.below(12)).map(|_| *r.pick(&bits)).collect();
+        for by in ["formula", "wt", "at"] {
+            if let Ok(c) = crate::elements::composition(&s, by) {
+                let (at, wt) = c.parts.iter().fold((0.0, 0.0), |a, p| (a.0 + p.at, a.1 + p.wt));
+                assert!(c.mass.is_finite() && c.mass > 0.0 && (at - 100.0).abs() < 1e-6 && (wt - 100.0).abs() < 1e-6, "{s:?} ({by}): {c:?}");
+            }
+        }
+    }
+}

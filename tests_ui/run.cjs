@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -157,6 +157,24 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.click(".side .modsw");
   check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("EBSD (0.3.14)"));
   await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
+  // Crystal › Elements: the periodic table, an element card, colour by a property, composition.
+  await goTo(p, "Elements");
+  await p.waitForSelector(".elpage .el");
+  check("Crystal › Elements shows the 118 elements on a periodic table", (await p.$$(".elpage .pt .el")).length === 118 && (await p.textContent(".side .modsw")).includes("Crystal"));
+  await p.click('.elpage .el:has(b:text-is("Cu"))');
+  const card = await p.textContent(".elcard");
+  check("clicking an element opens its card with values, sources and materials", card.includes("Copper") && card.includes("FCC") && card.includes("8,960 kg/m³") && card.includes("Standard atomic weights") && (await p.$$(".elcard .elmats button")).length > 0, card.slice(0, 300));
+  await p.fill(".elfind", "Og"); await p.press(".elfind", "Enter");
+  check("an unknown value is a gap, never zero", (await p.textContent(".elcard")).includes("Oganesson") && (await p.textContent(".elcard")).includes("No reliable value known"));
+  await p.selectOption(".eltools select", "density");
+  check("colouring by a property shades the table and marks the gaps", (await p.$$(".elpage .el.gap")).length >= 15 && (await p.textContent(".eltools")).includes("log scale"));
+  await p.fill(".compin", "Al2(SO4)3"); await p.press(".compin", "Enter"); await p.waitForTimeout(200);
+  check("composition works out a formula's molar mass", (await p.textContent(".compbox")).includes("342.13"), await p.textContent(".compbox"));
+  await p.selectOption(".comprow select", "wt"); await p.fill(".compin", "Fe C 0.8"); await p.press(".compin", "Enter"); await p.waitForTimeout(200);
+  check("weight percent turns into atom percent, with the balance", (await p.textContent(".compbox")).includes("3.61") && (await p.textContent(".compbox")).includes("99.200"), await p.textContent(".compbox"));
+  await p.fill(".compin", "Fe 60 C 30"); await p.press(".compin", "Enter"); await p.waitForTimeout(200);
+  check("a composition that does not add up says why", (await p.textContent(".compbox .err").catch(() => "")).includes("not 100"));
+  await shot("elements");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");
@@ -381,7 +399,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
   const at = t => tiles.indexOf(t);
-  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
+  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
   await p.click(".bs aside .back");
   await p.waitForTimeout(200);
 

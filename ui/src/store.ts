@@ -50,7 +50,7 @@ export const setTheme = (t: string) => { setThemeRaw(t); applyTheme(); setOpts({
 export const [opts, setOpts] = createSignal<Options>({ theme: "auto", autosave: 5, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "", logo: "" });
 
 // ---------- what is shown ----------
-export type View = "setup" | "browse" | "datasheet" | "charts" | "stages" | "results" | "compare" | "index" | "report" | "data" | "sources" | "eco" | "processes" | "process" | "micro";
+export type View = "setup" | "browse" | "datasheet" | "charts" | "stages" | "results" | "compare" | "index" | "report" | "data" | "sources" | "eco" | "processes" | "process" | "micro" | "elements";
 export const [view, setView] = createSignal<View>("charts");
 export const [backstage, setBackstage] = createSignal<string | null>("home");
 export const [tab, setTab] = createSignal("home");
@@ -63,7 +63,7 @@ export const [query, setQuery] = createSignal("");
 export const chart = (): Chart | undefined => out()?.project.charts.find(c => c.id === chartId()) ?? out()?.project.charts[0];
 export const chartOut = (id = chart()?.id): ChartOut | undefined => out()?.charts.find(c => c.id === id);
 const fixChart = () => { const cs = out()?.project.charts ?? []; if (!cs.some(c => c.id === chartId())) setChartId(cs[0]?.id ?? 0); };
-export const show = (v: View) => { setView(v); if (v === "charts") setTab("chart"); else if (v === "browse" || v === "datasheet" || v === "data" || v === "sources") setTab("data"); else if (v === "stages" || v === "results" || v === "index") setTab("select"); else if (v === "report" || v === "compare") setTab("report"); else if (v === "eco" || v === "processes" || v === "process") setTab("report"); else if (v === "micro") setTab("home"); };
+export const show = (v: View) => { setView(v); if (v === "charts") setTab("chart"); else if (v === "browse" || v === "datasheet" || v === "data" || v === "sources") setTab("data"); else if (v === "stages" || v === "results" || v === "index") setTab("select"); else if (v === "report" || v === "compare") setTab("report"); else if (v === "eco" || v === "processes" || v === "process") setTab("report"); else if (v === "micro" || v === "elements") setTab("home"); };
 export const openSheet = (id: string) => { setCur(id); show("datasheet"); };
 /** Did a material fail the stages? (greyed on charts) */
 export const failed = () => { const s = new Set<string>(); const r = out()?.results; if (r && r.stages.length) r.rows.forEach(x => { if (!x.pass) s.add(x.id); }); return s; };

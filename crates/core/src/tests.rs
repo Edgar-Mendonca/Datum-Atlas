@@ -761,3 +761,29 @@ fn every_material_has_a_schematic_microstructure() {
     assert!(matches!(k("al-a356-t6"), Kind::Dendrites { .. }) && matches!(k("cfrp-ud"), Kind::Fibres { .. }) && matches!(k("pp"), Kind::Spherulites { .. }) && matches!(k("pc"), Kind::Amorphous { .. }));
     assert!(matches!(k("glass-soda"), Kind::Glass) && matches!(k("pe-foam"), Kind::Foam { open: false, .. }) && matches!(k("pine-l"), Kind::Wood { hard: false }));
 }
+
+#[test]
+fn the_elements_hold_together() {
+    use crate::elements::{check, composition, elements, find};
+    let bad = check(&db::builtin().sources);
+    assert!(bad.is_empty(), "{bad:#?}");
+    let e = elements();
+    assert_eq!((e[25].symbol.as_str(), e[25].structure.as_deref(), e[25].density), ("Fe", Some("BCC"), Some(7874.0)));
+    assert!(e.iter().filter(|x| x.z >= 104).all(|x| x.density.is_none() && x.melt.is_none()), "superheavy elements are gaps, not zeros");
+    assert_eq!((find("26").unwrap().symbol.as_str(), find("aluminum").unwrap().z, find("CU").unwrap().z, find("Tungsten").unwrap().symbol.as_str()), ("Fe", 13, 29, "W"));
+    assert!(find("Xx").is_none());
+    // Formulas: molar mass and weight fractions.
+    let c = composition("Fe2O3", "formula").unwrap();
+    assert!((c.mass - 159.69).abs() < 0.01 && (c.parts[0].wt - 69.94).abs() < 0.02, "{c:?}");
+    assert!((composition("Al2(SO4)3", "formula").unwrap().mass - 342.13).abs() < 0.01);
+    assert!((composition("CuSO4·5H2O", "formula").unwrap().mass - 249.69).abs() < 0.02);
+    assert!((composition("Ti0.5Al0.5", "formula").unwrap().parts[1].at - 50.0).abs() < 1e-9);
+    // Alloys: Fe–0.8 wt % C is about 3.6 at % C; the element without a number is the balance.
+    let s = composition("Fe C 0.8", "wt").unwrap();
+    assert!((s.parts[0].wt - 99.2).abs() < 1e-9 && (s.parts[1].at - 3.614).abs() < 0.005, "{s:?}");
+    let b = composition("Ni 50 Ti 50", "at").unwrap();
+    assert!((b.parts[0].wt - 55.07).abs() < 0.02, "{b:?}");
+    for (t, by) in [("Fe2O3)", "formula"), ("(Fe", "formula"), ("Qq2", "formula"), ("", "formula"), ("Fe0", "formula"), ("Fe 60 C 30", "wt"), ("Fe C", "wt"), ("Fe 120", "wt"), ("Fe 50 Fe 50", "at"), ("Fe 80 Ni 30 Cr", "wt")] {
+        assert!(composition(t, by).is_err(), "{t} ({by}) should be refused");
+    }
+}

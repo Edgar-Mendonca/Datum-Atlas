@@ -1,5 +1,27 @@
 # Changelog
 
+## 0.3.6 — 2026-11-11
+
+A new module, Crystal: the 118 elements on a clickable periodic table, and the composition of formulas and alloys.
+
+**Crystal › Elements**
+- A periodic table of the 118 elements. Click one, or find it by symbol, name or number, for its card: atomic mass, category, group and period, state, density, melting and boiling points, crystal structure, lattice parameters and electronegativity, with their sources.
+- Colour the table by category, density, melting point, electronegativity or atomic mass, to see how a property runs across it.
+- A value nobody knows reliably (most of the heaviest elements) is blank and hatched, never zero.
+- **In the library** on the card lists the materials built on the element, each a click from its datasheet.
+- The values are our own compilation from public-domain data, with standard atomic weights from IUPAC; they are drafts until checked one by one, like the other values.
+
+**Composition**
+- The molar mass of a chemical formula (Fe2O3, Al2(SO4)3, CuSO4·5H2O) and each element's atom and weight percent.
+- Weight percent to atom percent and back for an alloy: write each element and its percent, and leave one without a number as the balance (Al Cu 4.4 Mg 1.5 Mn 0.6).
+
+**Command line and assistant**
+- `datum-atlas-cli element Fe` and `datum-atlas-cli composition [--wt|--at] TEXT`; the assistant connection gains `get_element` and `composition` (20 tools).
+
+**Smaller things**
+- The Home page's “More modules” tile lines up with the others.
+- A new chapter in the guide.
+
 ## 0.3.5 — 2026-11-11
 
 Datum Atlas becomes a materials workbench: modules that share one library, a module switcher, and a new logo.
