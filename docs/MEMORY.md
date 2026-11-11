@@ -177,7 +177,9 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.2.1** | Publisher | Windows publisher "Datum" for the whole family (hub FAMILY §9); copyright unchanged | ✅ |
 | **0.3.0** | Eco and process ([PLAN-0.3.0.md](PLAN-0.3.0.md)) | End-of-life data for every material (recycling energy and CO₂, recycled fraction, heat of combustion, combustion CO₂, downcycle/burn/biodegrade flags), 60 primary-energy gaps filled; `data/eco.json` factors; eco audit (parts, transport, use, years; five phases as ranges; up to four options; break-even; to a spreadsheet); greener substitutes; 5 more eco indices (52); 55 processes, cast/mach/weld ratings; process selection with reasons, cost against batch, shortlist matrix, joins and finishes; report sections | ✅ |
 | **0.3.1** | Wording | Public-repo cleanup (hub FAMILY §13): docs, plans, CLAUDE.md and code comments describe Atlas on its own terms; trademark line in README and NOTICE; UI test that no product name appears in the window | ✅ |
-| 0.4.0 | Assistants, trusted data, polish ([PLAN-0.4.0.md](PLAN-0.4.0.md)) | `datum-atlas-cli` and MCP server (from Plan), ops catalogue; ~300 values checked, ~500 materials with specific grades, search by equivalents, processes by alloy type; hybrid calculator, restricted/critical flags; user guide, colour-blind option, imperial eco/process, .ods, bench. Questions open. | 🔜 |
+| 0.4.0 | Assistants ([PLAN-0.4.0.md](PLAN-0.4.0.md) step 1) | `datum-atlas-cli`, ops catalogue, MCP server, Help card; 0.3.1 wording | 🔜 |
+| 0.4.1 | Polish (step 2) | User guide, colour-blind colours, imperial eco/process, .ods, Copy Picture on eco/process, bench; processes by alloy type | ⬜ |
+| 0.4.2 | Trusted data (step 3) | ~500 materials with grades, ~300 values checked, search by equivalents; hybrids; restricted/critical flags | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials with pictures, signed installer | ⬜ |
 
 ---
@@ -417,12 +419,13 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 ### 2026-11-11: Session 16 (plan for 0.4.0)
 - The user asked what is left and for an MCP server "as a default in all our apps". Read Datum Plan's `crates/cli` (`datum-cli` + `mcp`, 11 tools, tests drive an assistant session, release ships the exe) to copy.
 - Wrote [PLAN-0.4.0.md](PLAN-0.4.0.md): CLI and MCP first, then family polish, trusted data, hybrids and compliance; six questions. 0.3.1 wording ships inside 0.4.0.
+- The user asked for steps of three: the plan is now three releases (§2a): 0.4.0 assistants, 0.4.1 polish, 0.4.2 trusted data.
 
 ---
 
 ## 5. Known limits and next steps
 
-**Next:** answers to [PLAN-0.4.0.md](PLAN-0.4.0.md) §6, then build 0.4.0 (CLI and MCP first).
+**Next:** answers to [PLAN-0.4.0.md](PLAN-0.4.0.md) §6, then build it in three releases: 0.4.0 assistants, 0.4.1 polish, 0.4.2 trusted data.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

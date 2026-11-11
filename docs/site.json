@@ -44,13 +44,28 @@
   "roadmap": [
     {
       "v": "0.4.0",
-      "title": "Assistants and trusted data",
+      "title": "Assistants",
       "when": "Next",
       "items": [
-        "A command line and an assistant connection (Model Context Protocol) to search materials, run a selection, the eco audit and process selection.",
-        "About 500 materials with specific grades and many more values checked against published datasheets; search by equivalent designations.",
-        "Sandwich panels and lattices, and flags for restricted and critical substances.",
-        "A user guide and colour-blind safe colours."
+        "A command line and an assistant connection (Model Context Protocol) to search materials, run a selection, the eco audit and process selection."
+      ]
+    },
+    {
+      "v": "0.4.1",
+      "title": "Polish",
+      "when": "Soon",
+      "items": [
+        "A user guide, colour-blind safe colours, imperial units on the eco and process pages, and .ods export.",
+        "Processes matched by alloy type, so cast and wrought alloys are told apart."
+      ]
+    },
+    {
+      "v": "0.4.2",
+      "title": "Trusted data",
+      "when": "Soon",
+      "items": [
+        "About 500 materials with specific grades, many more values checked against published datasheets, and search by equivalent designations.",
+        "Sandwich panels and lattices, and flags for restricted and critical substances."
       ]
     },
     {

@@ -1,6 +1,6 @@
 # Datum Atlas 0.4.0: assistant access, trusted data, family polish (plan)
 
-Status: **questions open** (§6). Written 2026-11-11. The user: "can we add MCP for it, like in other applications? I think this should be a default in all our apps. So what more can we improve?" Built like 0.2.0 and 0.3.0: one big release in stages, each pushed when its checks pass. The 0.3.1 wording changes ship inside it.
+Status: **questions open** (§6). Written 2026-11-11. The user: "can we add MCP for it, like in other applications? I think this should be a default in all our apps. So what more can we improve?" The user then asked to break it into three steps: three releases, 0.4.0, 0.4.1 and 0.4.2 (§2a). The 0.3.1 wording changes ship inside 0.4.0.
 
 ---
 
@@ -53,11 +53,23 @@ Not done or thin:
 - 1,000 materials with pictures and microstructures, and the signed installer (1.0.0).
 - Properties against temperature and curves (stress–strain, fatigue): after 0.4.0.
 
+## 2a. The three steps
+
+| Step | Release | Contents (items of §2) | Why in this order |
+| --- | --- | --- | --- |
+| 1 | **0.4.0 Assistants** | A (1–5): `datum-atlas-cli`, ops catalogue, MCP server, Help card; and the 0.3.1 wording | Small, copied from Datum Plan, wanted in every app |
+| 2 | **0.4.1 Polish** | D (12–17): user guide, colour-blind colours, imperial eco and process, `.ods`, Copy Picture on eco and process charts, bench; and B 9: processes match by alloy type | Catches up with Datum Plan and fixes a known fault |
+| 3 | **0.4.2 Trusted data** | B (6–8): about 500 materials with specific grades, about 300 values checked, search by equivalents; C (10–11): hybrids, restricted and critical substances | The longest work, in batches by family |
+
+Each step is a full release: checks, real app, CHANGELOG, MEMORY, `site.json`, installer.
+
 ## 3. Roadmap after this
 
 | Version | Theme | Contents |
 | --- | --- | --- |
-| 0.4.0 | Assistants, trusted data, polish | §2 above (with the 0.3.1 wording) |
+| 0.4.0 | Assistants | Step 1 (§2a) |
+| 0.4.1 | Polish | Step 2 |
+| 0.4.2 | Trusted data | Step 3 |
 | 0.5.0 | Data at temperature | Properties against temperature, simple curves, more processes with process charts, export of material cards for simulation |
 | 1.0.0 | Stable | About 1,000 materials with pictures, signed installer |
 
@@ -74,9 +86,9 @@ About 3,500 to 4,500 new lines (CLI and MCP ~600 with tests, ops catalogue ~200,
 
 ## 6. Questions
 
-1. **The list:** is §2 the 0.4.0 big update? Anything to drop, add or move to later?
+1. **The list:** are §2 and the three steps of §2a right? Anything to drop, add or move?
 2. **MCP:** the same rules as Datum Plan (nothing saved unless asked; only project and export files)? Should the assistant also be able to add your own materials (to “My materials”), or only read the database?
 3. **Data:** 500 materials and about 300 checked values the right target? The network is unchanged, so checks use the figures search results quote, labelled as such; opening the environment's network access would let me open each datasheet itself.
 4. **Guide:** English only, or English and Chinese like Datum Plan?
-5. **Hybrids and compliance:** in 0.4.0, or later so the data work comes first?
+5. **Hybrids and compliance:** in step 3 with the data, or a step of their own later?
 6. **Windows:** anything wrong in 0.3.0 on a real PC (printing, Copy Picture, the updater, the eco and process pages)?
