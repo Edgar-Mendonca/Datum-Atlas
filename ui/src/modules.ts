@@ -24,7 +24,7 @@ export const MODULES: Module[] = [
   { id: "ebsd", name: "EBSD", short: "EBSD", icon: "layout", about: "Orientation maps from EBSD: open .ang and .ctf exports and see orientations, phases and pattern quality; grains, boundaries, Schmid factors and pole figures follow.",
     pages: [["ebsd", "layout", "Maps"], ["ebsdgrains", "grains", "Grains"], ["polefig", "atlas", "Pole figures"]], tabs: ["home", "data"] },
   { id: "dic", name: "DIC", short: "DIC", icon: "xy", about: "Strain maps from digital image correlation: open a displacement field and see every strain component, its statistics and profiles; strain by EBSD grain follows.",
-    pages: [["dic", "xy", "Strain maps"]], tabs: ["home", "data"] },
+    pages: [["dic", "xy", "Strain maps"], ["bygrain", "grains", "By grain"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */

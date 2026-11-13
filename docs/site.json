@@ -7,7 +7,7 @@
   "tagline": "A materials workbench: referenced materials data, property charts and selection, eco audit, process selection and microstructures, in one app for Windows.",
   "for": "Design and materials engineers, and students.",
   "about": [
-    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material and measures your micrographs and generates synthetic grain structures; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; EBSD opens orientation maps; DIC turns displacement fields into strain maps; Testing turns your tensile, hardness, fatigue and creep data into results and into a material of your own.",
+    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material and measures your micrographs and generates synthetic grain structures; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; EBSD opens orientation maps; DIC turns displacement fields into strain maps and links them to EBSD grains; Testing turns your tensile, hardness, fatigue and creep data into results and into a material of your own.",
     "Every material is a bubble spanning its range of values. Limits, index lines, bands, boxes and shapes narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best, print a report, and add, import and share your own materials. corrosion and heat treatment modules are on the way."
   ],
   "steps": [
@@ -40,7 +40,7 @@
     "Image analysis of micrographs: calibrate from the scale bar, then phase fraction, porosity, particles, grain size with G, graphite nodularity and coating thickness.",
     "A structure generator: synthetic grain maps with the size, spread, elongation, second phase, pores and texture you choose, coloured by orientation, measured back and ready for image analysis.",
     "EBSD: open .ang and .ctf maps; orientation, phase and quality maps; grains, boundaries, Σ3 twins, local misorientation, Schmid factors, pole figures and inverse pole figures.",
-    "DIC: strain maps from displacement fields, every strain component with statistics and line profiles."
+    "DIC: strain maps from displacement fields, with statistics and profiles, and strain by grain linked to an EBSD map, with Schmid factors and slip traces."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -52,17 +52,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.18",
-      "title": "DIC 2",
-      "when": "Next",
-      "items": [
-        "Strain by grain linked to EBSD, with slip traces."
-      ]
-    },
-    {
       "v": "0.3.19",
       "title": "Corrosion",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Galvanic compatibility, resistance by environment, corrosion allowance."
       ]

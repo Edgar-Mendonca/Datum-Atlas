@@ -95,7 +95,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures, Images | The typical structure of every class of material; image analysis of your micrographs |
 | **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
-| **DIC** | Strain maps | Strain maps from displacement fields, statistics and profiles |
+| **DIC** | Strain maps, By grain | Strain maps from displacement fields; strain by EBSD grain with Schmid factors and slip traces |
 | **EBSD** | Maps, Grains, Pole figures | Orientation maps from EBSD exports; grains, boundaries, twins, KAM, Schmid factors |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
@@ -300,7 +300,18 @@ A map on a hexagonal grid is shown on a square grid of the same step.
 4. **The profile** of the component along the line.
 5. **Statistics** of every component: mean, standard deviation, 5 % and 95 % values, lowest and highest.
 
-Strains are small-strain gradients by central differences on the grid; the equivalent strain takes εzz = −(εxx + εyy). Strain by grain, linked to an EBSD map, comes next.
+Strains are small-strain gradients by central differences on the grid; the equivalent strain takes εzz = −(εxx + εyy).
+
+![DIC › By grain: strain over the EBSD grains, with slip traces and the strain–Schmid plot.](img/bygrain.png)
+
+1. **The strain over the grains:** the DIC field laid over the open EBSD map, with its grain boundaries in black and the slip traces: the lines each slip plane makes on the surface, through each grain's centre, the plane with the highest Schmid factor in amber.
+2. **Show:** the strain component.
+3. **Same area:** leave ticked when the field covers the same area as the map; otherwise give the offset and scale that put the field's coordinates on the map's (x_map = x_field × scale + offset). Below: the grain tolerance and the load direction with FCC or BCC slip systems.
+4. **r:** how closely grain strain follows the Schmid factor across the grains.
+5. **The plot** of grain strain against Schmid factor, each grain in its IPF colour.
+6. **The table** of grains, most strained first: size, mean strain and spread, Schmid factor.
+
+Open the EBSD map on EBSD › Maps and the field on DIC › Strain maps first, or use **Example (made-up map and field)**: the EBSD example with a field in which each grain strains with its Schmid factor.
 
 ## Crystal: the elements
 

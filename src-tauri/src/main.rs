@@ -257,6 +257,27 @@ fn dic_profile(st: State<St>, key: String, a: [f64; 2], b: [f64; 2]) -> R<Vec<[f
     Ok(s.dic.as_ref().ok_or("Open a displacement field first.")?.profile(&key, a, b, 200))
 }
 
+/// Strain by grain: the open DIC field over the open EBSD map.
+#[tauri::command]
+async fn dic_link(st: State<'_, St>, ask: datum_atlas_core::dic::LinkAsk) -> R<datum_atlas_core::dic::Linked> {
+    let a = st.lock();
+    let m = a.ebsd.as_ref().ok_or("Open an EBSD map on EBSD › Maps first.")?;
+    let d = a.dic.as_ref().ok_or("Open a displacement field on DIC › Strain maps first.")?;
+    datum_atlas_core::dic::by_grain(d, m, &ask)
+}
+
+/// A made-up linked example: the EBSD example map and a field over it; returns both summaries.
+#[tauri::command]
+fn dic_link_example(st: State<St>) -> R<Value> {
+    let m = datum_atlas_core::ebsd::example()?;
+    let d = datum_atlas_core::dic::example_on(&m);
+    let v = json!({ "ebsd": m.summary(), "dic": d.summary() });
+    let mut a = st.lock();
+    a.ebsd = Some(m);
+    a.dic = Some(d);
+    Ok(v)
+}
+
 /// A synthetic grain map as an orientation map in text.
 #[tauri::command]
 async fn synth_ebsd(ask: datum_atlas_core::synth::Ask) -> R<String> { datum_atlas_core::synth::ebsd_text(&ask) }
@@ -815,7 +836,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

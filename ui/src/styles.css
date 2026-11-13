@@ -940,3 +940,9 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .dicpage .dprof { width: 100%; height: auto; }
 .dicpage .dstats td, .dicpage .dstats th { text-align: right; } .dicpage .dstats td:first-child, .dicpage .dstats th:first-child { text-align: left; }
 .dicpage .dstats tr.on td { background: var(--bg2); font-weight: 600; }
+
+.dicpage .icontrols { display: flex; flex-direction: column; gap: 8px; } .dicpage .icontrols label { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dicpage .icontrols input[type=number] { width: 70px; }
+.dicpage .dscat { width: 100%; max-width: 420px; height: auto; }
+.dicpage .sw { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
+.dicpage .lscroll { max-height: 320px; overflow-y: auto; }

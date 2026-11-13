@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.17** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.17). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.18** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.18). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -213,8 +213,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.15** | EBSD 2 | `ebsd.rs` grains (flood fill under a tolerance, smallest size), boundaries (low ≥ 2°, high ≥ 15°, Σ3 by `orient::is_sigma3` with Brandon), KAM (< 5°), Schmid (`orient::slip_systems` fcc/bcc/basal/prismatic), stats and pictures; EBSD › Grains page | ✅ |
 | **0.3.16** | EBSD 3 | `ebsd.rs` pole figures (families per crystal, up to 4,000 orientations, 5° Gaussian axial density in mrd on a 41 × 41 grid) and inverse pole figures (sample direction reduced to the standard triangle); EBSD › Pole figures page | ✅ |
 | **0.3.17** | DIC 1 | `dic.rs` (parse x, y, u, v tables onto a grid with gaps; central differences; εxx, εyy, εxy, ε1, ε2, γmax, ω, von Mises with εzz = −(εxx + εyy); stats with 5/95 %; diverging or sequential pictures with 1–99 % range; bilinear profiles; made-up field); the field lives in the shell (`App.dic`); DIC module › Strain maps (`dic.tsx`) | ✅ |
-| 0.3.18 | DIC 2 | Strain by grain linked to EBSD, with slip traces. | 🔜 |
-| 0.3.19 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance. | ⬜ |
+| **0.3.18** | DIC 2 | `dic::by_grain` (field sampled at each EBSD point, fit or offset/scale; per-grain mean and sd, Schmid factor, IPF colour, centroid, slip traces as surface angles of each plane with its best Schmid factor; Pearson r against Schmid); `example_on` (each grain strained with its Schmid factor, softened); DIC › By grain page (strain with boundaries, traces overlay, scatter, table) | ✅ |
+| 0.3.19 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance. | 🔜 |
 | 0.3.20 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule. | ⬜ |
 | later | Pending from PLAN-0.4.0 | Display and export, processes by alloy type, metal and polymer grades and checks, equivalent designations, hybrids, restricted and critical substances; fracture; mesh export to Datum Mesh; download-on-demand data; HDF5 and makers' formats; 3D | ⬜ |
 | 0.4.0 | Data at temperature | Properties against temperature, simple curves, more processes with process charts, material cards for simulation | ⬜ |
@@ -567,13 +567,19 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Fixture `tests_ui/field.csv` is made up (εxx 1 %, εyy −0.5 %).
 - Released 0.3.17.
 
+### 2026-11-13: Session 18, continued (0.3.18: strain by grain)
+- Trace of a plane on the surface (normal Z): direction n_s × Z with n_s = gᵀ n; angle from X. A Cube grain's {111} traces are at 45° and 135°.
+- The made-up field over the EBSD example integrates a per-grain strain (proportional to the Schmid factor, softened by three 3 × 3 averages) along x for u and along y for v; it keeps some row banding from the integration, which is fine for an example labelled made-up.
+- The user asked to carry on to EBSD and high-resolution DIC overnight: 0.3.10 to 0.3.18 released in this session.
+- Released 0.3.18.
+
 ---
 
 - 2026-11-13: Outside projects (the user's university repositories and others) are used for ideas and to check results only. Atlas writes its own code from textbook methods and published papers, cited like values; no code or data files are copied, so no code credit is owed.
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.18: DIC 2: strain by grain linked to EBSD, with slip traces.
+**Next:** 0.3.19: Corrosion: galvanic compatibility, resistance by environment, corrosion allowance. Then 0.3.20 heat treatment and phase diagrams.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

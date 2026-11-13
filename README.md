@@ -37,7 +37,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
 4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Modules (0.3.17)
+## Modules (0.3.18)
 
 | Module | What it is for |
 | --- | --- |
@@ -48,12 +48,12 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 | **Microstructure** | Typical structures of every class of material; image analysis of your micrographs (phase fraction, porosity, particles, grain size, nodularity, coating thickness); a generator of synthetic grain structures with orientations and texture |
 | **Testing** | Your test data: tensile curves and results with statistics, hardness statistics, S–N curves (Basquin), creep rupture (Larson–Miller); the results become a material of your own |
 | **EBSD** | Orientation maps from .ang and .ctf exports: orientation (IPF), phase and quality maps; grains, boundaries, Σ3 twins, local misorientation (KAM), Schmid factors, pole figures and inverse pole figures |
-| **DIC** | Strain maps from displacement fields: every strain component, statistics and profiles |
+| **DIC** | Strain maps from displacement fields: every strain component, statistics and profiles; strain by EBSD grain with Schmid factors and slip traces |
 | **Crystal** | The elements on a periodic table, with referenced values; compositions (wt % and at %); crystal structures, plane spacings and angles, X-ray powder patterns and stereographic projections |
 
 On the way: corrosion, heat treatment and phase diagrams.
 
-## Features (0.3.17)
+## Features (0.3.18)
 
 - **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
 - **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
@@ -72,7 +72,7 @@ On the way: corrosion, heat treatment and phase diagrams.
 - **Image analysis** (Microstructure module): calibrate a micrograph from its scale bar, threshold a phase, and measure its area fraction and its particles' sizes and shapes, the grain size (intercept and area, with G), graphite nodularity and coating thickness.
 - **Structure generator** (Microstructure module): synthetic grain maps with a chosen size, spread, elongation, second phase, pores and texture (Cube, Goss, Brass, Copper, S, fibres, basal), coloured by orientation, measured back and sent to image analysis.
 - **EBSD** module: open .ang and .ctf orientation maps and see them by orientation (IPF colours with a key), phase, pattern quality or confidence; grains, high- and low-angle boundaries, Σ3 twins, local misorientation and Schmid factors; pole figures and inverse pole figures.
-- **DIC** module: open a displacement field (x, y, u, v) and see every strain component, with statistics and line profiles.
+- **DIC** module: open a displacement field (x, y, u, v) and see every strain component, with statistics and line profiles; strain by grain over an EBSD map, against the Schmid factor, with slip traces.
 - **? help** beside the tools, a Glossary, and **Tell Me** (Ctrl+K) for commands, goals and materials.
 - Print or save as PDF; export charts as SVG or PNG, or copy them as a picture. Light, dark and auto themes; the in-app updater; recovery of unsaved work; damaged files never crash the app.
 
@@ -91,7 +91,7 @@ On the way: corrosion, heat treatment and phase diagrams.
 
 ## Coming next
 
-0.3.18 DIC 2. 0.3.19 Corrosion. 0.3.20 Heat treatment and phase diagrams. Then synthetic structures, EBSD, DIC, corrosion and heat treatment, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+0.3.19 Corrosion. 0.3.20 Heat treatment and phase diagrams. Then synthetic structures, EBSD, DIC, corrosion and heat treatment, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Command line
 

@@ -54,6 +54,8 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "dic_example" => { let d = datum_atlas_core::dic::example(); let v = json!(d.summary()); s.dic = Some(d); v }
         "dic_draw" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let k = a["key"].as_str().unwrap_or("exx"); let (rgb, range) = d.draw(k, None); json!({ "w": d.w, "h": d.h, "rgb": rgb, "range": range, "stats": datum_atlas_core::dic::COMPONENTS.iter().map(|c| d.stats(c.0)).collect::<Vec<_>>() }) }
         "dic_profile" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let pa: [f64; 2] = serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?; let pb: [f64; 2] = serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?; json!(d.profile(a["key"].as_str().unwrap_or("exx"), pa, pb, 200)) }
+        "dic_link" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map on EBSD › Maps first.")?; let d = s.dic.as_ref().ok_or("Open a displacement field on DIC › Strain maps first.")?; json!(datum_atlas_core::dic::by_grain(d, m, &serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?) }
+        "dic_link_example" => { let m = datum_atlas_core::ebsd::example()?; let d = datum_atlas_core::dic::example_on(&m); let v = json!({ "ebsd": m.summary(), "dic": d.summary() }); s.ebsd = Some(m); s.dic = Some(d); v }
         "lab_example" => json!(datum_atlas_core::lab::example()),
         "test_material" => json!(datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&s.doc.p.tensile), &datum_atlas_core::lab::run(&s.doc.p.lab), a["name"].as_str().unwrap_or(""), a["src"].as_str().unwrap_or(""))),
         "tensile_example" => json!(datum_atlas_core::tensile::example()),

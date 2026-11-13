@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.18 — 2026-11-13
+
+DIC links to EBSD: strain by grain, its relation to the Schmid factor, and slip traces.
+
+**DIC › By grain**
+- Lays the open DIC field over the open EBSD map of the same area (or at a given offset and scale) and gives each grain's mean strain and spread, size and Schmid factor, most strained first.
+- A plot of grain strain against Schmid factor, each grain in its IPF colour, with the correlation r.
+- **Slip traces:** the lines each slip plane makes on the surface, drawn through every grain's centre; the plane with the highest Schmid factor in amber, so slip bands can be matched to their plane.
+- Grain boundaries from the EBSD map drawn over the strain.
+- **Example (made-up map and field)**: the EBSD example with a field in which each grain strains with its Schmid factor.
+
+**Checked**
+- On the made-up pair, grain strain follows the Schmid factor (r above 0.8); a Cube grain's {111} traces lie at 45° and 135° with a Schmid factor of 1/√6; a field placed off the map is reported as not covering it.
+
 ## 0.3.17 — 2026-11-13
 
 A new module, DIC: strain maps from digital image correlation displacement fields.

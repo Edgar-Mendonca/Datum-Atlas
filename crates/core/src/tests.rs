@@ -1137,3 +1137,27 @@ fn dic_strains_from_a_known_field() {
     let e = example();
     assert!(e.stats("exx").mean.is_some_and(|m| (m - 0.02).abs() < 0.01) && e.stats("eeq").max.is_some_and(|m| m > 0.03));
 }
+
+#[test]
+fn strain_by_grain_links_dic_to_ebsd() {
+    use crate::dic::*;
+    let m = crate::ebsd::example().unwrap();
+    let f = example_on(&m);
+    let q = LinkAsk { key: "exx".into(), ..Default::default() };
+    let l = by_grain(&f, &m, &q).unwrap();
+    assert!((l.covered - 100.0).abs() < 1e-9 && l.grains.len() > 50 && l.r_schmid.is_some_and(|r| r > 0.8), "{:?} {} {}", l.r_schmid, l.grains.len(), l.covered);
+    assert!(l.grains.windows(2).all(|w| w[0].mean >= w[1].mean), "strongest first");
+    // A single Cube grain: {111} traces on the surface at 45° and 135°.
+    let mut t = String::from("# Datum Atlas orientation map (test)\n# crystal cubic\n# step 1\n");
+    for y in 0..10 { for x in 0..10 { t += &format!("{x} {y} 0 0 0 1 1\n") } }
+    let cube = crate::ebsd::parse(&t, "c.txt").unwrap();
+    let lc = by_grain(&example_on(&cube), &cube, &LinkAsk::default()).unwrap();
+    let mut ang: Vec<i64> = lc.grains[0].traces.iter().map(|t| t.0.round() as i64).collect();
+    ang.sort();
+    assert_eq!(ang, vec![45, 135]);
+    assert!((lc.grains[0].schmid - 1.0 / 6f64.sqrt()).abs() < 1e-6);
+    // Coordinates that miss the map leave it uncovered, and the page says so.
+    let off = by_grain(&f, &m, &LinkAsk { fit: false, offset: [1e4, 0.0], ..Default::default() }).unwrap();
+    assert!(off.covered < 1.0 && !off.notes.is_empty());
+    assert!(by_grain(&f, &m, &LinkAsk { scale: 0.0, ..Default::default() }).is_err());
+}
