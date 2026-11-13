@@ -164,6 +164,14 @@ async fn tensile_read(app: AppHandle, path: Option<String>) -> R<Option<Value>> 
     Ok(Some(json!({ "path": path.display().to_string(), "name": path.file_stem().map(|s| s.to_string_lossy().to_string()).unwrap_or_default(), "cols": datum_atlas_core::tensile::columns(&raw)? })))
 }
 
+/// Image analysis of a grey image the window decoded: threshold, phase fraction, particles.
+#[tauri::command]
+async fn image_analyse(ask: datum_atlas_core::image::Ask) -> R<datum_atlas_core::image::Answer> { datum_atlas_core::image::analyse(&ask) }
+
+/// A made-up test image (grey, base64).
+#[tauri::command]
+fn image_example() -> Value { let (w, h, px) = datum_atlas_core::image::example(); json!({ "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) }
+
 /// Made-up example hardness, fatigue and creep data, to try the pages.
 #[tauri::command]
 fn lab_example() -> datum_atlas_core::lab::Lab { datum_atlas_core::lab::example() }
@@ -710,7 +718,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

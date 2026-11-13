@@ -93,7 +93,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Select** | Setup, Charts, Stages, Results, Compare, Index, Report | Choosing a material: charts, goals and indices, stages, ranking, compare, the report |
 | **Eco** | Eco audit | Energy and CO₂ through a product's life; greener substitutes |
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
-| **Microstructure** | Structures | The typical structure of every class of material |
+| **Microstructure** | Structures, Images | The typical structure of every class of material; image analysis of your micrographs |
 | **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
@@ -217,6 +217,20 @@ The **Structures** page shows what each class of material is made of, as it woul
 These are **schematics** drawn by Datum Atlas from a recipe for each class, never photographs of real samples. Opened from a datasheet, the page starts with that material's own drawing. The command line draws one too: `datum-atlas-cli microstructure ID`.
 
 Image analysis of your own micrographs, a structure generator, EBSD and DIC will join this module.
+
+## Microstructure: image analysis
+
+![Microstructure › Images: the made-up example with its particles measured.](img/images.png)
+
+1. **Open an image:** a micrograph as PNG, JPEG, BMP or WebP (save a TIFF as PNG first). It is read in grey; a very large picture is shrunk to about 2.5 million pixels and the page says so. **Example (made-up image)** loads an invented picture to try the page.
+2. **The image** with the measurement over it: violet is the phase measured, amber is phase not counted as particles (too small, or touching the edge), grey is left out.
+3. **Scale:** type µm per pixel, or click **Set from the scale bar**, type the bar's length and click both of its ends on the image. Without a scale, sizes are in pixels.
+4. **Ignore the bottom:** leave out the strip with the microscope's data bar.
+5. **Threshold:** say whether the phase is darker (pores, graphite, dark particles) or brighter, and let Otsu's method choose the threshold or set it by hand; the histogram shows the grey levels with the phase in violet and the threshold in amber. Smooth a noisy image, and raise the smallest particle to drop specks.
+6. **Results:** the area fraction of the phase (phase fraction or porosity), the number of particles and their number per mm², the equivalent circle diameter (mean, standard deviation, D10, D50, D90), mean area, circularity and aspect ratio.
+7. **Size distribution:** a histogram of equivalent diameters and a table of the particles; **Particles to CSV** saves them all.
+
+Particles touching the edge of the region are left out of the sizes, because their whole size is not seen; they still count in the area fraction. Grain size by the intercept method, nodularity and coating thickness come next.
 
 ## Crystal: the elements
 

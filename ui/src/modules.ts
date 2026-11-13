@@ -15,8 +15,8 @@ export const MODULES: Module[] = [
     pages: [["eco", "eco", "Eco audit"]], tabs: ["home", "report"] },
   { id: "make", name: "Make", short: "Make", icon: "process", about: "Which processes can make your part, why the others cannot, and the cost against batch size.",
     pages: [["process", "process", "Process"], ["processes", "list", "Processes"]], tabs: ["home", "report"] },
-  { id: "micro", name: "Microstructure", short: "Micro", icon: "grains", about: "Typical structures of every class of material; image analysis, the generator, EBSD and DIC follow.",
-    pages: [["micro", "grains", "Structures"]], tabs: ["home", "data"] },
+  { id: "micro", name: "Microstructure", short: "Micro", icon: "grains", about: "Typical structures of every class of material, and image analysis of your micrographs: phase fraction, porosity and particles; grain size, the generator, EBSD and DIC follow.",
+    pages: [["micro", "grains", "Structures"], ["images", "image", "Images"]], tabs: ["home", "data"] },
   { id: "crystal", name: "Crystal", short: "Crystal", icon: "crystal", about: "The elements on a periodic table; compositions; crystal structures with spacings, angles, X-ray peaks and stereographic projections.",
     pages: [["elements", "crystal", "Elements"], ["calc", "builder", "Lattice"]], tabs: ["home", "data"] },
   { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your test data: tensile curves and results, hardness statistics, S–N curves and creep rupture on a Larson–Miller plot; the results become a material of your own.",
@@ -25,7 +25,7 @@ export const MODULES: Module[] = [
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */
 export const PLANNED: [string, string, string][] = [
-["H3", "Image analysis", "image"], ["H4", "Synthetic structures", "grid"],
+["H4", "Synthetic structures", "grid"],
   ["H5", "EBSD", "layout"], ["H6", "DIC", "xy"], ["H7", "Corrosion", "risk"], ["H8", "Heat treatment", "level"],
 ];
 

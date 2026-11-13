@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.9** (released 2026-11-12: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.9). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.10** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.10). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -96,6 +96,7 @@ flowchart LR
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
 | `docs/guide/en.md`, `img/`, `pdf/` | The Datum Atlas Guide: Markdown source (English), screenshots, the built PDF (attached to every release as `DatumAtlas-Guide-en.pdf`). `npm run guide` remakes the screenshots (`tests_ui/guide_shots.cjs`, the bridge with a bracket project) and the PDF (`scripts/guide.cjs`, Chromium, from Datum Plan's). |
+| `crates/core/src/image.rs`, `ui/src/imaging.tsx` | Image analysis (threshold, phase fraction, particles); the Microstructure › Images page. |
 | `crates/core/src/lab.rs`, `ui/src/lab.tsx` | Hardness, fatigue and creep (`Project.lab`, `Op::Lab`) and a material from the test results; the Testing › Hardness, Fatigue and Creep pages. |
 | `crates/core/src/tensile.rs`, `ui/src/testing.tsx` | Tensile tests (`Project.tensile`, `Op::Tensile`): analysis, statistics, reading exports; the Testing › Tensile page. |
 | `crates/core/src/elements.rs`, `crates/core/src/crystal.rs`, `ui/src/crystal.tsx` | The elements (`data/elements.json`) and compositions; crystal structures and calculators; the Crystal › Elements page (periodic table, element card, composition box) and Crystal › Lattice (`CalcPage`). |
@@ -200,8 +201,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.7** | Crystal: calculators | `crystal.rs` (Cell with metric from the basis, d, angles, Miller–Bravais, 9 structure types + any cell, density, |F|² with f = Z, powder peaks with multiplicity and LP, stereographic poles, `Ask`/`answer`); Crystal › Lattice page (`CalcPage`: cell drawing, facts, planes and directions, stereo, X-ray chart and table); element card → Lattice; CLI `crystal`; MCP `crystal` (21 tools) | ✅ |
 | **0.3.8** | Testing: tensile | `tensile.rs` (Specimen with x/y kinds, section and gauge length; E by window fit with toe, Rp0.2 by offset line, Rm, Ag, A at the last point ≥ 0.1 Rm, work, n and K on true plastic strain; stats; `columns` reads exports with heading lines and decimal commas; made-up `example`); `Project.tensile`, `Op::Tensile`; Testing module, `testing.tsx` (import, curves, specimens, results, export); CLI `tensile`, MCP `tensile_results` (22 tools); CSV separator by share of lines | ✅ |
 | **0.3.9** | Testing: hardness, fatigue, creep | `lab.rs` (HardSet stats with t-interval and Tabor; Basquin fit on broken points; Larson–Miller with C given or found 5–60, stress at [°C, h]; `to_material` from tensile + lab; made-up `example`); `Project.lab`, `Op::Lab`; Hardness, Fatigue and Creep pages (`lab.tsx`) with log plots; Make a material of the results (Add Material prefilled, source = the project's tests); CLI `lab`, MCP `lab_results` (23 tools) | ✅ |
-| 0.3.10 | Image analysis 1 | Open and calibrate micrographs; phase fraction, porosity and particles. | 🔜 |
-| 0.3.11 | Image analysis 2 | Grain size by intercept and area, nodularity and coating thickness. | ⬜ |
+| **0.3.10** | Image analysis 1 | `image.rs` (grey image in base64 from the window, ROI, box smoothing, Otsu or given threshold, area fraction, 8-connected particles with area, ECD, perimeter ×π/4, circularity, aspect from moments, edge rule, stats with D10/50/90 and bins, mask; made-up example); Microstructure › Images (`imaging.tsx`: decode in a canvas to ≤ 2.5 MP, scale from the bar, overlay, histogram, CSV) | ✅ |
+| 0.3.11 | Image analysis 2 | Grain size by intercept and area, nodularity and coating thickness. | 🔜 |
 | 0.3.12 | Synthetic structures 1 | Generate 2D grain structures with size spreads, aspect ratios, phases and pores. | ⬜ |
 | 0.3.13 | Synthetic structures 2 | Orientations and texture, with an orientation-coloured view. | ⬜ |
 | 0.3.14 | EBSD 1 | Read EBSD text exports; orientation, phase and quality maps. | ⬜ |
@@ -517,11 +518,19 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - UI: Testing › Hardness, Fatigue, Creep; help topics hardness, fatigue, creep, mkmat; superscript powers of ten; UI tests (statistics, Basquin from exact points, the example's creep fit, C found, a saved material). Guide chapter with three screenshots.
 - Released 0.3.9 on 2026-11-12. The first two release runs (11 Nov) failed to start and CI sat queued overnight on GitHub's side; billing showed $0 billable and no limit reached (public repositories are free), and nothing was running in other repositories. A fresh run the next morning started normally.
 
+### 2026-11-13: Session 18 (0.3.10: image analysis 1)
+- The user asked to carry on through the roadmap to EBSD and DIC, one release at a time. Their university repositories were reviewed for ideas only: Atlas writes its own code from textbook methods, copying nothing (decision in §4).
+- `image.rs`: the window decodes the picture (canvas) and sends grey bytes as base64; the engine thresholds, labels and measures. Random-input test found an absurd scale overflowing; the scale is now 0–100,000 µm/px. TIFF is not read (save as PNG); no CLI command for images yet (no image decoder in the engine).
+- UI: Microstructure › Images; help topic images; UI tests (the example's particles, a hand threshold, pixels without a scale); guide chapter.
+- Released 0.3.10.
+
 ---
+
+- 2026-11-13: Outside projects (the user's university repositories and others) are used for ideas and to check results only. Atlas writes its own code from textbook methods and published papers, cited like values; no code or data files are copied, so no code credit is owed.
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.10: Image analysis 1: open and calibrate micrographs; phase fraction, porosity and particles.
+**Next:** 0.3.11: Image analysis 2: grain size by intercept and area, nodularity and coating thickness.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

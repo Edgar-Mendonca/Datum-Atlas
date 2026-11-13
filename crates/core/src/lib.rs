@@ -12,6 +12,7 @@ pub mod elements;
 pub mod export;
 pub mod geometry;
 pub mod goals;
+pub mod image;
 pub mod lab;
 pub mod micro;
 pub mod model;

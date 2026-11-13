@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.10 — 2026-11-13
+
+Image analysis of your micrographs: calibrate, threshold, and measure a phase's area fraction and its particles.
+
+**Microstructure › Images**
+- Open a micrograph (PNG, JPEG, BMP or WebP). It is read in grey and stays on your computer.
+- **Scale:** type µm per pixel, or click both ends of the scale bar and type its length. Leave out the microscope's data bar at the bottom.
+- **Threshold:** darker or brighter phase; Otsu's method finds the threshold, or set it by hand and watch the overlay. Smoothing for noisy images, a smallest particle size to drop specks.
+- **Results:** the area fraction of the phase (phase fraction or porosity), particle count and number per mm², equivalent circle diameter (mean, standard deviation, D10, D50, D90), mean area, circularity and aspect ratio, a size histogram and a table of every particle.
+- Particles touching the edge are left out of the sizes but count in the area fraction.
+- **Particles to CSV** saves every particle.
+- **Example (made-up image)** loads an invented picture with a scale bar and a data bar to try the page.
+
+**Checked**
+- On a picture of discs of known size: the count, the diameter, the area fraction, the edge rule, the bright phase and the region give the right answers.
+
 ## 0.3.9 — 2026-11-11
 
 Testing grows: hardness statistics, S–N curves with Basquin's law, creep rupture on a Larson–Miller plot, and a material of your own made from all the results.

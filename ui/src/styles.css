@@ -884,3 +884,18 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .labpage .lplot { width: 100%; height: auto; }
 .labpage .hres td, .labpage .hres th { text-align: right; } .labpage .hres td:first-child, .labpage .hres th:first-child { text-align: left; }
 .labpage .panel + .panel { margin-top: 14px; } .labpage .labgrid .panel + .panel { margin-top: 0; }
+
+/* Microstructure › Images */
+.imgpage .ttools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.imgpage .imgrid { display: grid; grid-template-columns: minmax(420px, 1.5fr) minmax(320px, 1fr); gap: 14px; }
+.imgpage .ivwrap { position: relative; line-height: 0; }
+.imgpage .ivwrap canvas { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--line); }
+.imgpage .ivwrap.pick canvas { cursor: crosshair; }
+.imgpage .icontrols { display: flex; flex-direction: column; gap: 8px; }
+.imgpage .icontrols label { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.imgpage .icontrols input[type=number] { width: 80px; }
+.imgpage .icontrols input[type=range] { flex: 1; min-width: 140px; }
+.imgpage .ihist, .imgpage .isize { width: 100%; height: auto; }
+.imgpage .ires td:last-child { text-align: right; font-family: var(--mono); }
+.imgpage .iparts td { text-align: right; } .imgpage .iparts { font-size: 11.5px; }
+.imgpage .ikey i { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; }

@@ -902,3 +902,36 @@ fn hardness_fatigue_and_creep_match_their_formulas() {
     assert!(Lab { lmp_c: 2.0, ..Default::default() }.validate().is_err() && Lab { fatigue: vec![FatPoint { s: -1.0, n: 10.0, runout: false }], ..Default::default() }.validate().is_err() && Lab { hardness: vec![HardSet { scale: "XX".into(), ..Default::default() }], ..Default::default() }.validate().is_err());
     assert!(example().validate().is_ok());
 }
+
+#[test]
+fn image_analysis_measures_known_particles() {
+    use crate::image::*;
+    // Ten dark discs of radius 10 on a bright field, one cut by the edge.
+    let (w, h) = (300usize, 200usize);
+    let mut px = vec![200u8; w * h];
+    let centres: Vec<(f64, f64)> = (0..10).map(|k| (30.0 + 55.0 * (k % 5) as f64, 50.0 + 90.0 * (k / 5) as f64)).collect();
+    let all = centres.iter().copied().chain([(2.0, 100.0)]);
+    for (cx, cy) in all { for y in 0..h { for x in 0..w { if (x as f64 - cx).powi(2) + (y as f64 - cy).powi(2) <= 100.0 { px[y * w + x] = 50 } } } }
+    let q = Ask { w, h, px: b64_encode(&px), scale: 0.5, ..Default::default() };
+    let a = analyse(&q).unwrap();
+    assert!(a.threshold >= 50 && a.threshold < 200 && a.stats.count == 10, "{} {}", a.threshold, a.stats.count);
+    assert!(a.stats.mean.is_some_and(|d| (d - 10.0).abs() < 0.3) && a.stats.circ.is_some_and(|c| c > 0.85) && a.stats.aspect.is_some_and(|r| r < 1.1), "{:?}", a.stats);
+    let on = px.iter().filter(|&&v| v == 50).count() as f64 / (w * h) as f64 * 100.0;
+    assert!((a.fraction - on).abs() < 1e-9 && a.unit == "µm" && a.particles.len() == 11 && a.particles.iter().filter(|p| p.edge).count() == 1);
+    assert!(a.stats.density.is_some_and(|n| (n - 10.0 / (300.0 * 200.0 * 0.25e-6)).abs() < 1e-6));
+    let m = b64_decode(&a.mask).unwrap();
+    assert!(m.len() == w * h && m.contains(&1) && m.contains(&2));
+    // Bright phase, a region, smoothing and the edge rule change what they should.
+    let inv: Vec<u8> = px.iter().map(|v| 255 - v).collect();
+    let b = analyse(&Ask { px: b64_encode(&inv), dark: false, edge: false, smooth: 1, ..q.clone() }).unwrap();
+    assert!(b.stats.count == 11, "{}", b.stats.count);
+    let c = analyse(&Ask { roi: [0, 0, 150, 200], scale: 0.0, ..q.clone() }).unwrap();
+    assert!(c.unit == "px" && c.stats.count < 10 && !c.notes.is_empty());
+    assert_eq!(otsu(&{ let mut hh = vec![0u32; 256]; hh[40] = 100; hh[200] = 300; hh }), 40);
+    assert!(analyse(&Ask { w: 10, h: 10, px: b64_encode(&[0; 50]), ..Default::default() }).is_err() && analyse(&Ask { roi: [5, 5, 6, 6], ..q.clone() }).is_err() && b64_decode("@@").is_err());
+    assert_eq!(b64_decode(&b64_encode(b"Datum")).unwrap(), b"Datum");
+    // The made-up example: particles are found, the data bar is left out by the region.
+    let (ew, eh, ep) = example();
+    let e = analyse(&Ask { w: ew, h: eh, px: b64_encode(&ep), roi: [0, 0, ew, 440], smooth: 1, scale: 0.5, ..Default::default() }).unwrap();
+    assert!(e.stats.count >= 50 && e.stats.count <= 60 && e.stats.mean.is_some_and(|d| d > 6.0 && d < 14.0), "{:?}", e.stats);
+}

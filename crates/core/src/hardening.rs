@@ -394,3 +394,16 @@ fn random_lab_data_never_panics() {
         if l.validate().is_ok() { assert!(o.fatigue.strength.is_none_or(|v| !v.is_nan()) && o.creep.stress.is_none_or(|v| !v.is_nan()), "{l:?}"); }
     }
 }
+
+#[test]
+fn random_images_never_panic() {
+    use crate::image::{analyse, b64_encode, Ask};
+    let mut r = Rng(0x2545_F491_4F6C_DD1D);
+    for _ in 0..300 {
+        let (w, h) = (1 + r.below(40) as usize, 1 + r.below(40) as usize);
+        let px: Vec<u8> = (0..w * h).map(|_| r.below(256) as u8).collect();
+        let q = Ask { w, h, px: if r.below(10) == 0 { "!!".into() } else { b64_encode(&px) }, scale: r.num(), roi: [r.below(50) as usize, r.below(50) as usize, r.below(50) as usize, r.below(50) as usize],
+            smooth: r.below(3) as u8, threshold: if r.below(2) == 0 { None } else { Some(r.below(256) as u8) }, dark: r.below(2) == 0, min_area: r.below(5) as usize, edge: r.below(2) == 0 };
+        if let Ok(a) = analyse(&q) { assert!(a.fraction.is_finite() && a.particles.iter().all(|p| p.ecd.is_finite() && p.circ.is_finite())); }
+    }
+}

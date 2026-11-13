@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -233,6 +233,20 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.click(".dlg footer .btn.pri"); await p.waitForTimeout(400);
   check("…and it is saved with its values", (await p.textContent(".sheetpage h1").catch(() => "")).includes("(tested)"), await p.textContent("#toast").catch(() => "") + " / " + (await p.textContent(".dlg").catch(() => "")).slice(0, 400));
   if (await p.$(".dlg")) { await p.keyboard.press("Escape"); await p.waitForTimeout(200); }
+  // Microstructure › Images: the made-up image, its particles, a manual threshold, the bright phase.
+  await goTo(p, "Images");
+  check("Image analysis starts empty and says how to begin", (await p.textContent(".imgpage .tempty")).includes("Open a micrograph"));
+  await p.click(".imgpage .iex"); await p.waitForSelector(".imgpage .ires"); await p.waitForTimeout(400);
+  const icount = +(await p.textContent(".imgpage .icount"));
+  check("the made-up image's particles are found and measured in µm", icount >= 50 && icount <= 60 && (await p.textContent(".imgpage .iecd")).includes("µm") && (await p.$$(".imgpage .isize rect")).length > 3, String(icount));
+  const f0 = await p.textContent(".imgpage .ifrac");
+  await p.click(".imgpage .iauto"); await p.fill(".imgpage .ithr", "20"); await p.dispatchEvent(".imgpage .ithr", "input"); await p.waitForTimeout(400);
+  check("a hand-set threshold changes the area fraction", (await p.textContent(".imgpage .ifrac")) !== f0, f0 + " → " + await p.textContent(".imgpage .ifrac"));
+  await p.click(".imgpage .iauto"); await p.waitForTimeout(300);
+  await p.fill(".imgpage .iscale", "0"); await p.press(".imgpage .iscale", "Tab"); await p.waitForTimeout(300);
+  check("without a scale the sizes are in pixels and a note says so", (await p.textContent(".imgpage .iecd")).includes("px") && (await p.textContent(".imgpage")).includes("Not calibrated"));
+  await p.fill(".imgpage .iscale", "0.5"); await p.press(".imgpage .iscale", "Tab"); await p.waitForTimeout(300);
+  await shot("images");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");
