@@ -13,7 +13,7 @@ const srv = http.createServer((q, r) => {
 const exe = path.join(__dirname, "../target/debug/examples/bridge" + (process.platform === "win32" ? ".exe" : ""));
 const eng = spawn(exe, [], { stdio: ["pipe", "pipe", "inherit"] }), waiting = [];
 readline.createInterface({ input: eng.stdout }).on("line", l => waiting.shift()(JSON.parse(l)));
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -32,7 +32,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "Northwind Engineering", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "0.3.3", copy_text: null, save_file: null };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile"];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (engine.includes(c)) { const r = await window.__engine(c, a); if ("err" in r) throw r.err; return r.ok; }
       if (c === "set_options") return (await window.__engine("state", {})).ok;
@@ -154,6 +154,9 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await shot("ebsdgrains", [[".ebsdpage canvas", 1], [".ebsdpage .gkind", 2], [".ebsdpage .gtol", 3], [".ebsdpage .gload", 4], [".ebsdpage .gres", 5]]);
   await side("Pole figures"); await wait(5000);
   await shot("polefig", [[".pfpage .pfphase", 1], [".pfpage .pfrow", 2], [".pfpage .panel:last-child .pfrow", 3]]);
+  await side("Strain maps"); await p.click(".dicpage .dex"); await wait(2500);
+  { const b = await p.$eval(".dicpage .dov", c => { const r = c.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }); await p.mouse.click(b[0] + b[2] * 0.1, b[1] + b[3] * 0.6); await p.mouse.click(b[0] + b[2] * 0.9, b[1] + b[3] * 0.6); await wait(800); }
+  await shot("dic", [[".dicpage .dopen", 1], [".dicpage .dwrap", 2], [".dicpage .dkey", 3], [".dicpage .dprof", 4], [".dicpage .dstats", 5]]);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

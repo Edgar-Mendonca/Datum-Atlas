@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -155,7 +155,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(500);
   check("“Typical structure” opens the Microstructure module on that material", (await p.textContent(".side .modsw")).includes("Micro") && !!(await p.$(".structpage .focus .micro svg")) && (await p.$$(".structpage .scard")).length >= 30);
   await p.click(".side .modsw");
-  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("DIC (0.3.17)"));
+  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Corrosion (0.3.19)"));
   await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
   // Crystal › Elements: the periodic table, an element card, colour by a property, composition.
   await goTo(p, "Elements");
@@ -315,6 +315,17 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("pole figures of the three plane families, the half-Goss map clearly textured", mx.length === 3 && mx.every(v => v > 3), JSON.stringify(mx));
   check("inverse pole figures of X, Y and Z", (await p.$$(".pfpage .pf")).length === 6 && (await p.$$(".pfpage .pf circle[fill^='rgb']")).length > 100);
   await shot("polefig");
+  // DIC › Strain maps: a field with εxx 1 % and εyy −0.5 %; a profile; the made-up field.
+  const didle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".dicpage .dbusy")) ? 0 : quiet + 1; } };
+  await goTo(p, "Strain maps");
+  check("DIC starts empty and says what it opens", (await p.textContent(".dicpage .tempty")).includes("x, y, u and v"));
+  await p.click(".dicpage .dopen"); await p.waitForSelector(".dicpage .dstats"); await didle();
+  check("a displacement field gives its strains (εxx 1 %, εyy −0.5 %)", (await p.textContent(".dicpage .dexx")) === "1.000 %" && (await p.textContent(".dicpage .deyy")) === "-0.500 %" && (await p.textContent(".dicpage .dexy")) === "0.000 %", await p.textContent(".dicpage .dstats"));
+  await p.click(".dicpage .dex"); await didle();
+  const db = await p.$eval(".dicpage .dov", c => { const r = c.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });
+  await p.mouse.click(db[0] + db[2] * 0.1, db[1] + db[3] * 0.5); await p.mouse.click(db[0] + db[2] * 0.9, db[1] + db[3] * 0.5); await p.waitForTimeout(500);
+  check("two clicks draw a profile along the line", !!(await p.$(".dicpage .dprof polyline")));
+  await shot("dic");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");
@@ -539,7 +550,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
   const at = t => tiles.indexOf(t);
-  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Testing", "EBSD", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
+  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Testing", "EBSD", "DIC", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
   await p.click(".bs aside .back");
   await p.waitForTimeout(200);
 

@@ -47,6 +47,8 @@ impl Default for Options {
 struct App {
     /// The EBSD map open in Crystal › EBSD (not saved in the project).
     ebsd: Option<datum_atlas_core::ebsd::Ebsd>,
+    /// The displacement field open in DIC (not saved in the project).
+    dic: Option<datum_atlas_core::dic::Dic>,
     doc: Doc,
     opts: Options,
     rev: u64,
@@ -221,6 +223,38 @@ async fn ebsd_figure(st: State<'_, St>, kind: String, phase: u8, of: String) -> 
     let a = st.lock();
     let m = a.ebsd.as_ref().ok_or("Open an EBSD map first.")?;
     if kind == "ipf" { m.inverse_pole_figure(phase, &of) } else { m.pole_figure(phase, &of, 41) }
+}
+
+/// Open a displacement field (CSV, text or spreadsheet with x, y, u, v); returns its summary.
+#[tauri::command]
+async fn dic_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<datum_atlas_core::dic::Summary>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Displacement field", &["csv", "txt", "dat", "xlsx"])) else { return Ok(None) };
+    let t = sheet::read(&path)?;
+    let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect();
+    let d = datum_atlas_core::dic::parse(&raw, &path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())?;
+    let s = d.summary();
+    st.lock().dic = Some(d);
+    Ok(Some(s))
+}
+
+/// A made-up displacement field.
+#[tauri::command]
+fn dic_example(st: State<St>) -> datum_atlas_core::dic::Summary { let d = datum_atlas_core::dic::example(); let s = d.summary(); st.lock().dic = Some(d); s }
+
+/// A strain component of the open field: picture, colour range and statistics.
+#[tauri::command]
+fn dic_draw(st: State<St>, key: String) -> R<Value> {
+    let a = st.lock();
+    let d = a.dic.as_ref().ok_or("Open a displacement field first.")?;
+    let (rgb, range) = d.draw(&key, None);
+    Ok(json!({ "w": d.w, "h": d.h, "rgb": rgb, "range": range, "stats": datum_atlas_core::dic::COMPONENTS.iter().map(|c| d.stats(c.0)).collect::<Vec<_>>() }))
+}
+
+/// A strain component along a line between two grid points.
+#[tauri::command]
+fn dic_profile(st: State<St>, key: String, a: [f64; 2], b: [f64; 2]) -> R<Vec<[f64; 2]>> {
+    let s = st.lock();
+    Ok(s.dic.as_ref().ok_or("Open a displacement field first.")?.profile(&key, a, b, 200))
 }
 
 /// A synthetic grain map as an orientation map in text.
@@ -767,7 +801,7 @@ fn main() {
             let all: Vec<Database> = others.iter().map(|o| o.1.clone()).collect();
             let db = Db::new(db::builtin(), Some(&user)).with_others(&all);
             let p = fresh(&db, &opts, None).unwrap_or_default();
-            app.manage(St(Mutex::new(App { ebsd: None, doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
+            app.manage(St(Mutex::new(App { ebsd: None, dic: None, doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
             Ok(())
         })
         .on_window_event(|w, e| {
@@ -781,7 +815,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

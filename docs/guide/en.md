@@ -2,7 +2,7 @@
 
 ## Welcome
 
-Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure**, **Crystal**, **Testing** and **EBSD**; image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
+Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure**, **Crystal**, **Testing**, **EBSD** and **DIC**; image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
 
 The Select module helps you choose a material and show why it is the right one. Every material is drawn on property charts as a bubble spanning its range of values; design goals and performance indices turn what the part must do into a line on the chart; limits, lines, boxes and shapes narrow the field; and the materials that pass are ranked, with the reason every other one fails. Then you compare the best, add up their energy and CO₂ through the product's life, find the processes that can make the part and what it costs, and print a report that documents the choice.
 
@@ -95,6 +95,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures, Images | The typical structure of every class of material; image analysis of your micrographs |
 | **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
+| **DIC** | Strain maps | Strain maps from displacement fields, statistics and profiles |
 | **EBSD** | Maps, Grains, Pole figures | Orientation maps from EBSD exports; grains, boundaries, twins, KAM, Schmid factors |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
@@ -288,6 +289,18 @@ A map on a hexagonal grid is shown on a square grid of the same step.
 1. **Phase:** the phase to plot.
 2. **Pole figures:** where the normals of the {100}, {110} and {111} planes (cubic; {0001}, {101̄0} and {112̄0} for hexagonal) point in the sample, seen down Z with X to the right and Y up. The shading is the density in multiples of a random distribution (1 everywhere for no texture); the caption gives the strongest peak. **Show the poles as points** to see single grains.
 3. **Inverse pole figures** of X, Y and Z: which crystal directions lie along each, in the standard triangle and their IPF colours.
+
+## DIC: strain maps
+
+![DIC › Strain maps: the made-up field's equivalent strain, with a profile across the shear bands.](img/dic.png)
+
+1. **Open a displacement field** exported by your DIC software: a CSV, text or spreadsheet file with columns x, y, u and v in one length unit. Headings such as x, y, u, v or ux, uy are found; without headings the first four columns are taken in that order. **Example (made-up field)** opens 2 % tension with two shear bands.
+2. **The map** of the chosen component, with grey where there is no displacement. Click two points for a profile along the line between them.
+3. **Show:** εxx, εyy, εxy, the principal strains ε1 and ε2, the maximum shear, the von Mises equivalent strain, the rotation, or the displacements. Signed components use a blue–white–red scale centred on zero.
+4. **The profile** of the component along the line.
+5. **Statistics** of every component: mean, standard deviation, 5 % and 95 % values, lowest and highest.
+
+Strains are small-strain gradients by central differences on the grid; the equivalent strain takes εzz = −(εxx + εyy). Strain by grain, linked to an EBSD map, comes next.
 
 ## Crystal: the elements
 

@@ -1,6 +1,6 @@
 [package]
 name = "datum-atlas"
-version = "0.3.16"
+version = "0.3.17"
 edition = "2021"
 description = "Datum Atlas: materials selection and property charts for Windows."
 license = "MIT"

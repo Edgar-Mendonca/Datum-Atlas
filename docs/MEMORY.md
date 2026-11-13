@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.16** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.16). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.17** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.17). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -96,6 +96,7 @@ flowchart LR
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
 | `docs/guide/en.md`, `img/`, `pdf/` | The Datum Atlas Guide: Markdown source (English), screenshots, the built PDF (attached to every release as `DatumAtlas-Guide-en.pdf`). `npm run guide` remakes the screenshots (`tests_ui/guide_shots.cjs`, the bridge with a bracket project) and the PDF (`scripts/guide.cjs`, Chromium, from Datum Plan's). |
+| `crates/core/src/dic.rs`, `ui/src/dic.tsx` | DIC displacement fields and strains (the field lives in the shell); the DIC module. |
 | `crates/core/src/ebsd.rs`, `ui/src/ebsd.tsx` | EBSD maps: reading exports, drawing maps (the open map lives in the shell); the EBSD module. |
 | `crates/core/src/orient.rs` | Orientations: Euler angles, symmetry, misorientation, textures, IPF colours (used by the generator and EBSD). |
 | `crates/core/src/synth.rs`, `ui/src/synth.tsx` | Synthetic grain maps; the Microstructure › Generator page. |
@@ -211,8 +212,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.14** | EBSD 1 | `ebsd.rs` (read .ang with phases/symmetry/steps, .ctf with phase table and Laue groups, Datum Atlas maps; square grid, hex grid shown square; unindexed = phase 0; draw ipf/phase/quality/confidence as RGB; made-up example from the generator); the map lives in the shell (`App.ebsd`), not the project; EBSD module › Maps (`ebsd.tsx`) | ✅ |
 | **0.3.15** | EBSD 2 | `ebsd.rs` grains (flood fill under a tolerance, smallest size), boundaries (low ≥ 2°, high ≥ 15°, Σ3 by `orient::is_sigma3` with Brandon), KAM (< 5°), Schmid (`orient::slip_systems` fcc/bcc/basal/prismatic), stats and pictures; EBSD › Grains page | ✅ |
 | **0.3.16** | EBSD 3 | `ebsd.rs` pole figures (families per crystal, up to 4,000 orientations, 5° Gaussian axial density in mrd on a 41 × 41 grid) and inverse pole figures (sample direction reduced to the standard triangle); EBSD › Pole figures page | ✅ |
-| 0.3.17 | DIC 1 | Strain maps from displacement fields, statistics and profiles. | 🔜 |
-| 0.3.18 | DIC 2 | Strain by grain linked to EBSD, with slip traces. | ⬜ |
+| **0.3.17** | DIC 1 | `dic.rs` (parse x, y, u, v tables onto a grid with gaps; central differences; εxx, εyy, εxy, ε1, ε2, γmax, ω, von Mises with εzz = −(εxx + εyy); stats with 5/95 %; diverging or sequential pictures with 1–99 % range; bilinear profiles; made-up field); the field lives in the shell (`App.dic`); DIC module › Strain maps (`dic.tsx`) | ✅ |
+| 0.3.18 | DIC 2 | Strain by grain linked to EBSD, with slip traces. | 🔜 |
 | 0.3.19 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance. | ⬜ |
 | 0.3.20 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule. | ⬜ |
 | later | Pending from PLAN-0.4.0 | Display and export, processes by alloy type, metal and polymer grades and checks, equivalent designations, hybrids, restricted and critical substances; fracture; mesh export to Datum Mesh; download-on-demand data; HDF5 and makers' formats; 3D | ⬜ |
@@ -561,13 +562,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Poles in sample axes are gᵀ·n; inverse pole figures reduce g·s to the standard triangle and scale it like the IPF key.
 - Released 0.3.16.
 
+### 2026-11-13: Session 18, continued (0.3.17: DIC strain maps)
+- Strains are small-strain gradients by central differences (one-sided at edges and next to gaps). The equivalent strain uses εzz = −(εxx + εyy) (no volume change), which suits plastic strain.
+- Fixture `tests_ui/field.csv` is made up (εxx 1 %, εyy −0.5 %).
+- Released 0.3.17.
+
 ---
 
 - 2026-11-13: Outside projects (the user's university repositories and others) are used for ideas and to check results only. Atlas writes its own code from textbook methods and published papers, cited like values; no code or data files are copied, so no code credit is owed.
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.17: DIC 1: strain maps from displacement fields, statistics and profiles.
+**Next:** 0.3.18: DIC 2: strain by grain linked to EBSD, with slip traces.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

@@ -430,3 +430,13 @@ fn damaged_ebsd_exports_never_panic() {
         for name in ["a.ang", "a.ctf", "a.txt"] { if let Ok(m) = crate::ebsd::parse(&s, name) { let _ = m.draw("ipf", "z"); let _ = m.summary(); } }
     }
 }
+
+#[test]
+fn damaged_dic_tables_never_panic() {
+    let mut r = Rng(0x0F1E_2D3C_4B5A_6978);
+    let vals = ["0", "1", "-1", "2", "1e300", "NaN", "x", "", "0.5", "1e-300", "inf"];
+    for _ in 0..300 {
+        let rows: Vec<Vec<String>> = (0..r.below(40)).map(|_| (0..r.below(6)).map(|_| r.pick(&vals).to_string()).collect()).collect();
+        if let Ok(d) = crate::dic::parse(&rows, "r") { for k in ["exx", "eeq", "gmax"] { let _ = d.stats(k); let _ = d.draw(k, None); let _ = d.profile(k, [0.0, 0.0], [5.0, 5.0], 10); } }
+    }
+}

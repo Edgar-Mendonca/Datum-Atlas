@@ -6,7 +6,7 @@ use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, eco, proc
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
-struct St { ebsd: Option<datum_atlas_core::ebsd::Ebsd>, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
+struct St { ebsd: Option<datum_atlas_core::ebsd::Ebsd>, dic: Option<datum_atlas_core::dic::Dic>, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
 
 /// A file of the UI tests, when the window asks without a path (the shell would open a dialog).
 fn fixture(a: &Value, name: &str) -> String { a["path"].as_str().map(String::from).unwrap_or_else(|| format!("{}/../../tests_ui/{name}", env!("CARGO_MANIFEST_DIR"))) }
@@ -50,6 +50,10 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "ebsd_draw" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; json!({ "w": m.w, "h": m.h, "rgb": m.draw(a["kind"].as_str().unwrap_or("ipf"), a["dir"].as_str().unwrap_or("z"))? }) }
         "ebsd_grains" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; let q: datum_atlas_core::ebsd::GrainAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let (rgb, o) = m.draw_grains(a["kind"].as_str().unwrap_or("grains"), &q)?; json!({ "w": m.w, "h": m.h, "rgb": rgb, "out": o }) }
         "ebsd_figure" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; let (ph, of) = (a["phase"].as_u64().unwrap_or(1) as u8, a["of"].as_str().unwrap_or("100")); json!(if a["kind"] == "ipf" { m.inverse_pole_figure(ph, of)? } else { m.pole_figure(ph, of, 41)? }) }
+        "dic_open" => { let p = fixture(a, "field.csv"); let t = sheet::read(std::path::Path::new(&p))?; let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect(); let d = datum_atlas_core::dic::parse(&raw, "field.csv")?; let v = json!(d.summary()); s.dic = Some(d); v }
+        "dic_example" => { let d = datum_atlas_core::dic::example(); let v = json!(d.summary()); s.dic = Some(d); v }
+        "dic_draw" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let k = a["key"].as_str().unwrap_or("exx"); let (rgb, range) = d.draw(k, None); json!({ "w": d.w, "h": d.h, "rgb": rgb, "range": range, "stats": datum_atlas_core::dic::COMPONENTS.iter().map(|c| d.stats(c.0)).collect::<Vec<_>>() }) }
+        "dic_profile" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let pa: [f64; 2] = serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?; let pb: [f64; 2] = serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?; json!(d.profile(a["key"].as_str().unwrap_or("exx"), pa, pb, 200)) }
         "lab_example" => json!(datum_atlas_core::lab::example()),
         "test_material" => json!(datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&s.doc.p.tensile), &datum_atlas_core::lab::run(&s.doc.p.lab), a["name"].as_str().unwrap_or(""), a["src"].as_str().unwrap_or(""))),
         "tensile_example" => json!(datum_atlas_core::tensile::example()),
@@ -95,7 +99,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
 fn main() {
     let user = Database { format: FORMAT, name: "My materials".into(), ..Default::default() };
     let d = Db::new(db::builtin(), Some(&user));
-    let mut s = St { ebsd: None, doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
+    let mut s = St { ebsd: None, dic: None, doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
     let stdout = std::io::stdout();
     for line in std::io::stdin().lock().lines().map_while(Result::ok) {
         let q: Value = serde_json::from_str(&line).unwrap_or_default();

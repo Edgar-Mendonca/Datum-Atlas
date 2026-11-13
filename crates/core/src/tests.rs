@@ -1109,3 +1109,31 @@ fn pole_figures_show_texture() {
     assert!(fib.points.iter().filter(|p| (p[0] - 0.887).hypot(p[1] - 0.887) < 0.25).count() * 10 > fib.points.len() * 8, "{:?}", &fib.points[..5]);
     assert!(cube.pole_figure(2, "100", 41).is_err() && family("hex", "0001").len() == 1);
 }
+
+#[test]
+fn dic_strains_from_a_known_field() {
+    use crate::dic::*;
+    // u = 0.02 x + 0.004 y, v = 0.006 x − 0.01 y: εxx 0.02, εyy −0.01, εxy 0.005, ω 0.001 everywhere.
+    let mut rows = vec![vec!["X [µm]".to_string(), "Y [µm]".into(), "U [µm]".into(), "V [µm]".into()]];
+    for j in 0..20 { for i in 0..30 { let (x, y) = (i as f64 * 2.0, j as f64 * 2.0); if (i, j) == (10, 10) { continue } rows.push([x, y, 0.02 * x + 0.004 * y, 0.006 * x - 0.01 * y].map(|v| v.to_string()).to_vec()); } }
+    let d = parse(&rows, "f.csv").unwrap();
+    assert!((d.w, d.h) == (30, 20) && (d.dx - 2.0).abs() < 1e-12 && !d.notes.is_empty() && d.summary().valid < 100.0);
+    let near = |v: Option<f64>, x: f64| v.is_some_and(|v| (v - x).abs() < 1e-9);
+    for (k, x) in [("exx", 0.02), ("eyy", -0.01), ("exy", 0.005), ("rot", 0.001)] { let s = d.stats(k); assert!(near(s.mean, x) && near(s.min, x) && near(s.max, x), "{k}: {s:?}") }
+    let (c, r) = (0.005, (0.015f64.powi(2) + 0.005f64.powi(2)).sqrt());
+    assert!(near(d.stats("e1").mean, c + r) && near(d.stats("e2").mean, c - r) && near(d.stats("gmax").mean, r));
+    let zz = -0.01;
+    assert!(near(d.stats("eeq").mean, (2.0 / 3.0 * (0.02f64.powi(2) + 0.0001 + zz * zz + 2.0 * 0.005f64.powi(2))).sqrt()));
+    assert!(d.field("exx")[10 * 30 + 10].is_nan(), "a lost point is blank");
+    let pr = d.profile("exx", [0.0, 5.0], [29.0, 5.0], 30);
+    assert!((pr[29][0] - 58.0).abs() < 1e-9 && pr.iter().all(|p| (p[1] - 0.02).abs() < 1e-9));
+    let (_, rg) = d.draw("exx", None);
+    assert!(rg[0] < 0.0 && rg[1] > 0.0 && (rg[1] + rg[0]).abs() < 1e-12);
+    // Without headings: x, y, u, v in that order. Too few points or no grid: refused.
+    let plain: Vec<Vec<String>> = rows[1..].to_vec();
+    assert!(parse(&plain, "p.txt").is_ok_and(|p| (p.w, p.h) == (30, 20)));
+    assert!(parse(&rows[..5], "s").is_err() && parse(&vec![vec!["1".to_string(), "1".into(), "0".into(), "0".into()]; 20], "g").is_err());
+    // The made-up field: mean εxx near 2 %.
+    let e = example();
+    assert!(e.stats("exx").mean.is_some_and(|m| (m - 0.02).abs() < 0.01) && e.stats("eeq").max.is_some_and(|m| m > 0.03));
+}

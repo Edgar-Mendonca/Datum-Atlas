@@ -29,6 +29,7 @@ import { CreepPage, FatiguePage, HardnessPage } from "./lab";
 import { ImagesPage } from "./imaging";
 import { SynthPage } from "./synth";
 import { GrainsPage, MapsPage, PoleFiguresPage } from "./ebsd";
+import { StrainPage } from "./dic";
 import { MODULES, PLANNED, moduleOf } from "./modules";
 import { feature } from "./features";
 import { soon } from "./roadmap";
@@ -136,6 +137,7 @@ const App = () => {
               <Match when={view() === "ebsd"}><MapsPage /></Match>
               <Match when={view() === "ebsdgrains"}><GrainsPage /></Match>
               <Match when={view() === "polefig"}><PoleFiguresPage /></Match>
+              <Match when={view() === "dic"}><StrainPage /></Match>
               <Match when={view() === "elements"}><ElementsPage /></Match>
               <Match when={view() === "calc"}><CalcPage /></Match>
               <Match when={view() === "tensile"}><TensilePage /></Match>

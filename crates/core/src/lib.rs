@@ -7,6 +7,7 @@ pub mod crystal;
 pub mod db;
 pub mod formula;
 pub mod doc;
+pub mod dic;
 pub mod ebsd;
 pub mod eco;
 pub mod elements;

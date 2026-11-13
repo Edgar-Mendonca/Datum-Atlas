@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.17 — 2026-11-13
+
+A new module, DIC: strain maps from digital image correlation displacement fields.
+
+**DIC › Strain maps**
+- Opens a displacement field exported by DIC software: CSV, text or a spreadsheet with columns x, y, u and v in one length unit (headings are found; without them the first four columns are taken in that order). Lines of heading at the top are skipped.
+- Works out every strain component by central differences (small strain): εxx, εyy, εxy, the principal strains ε1 and ε2, the maximum shear, the rotation and the von Mises equivalent strain; or shows the displacements.
+- Draws the chosen component with its colour scale (blue–white–red for signed components, centred on zero), with grey where there is no displacement.
+- A table of every component: mean, standard deviation, 5 % and 95 % values, lowest and highest.
+- Click two points on the map for a profile along the line between them.
+- **Example (made-up field)**: 2 % tension with two shear bands.
+
+**Checked**
+- A field with u = 0.02x + 0.004y and v = 0.006x − 0.01y gives εxx 2 %, εyy −1 %, εxy 0.5 %, rotation 0.001 and the right principal, shear and equivalent strains everywhere; a lost point stays blank; damaged tables never crash.
+
 ## 0.3.16 — 2026-11-13
 
 EBSD gains pole figures and inverse pole figures.
