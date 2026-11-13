@@ -310,3 +310,83 @@ impl Ebsd {
         Ok((b64_encode(&px), out))
     }
 }
+
+/// A pole figure or inverse pole figure: points (x, y in the unit circle, stereographic, upper
+/// hemisphere) and, for pole figures, a density grid in multiples of a random distribution (mrd).
+#[derive(Debug, Clone, Default, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Figure { pub family: String, pub crystal: String, pub orientations: usize, pub points: Vec<[f32; 2]>, pub colours: Vec<[u8; 3]>, pub grid: usize, pub density: Vec<f32>, pub max_mrd: f32 }
+
+/// The plane normals of a family in crystal axes (one of each ± pair).
+pub fn family(crystal: &str, f: &str) -> Vec<[f64; 3]> {
+    let u = |v: [f64; 3]| { let n = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt(); v.map(|x| x / n) };
+    let c30 = 3f64.sqrt() / 2.0;
+    match (crystal, f) {
+        ("hex", "0001") => vec![[0.0, 0.0, 1.0]],
+        ("hex", "10-10") => vec![[0.0, 1.0, 0.0], [c30, -0.5, 0.0], [-c30, -0.5, 0.0]],
+        ("hex", _) => vec![[1.0, 0.0, 0.0], [-0.5, c30, 0.0], [-0.5, -c30, 0.0]],
+        (_, "110") => [[1.0, 1.0, 0.0], [1.0, -1.0, 0.0], [1.0, 0.0, 1.0], [1.0, 0.0, -1.0], [0.0, 1.0, 1.0], [0.0, 1.0, -1.0]].map(u).into(),
+        (_, "111") => [[1.0, 1.0, 1.0], [-1.0, 1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, -1.0]].map(u).into(),
+        _ => vec![[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]],
+    }
+}
+
+fn stereo(v: [f64; 3]) -> [f32; 2] { let v = if v[2] < 0.0 { v.map(|x| -x) } else { v }; [(v[0] / (1.0 + v[2])) as f32, (v[1] / (1.0 + v[2])) as f32] }
+
+impl Ebsd {
+    /// Orientations of one phase, thinned evenly to at most `max`.
+    fn orients(&self, phase: u8, max: usize) -> Vec<orient::M3> {
+        let ks: Vec<usize> = (0..self.w * self.h).filter(|&k| self.phase[k] == phase).collect();
+        let step = ks.len().div_ceil(max.max(1)).max(1);
+        ks.iter().step_by(step).map(|&k| self.g(k)).collect()
+    }
+    /// The pole figure of a plane family (cubic "100", "110", "111"; hexagonal "0001", "10-10", "11-20") for one phase.
+    pub fn pole_figure(&self, phase: u8, fam: &str, grid: usize) -> Result<Figure, String> {
+        let crystal = self.crystal(phase).to_string();
+        let os = self.orients(phase, 4000);
+        if os.is_empty() { return Err("That phase has no indexed points.".into()) }
+        let ns = family(&crystal, fam);
+        let poles: Vec<[f64; 3]> = os.iter().flat_map(|g| { let gt = orient::tr(g); ns.iter().map(move |n| orient::apply(&gt, *n)).collect::<Vec<_>>() }).collect();
+        // Density: a Gaussian of 5° on the angle to each pole (axial), in multiples of random.
+        let sig = 5f64.to_radians();
+        let n = grid.clamp(11, 101);
+        let mut dens = vec![0f32; n * n];
+        let mut mx = 0f32;
+        for j in 0..n { for i in 0..n {
+            let (x, y) = (2.0 * i as f64 / (n - 1) as f64 - 1.0, 1.0 - 2.0 * j as f64 / (n - 1) as f64);
+            let r2 = x * x + y * y;
+            if r2 > 1.0 { dens[j * n + i] = f32::NAN; continue }
+            let v = [2.0 * x / (1.0 + r2), 2.0 * y / (1.0 + r2), (1.0 - r2) / (1.0 + r2)];
+            let sum: f64 = poles.iter().map(|p| { let c = (v[0] * p[0] + v[1] * p[1] + v[2] * p[2]).abs().min(1.0); let t = c.acos(); if t < 4.0 * sig { (-t * t / (2.0 * sig * sig)).exp() } else { 0.0 } }).sum();
+            let m = (sum / (poles.len() as f64 * sig * sig)) as f32;
+            dens[j * n + i] = m;
+            mx = mx.max(m);
+        }}
+        let shown: Vec<[f32; 2]> = poles.iter().take(6000).map(|p| stereo(*p)).collect();
+        Ok(Figure { family: fam.into(), crystal, orientations: os.len(), points: shown, colours: vec![], grid: n, density: dens, max_mrd: mx })
+    }
+    /// The inverse pole figure of a sample direction for one phase: points in the standard triangle (scaled as the IPF key), in their colours.
+    pub fn inverse_pole_figure(&self, phase: u8, dir: &str) -> Result<Figure, String> {
+        let crystal = self.crystal(phase).to_string();
+        let os = self.orients(phase, 6000);
+        if os.is_empty() { return Err("That phase has no indexed points.".into()) }
+        let s = match dir { "x" => [1.0, 0.0, 0.0], "y" => [0.0, 1.0, 0.0], _ => [0.0, 0.0, 1.0] };
+        let rm = if crystal == "hex" { 1.0 } else { 0.4142 };
+        let mut pts = vec![];
+        let mut cols = vec![];
+        for g in &os {
+            let d = orient::apply(g, s);
+            let a = d.map(f64::abs);
+            let v = if crystal == "hex" {
+                let phi = a[1].atan2(a[0]).to_degrees().rem_euclid(60.0);
+                let phi = if phi > 30.0 { 60.0 - phi } else { phi }.to_radians();
+                let rho = (a[0] * a[0] + a[1] * a[1]).sqrt();
+                [rho * phi.cos(), rho * phi.sin(), a[2]]
+            } else { let mut t = a; t.sort_by(f64::total_cmp); [t[1], t[0], t[2]] }; // x ≥ y, z largest
+            let st = stereo(v);
+            pts.push([st[0] / rm as f32, st[1] / rm as f32]);
+            cols.push(orient::ipf(g, s, &crystal));
+        }
+        Ok(Figure { family: dir.into(), crystal, orientations: os.len(), points: pts, colours: cols, grid: 0, density: vec![], max_mrd: 0.0 })
+    }
+}

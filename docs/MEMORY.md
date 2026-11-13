@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.15** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.15). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.16** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.16). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -210,8 +210,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.13** | Synthetic structures 2 | `orient.rs` (Bunge Euler ↔ matrix, axis–angle, cubic/hex symmetry, misorientation, Shoemake random, components and fibres, IPF colours and key); generator textures with share and scatter, IPF colouring, texture and boundary misorientation measured back, orientation map as text | ✅ |
 | **0.3.14** | EBSD 1 | `ebsd.rs` (read .ang with phases/symmetry/steps, .ctf with phase table and Laue groups, Datum Atlas maps; square grid, hex grid shown square; unindexed = phase 0; draw ipf/phase/quality/confidence as RGB; made-up example from the generator); the map lives in the shell (`App.ebsd`), not the project; EBSD module › Maps (`ebsd.tsx`) | ✅ |
 | **0.3.15** | EBSD 2 | `ebsd.rs` grains (flood fill under a tolerance, smallest size), boundaries (low ≥ 2°, high ≥ 15°, Σ3 by `orient::is_sigma3` with Brandon), KAM (< 5°), Schmid (`orient::slip_systems` fcc/bcc/basal/prismatic), stats and pictures; EBSD › Grains page | ✅ |
-| 0.3.16 | EBSD 3 | Pole figures and inverse pole figures. | 🔜 |
-| 0.3.17 | DIC 1 | Strain maps from displacement fields, statistics and profiles. | ⬜ |
+| **0.3.16** | EBSD 3 | `ebsd.rs` pole figures (families per crystal, up to 4,000 orientations, 5° Gaussian axial density in mrd on a 41 × 41 grid) and inverse pole figures (sample direction reduced to the standard triangle); EBSD › Pole figures page | ✅ |
+| 0.3.17 | DIC 1 | Strain maps from displacement fields, statistics and profiles. | 🔜 |
 | 0.3.18 | DIC 2 | Strain by grain linked to EBSD, with slip traces. | ⬜ |
 | 0.3.19 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance. | ⬜ |
 | 0.3.20 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule. | ⬜ |
@@ -556,13 +556,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - The example map's grain count is lower than its seeds because half the grains share the Goss texture and neighbours within 10° join; tests check sizes rather than counts.
 - Released 0.3.15.
 
+### 2026-11-13: Session 18, continued (0.3.16: pole figures)
+- Density: for each grid direction v, Σ exp(−θ²/2σ²) over poles with θ the axial angle, divided by N σ² so a uniform distribution gives 1 (σ = 5°).
+- Poles in sample axes are gᵀ·n; inverse pole figures reduce g·s to the standard triangle and scale it like the IPF key.
+- Released 0.3.16.
+
 ---
 
 - 2026-11-13: Outside projects (the user's university repositories and others) are used for ideas and to check results only. Atlas writes its own code from textbook methods and published papers, cited like values; no code or data files are copied, so no code credit is owed.
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.16: EBSD 3: pole figures and inverse pole figures.
+**Next:** 0.3.17: DIC 1: strain maps from displacement fields, statistics and profiles.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

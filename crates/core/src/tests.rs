@@ -1089,3 +1089,23 @@ fn ebsd_grains_boundaries_twins_and_schmid() {
     let (o, ..) = e.analyse(&GrainAsk::default());
     assert!(o.grains as f64 > g.grains as f64 * 0.75 && o.grains <= g.grains && o.mean_ecd.is_some_and(|d| (d - 12.0).abs() < 1.5) && o.high > 90.0, "{} vs {}: {o:?}", o.grains, g.grains);
 }
+
+#[test]
+fn pole_figures_show_texture() {
+    use crate::ebsd::*;
+    let mk = |tex: &str, share: f64| { let q = crate::synth::Ask { w: 120, h: 90, size: 6.0, texture: tex.into(), share, scatter: 4.0, ..Default::default() }; parse(&crate::synth::ebsd_text(&q).unwrap(), "m.txt").unwrap() };
+    // Cube: {100} poles at the centre and on the X and Y edges; a strong peak. Random: weak.
+    let cube = mk("cube", 1.0);
+    let pf = cube.pole_figure(1, "100", 41).unwrap();
+    let at = |x: f32, y: f32| pf.points.iter().filter(|p| (p[0] - x).hypot(p[1] - y) < 0.1).count();
+    assert!(at(0.0, 0.0) > 50 && (at(1.0, 0.0) + at(-1.0, 0.0)) > 50 && at(0.5, 0.5) == 0, "{} {} {}", at(0.0, 0.0), at(1.0, 0.0), at(0.5, 0.5));
+    let rnd = mk("random", 1.0).pole_figure(1, "100", 41).unwrap();
+    assert!(pf.max_mrd > 8.0 && rnd.max_mrd < 6.0 && pf.max_mrd > 2.0 * rnd.max_mrd, "{} {}", pf.max_mrd, rnd.max_mrd);
+    // Inverse pole figure of the normal: Cube sits at [001], the origin of the triangle.
+    let ipf = cube.inverse_pole_figure(1, "z").unwrap();
+    assert!(ipf.points.iter().filter(|p| p[0].hypot(p[1]) < 0.3).count() * 10 > ipf.points.len() * 9 && ipf.colours.len() == ipf.points.len());
+    // A <111> fibre's IPF of Z sits at the [111] corner.
+    let fib = mk("fibre111", 1.0).inverse_pole_figure(1, "z").unwrap();
+    assert!(fib.points.iter().filter(|p| (p[0] - 0.887).hypot(p[1] - 0.887) < 0.25).count() * 10 > fib.points.len() * 8, "{:?}", &fib.points[..5]);
+    assert!(cube.pole_figure(2, "100", 41).is_err() && family("hex", "0001").len() == 1);
+}

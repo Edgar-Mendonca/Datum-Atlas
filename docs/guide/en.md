@@ -95,7 +95,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures, Images | The typical structure of every class of material; image analysis of your micrographs |
 | **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
-| **EBSD** | Maps, Grains | Orientation maps from EBSD exports; grains, boundaries, twins, KAM, Schmid factors |
+| **EBSD** | Maps, Grains, Pole figures | Orientation maps from EBSD exports; grains, boundaries, twins, KAM, Schmid factors |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
@@ -282,7 +282,12 @@ A map on a hexagonal grid is shown on a square grid of the same step.
 4. **Load along** X, Y or Z for the Schmid factor, with FCC or BCC slip systems for cubic phases (hexagonal phases use basal and prismatic <a> slip).
 5. **Results:** grains, their mean equivalent diameter, spread and area (grains on the edge left out), the shares of high-angle, low-angle and Σ3 twin boundaries by length, the boundary length per area, the mean KAM and the mean Schmid factor.
 
-Pole figures come next.
+
+![EBSD › Pole figures: the made-up map's half-Goss texture.](img/polefig.png)
+
+1. **Phase:** the phase to plot.
+2. **Pole figures:** where the normals of the {100}, {110} and {111} planes (cubic; {0001}, {101̄0} and {112̄0} for hexagonal) point in the sample, seen down Z with X to the right and Y up. The shading is the density in multiples of a random distribution (1 everywhere for no texture); the caption gives the strongest peak. **Show the poles as points** to see single grains.
+3. **Inverse pole figures** of X, Y and Z: which crystal directions lie along each, in the standard triangle and their IPF colours.
 
 ## Crystal: the elements
 

@@ -49,6 +49,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "ebsd_example" => { let m = datum_atlas_core::ebsd::example()?; let v = json!(m.summary()); s.ebsd = Some(m); v }
         "ebsd_draw" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; json!({ "w": m.w, "h": m.h, "rgb": m.draw(a["kind"].as_str().unwrap_or("ipf"), a["dir"].as_str().unwrap_or("z"))? }) }
         "ebsd_grains" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; let q: datum_atlas_core::ebsd::GrainAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let (rgb, o) = m.draw_grains(a["kind"].as_str().unwrap_or("grains"), &q)?; json!({ "w": m.w, "h": m.h, "rgb": rgb, "out": o }) }
+        "ebsd_figure" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; let (ph, of) = (a["phase"].as_u64().unwrap_or(1) as u8, a["of"].as_str().unwrap_or("100")); json!(if a["kind"] == "ipf" { m.inverse_pole_figure(ph, of)? } else { m.pole_figure(ph, of, 41)? }) }
         "lab_example" => json!(datum_atlas_core::lab::example()),
         "test_material" => json!(datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&s.doc.p.tensile), &datum_atlas_core::lab::run(&s.doc.p.lab), a["name"].as_str().unwrap_or(""), a["src"].as_str().unwrap_or(""))),
         "tensile_example" => json!(datum_atlas_core::tensile::example()),

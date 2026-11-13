@@ -215,6 +215,14 @@ async fn ebsd_grains(st: State<'_, St>, kind: String, ask: datum_atlas_core::ebs
     Ok(json!({ "w": m.w, "h": m.h, "rgb": rgb, "out": out }))
 }
 
+/// A pole figure ("pf", family) or inverse pole figure ("ipf", sample direction) of one phase of the open EBSD map.
+#[tauri::command]
+async fn ebsd_figure(st: State<'_, St>, kind: String, phase: u8, of: String) -> R<datum_atlas_core::ebsd::Figure> {
+    let a = st.lock();
+    let m = a.ebsd.as_ref().ok_or("Open an EBSD map first.")?;
+    if kind == "ipf" { m.inverse_pole_figure(phase, &of) } else { m.pole_figure(phase, &of, 41) }
+}
+
 /// A synthetic grain map as an orientation map in text.
 #[tauri::command]
 async fn synth_ebsd(ask: datum_atlas_core::synth::Ask) -> R<String> { datum_atlas_core::synth::ebsd_text(&ask) }
@@ -773,7 +781,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.3.16 — 2026-11-13
+
+EBSD gains pole figures and inverse pole figures.
+
+**EBSD › Pole figures**
+- For each phase, the pole figures of the three most used plane families ({100}, {110}, {111} for cubic; {0001}, {101̄0}, {112̄0} for hexagonal), on a stereographic projection seen down Z, shaded by density in multiples of a random distribution, with the strongest peak given.
+- Show the poles as points to see single grains.
+- Inverse pole figures of X, Y and Z: which crystal directions lie along each sample direction, in the standard triangle, in their IPF colours.
+
+**Checked**
+- A Cube texture puts {100} poles at the centre and on the X and Y edges with a strong peak, a random map stays weak, Cube sits at [001] in the inverse pole figure of the normal and a <111> fibre at [111]; the made-up Goss map shows its <001> along X and <110> along the normal.
+
 ## 0.3.15 — 2026-11-13
 
 EBSD gains grains, boundaries, twins, local misorientation and Schmid factors.

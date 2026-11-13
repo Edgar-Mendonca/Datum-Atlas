@@ -1,6 +1,6 @@
 [package]
 name = "datum-atlas-cli"
-version = "0.3.15"
+version = "0.3.16"
 edition = "2021"
 license = "MIT"
 description = "Datum Atlas on the command line: search materials, read datasheets, run selections, the eco audit and process selection, change and export projects."

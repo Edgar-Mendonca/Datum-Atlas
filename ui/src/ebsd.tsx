@@ -128,3 +128,55 @@ export const GrainsPage = () => {
     </div>
   );
 };
+
+interface Figure { family: string; crystal: string; orientations: number; points: [number, number][]; colours: [number, number, number][]; grid: number; density: number[]; maxMrd: number }
+const FAMS: Record<string, [string, string][]> = { cubic: [["100", "{100}"], ["110", "{110}"], ["111", "{111}"]], hex: [["0001", "{0001}"], ["10-10", "{101̄0}"], ["11-20", "{112̄0}"]] };
+/** Density colour: white at 0 mrd through violet to amber at the top. */
+const mrdColour = (v: number, mx: number) => { const t = Math.min(1, Math.log1p(v) / Math.log1p(Math.max(mx, 2))); return t < 0.5 ? `rgb(${255 - 2 * t * 147},${255 - 2 * t * 181},${255 - 2 * t * 73})` : `rgb(${108 + (t - 0.5) * 2 * 134},${74 + (t - 0.5) * 2 * 104},${182 - (t - 0.5) * 2 * 131})`; };
+
+const PoleFigure = (p: { f: Figure; dots: boolean }) => {
+  const n = () => p.f.grid, c = 1 / (p.f.grid - 1);
+  return <figure class="pf"><svg viewBox="-1.18 -1.18 2.36 2.36">
+    <For each={p.f.density.map((v, k) => [v, k] as const).filter(x => Number.isFinite(x[0]) && x[0] > 0.05)}>{([v, k]) => <rect x={2 * (k % n()) * c - 1 - c} y={2 * Math.floor(k / n()) * c - 1 - c} width={2 * c + 0.005} height={2 * c + 0.005} fill={mrdColour(v, p.f.maxMrd)} />}</For>
+    <Show when={p.dots}><For each={p.f.points.slice(0, 2500)}>{q => <circle cx={q[0]} cy={-q[1]} r="0.008" fill="var(--text)" opacity=".5" />}</For></Show>
+    <circle r="1" fill="none" stroke="var(--text2)" stroke-width="0.012" />
+    <text x="1.05" y="0.04" font-size="0.1" fill="var(--text)">X</text><text x="-0.03" y="-1.05" font-size="0.1" fill="var(--text)">Y</text>
+  </svg><figcaption>{FAMS[p.f.crystal]?.find(x => x[0] === p.f.family)?.[1] ?? p.f.family}: max <b class="pfmax">{fx(p.f.maxMrd, 1)}</b> × random</figcaption></figure>;
+};
+const InversePF = (p: { f: Figure }) => {
+  const hex = () => p.f.crystal === "hex";
+  const edge = () => { const pts: string[] = []; if (hex()) { for (let k = 0; k <= 20; k++) { const a = k / 20 * Math.PI / 6; pts.push(`${Math.cos(a)},${-Math.sin(a)}`); } } else { for (let k = 0; k <= 20; k++) { const t = k / 20, v = [1, t, 1], nn = Math.hypot(...v), z = 1 / nn, x = 1 / nn, y = t / nn; pts.push(`${x / (1 + z) / 0.4142},${-(y / (1 + z)) / 0.4142}`); } } return `M0,0 L${hex() ? "1,0" : "1,0"} ${pts.map(q => "L" + q).join(" ")} Z`; };
+  return <figure class="pf"><svg viewBox="-0.12 -1.0 1.25 1.15">
+    <path d={edge()} fill="none" stroke="var(--text2)" stroke-width="0.008" />
+    <For each={p.f.points.slice(0, 3000)}>{(q, i) => <circle cx={q[0]} cy={-q[1]} r="0.012" fill={`rgb(${p.f.colours[i()].join(",")})`} />}</For>
+    <text x="-0.08" y="0.1" font-size="0.07" fill="var(--text)">{hex() ? "[0001]" : "[001]"}</text><text x="0.9" y="0.1" font-size="0.07" fill="var(--text)">{hex() ? "[21̄1̄0]" : "[101]"}</text><text x={hex() ? 0.8 : 0.82} y={hex() ? -0.55 : -0.92} font-size="0.07" fill="var(--text)">{hex() ? "[101̄0]" : "[111]"}</text>
+  </svg><figcaption>Inverse pole figure of {p.f.family.toUpperCase()}</figcaption></figure>;
+};
+
+export const PoleFiguresPage = () => {
+  const [phase, setPhase] = createSignal(1), [dots, setDots] = createSignal(false), [busy, setBusy] = createSignal(false);
+  const [pfs, setPfs] = createSignal<Figure[]>([]), [ipfs, setIpfs] = createSignal<Figure[]>([]);
+  createEffect(on([ebsdMap, phase], async ([m, ph]) => {
+    if (!m) return;
+    const crystal = m.phases[ph - 1]?.[0].crystal ?? "cubic";
+    setBusy(true);
+    try {
+      setPfs(await Promise.all(FAMS[crystal].map(f => invoke<Figure>("ebsd_figure", { kind: "pf", phase: ph, of: f[0] }))));
+      setIpfs(await Promise.all(["x", "y", "z"].map(d => invoke<Figure>("ebsd_figure", { kind: "ipf", phase: ph, of: d }))));
+    } catch (e) { toast(String(e)); setPfs([]); setIpfs([]); }
+    finally { setBusy(false); }
+  }));
+  return (
+    <div class="page ebsdpage pfpage">
+      <h1>Pole figures <Help k="polefig" /></h1>
+      <Show when={ebsdMap()} fallback={<p class="muted tempty">Open a map on the Maps page first.</p>}>{m => <>
+        <div class="ttools"><label>Phase <select class="pfphase" value={phase()} onChange={e => setPhase(+e.currentTarget.value)}><For each={m().phases}>{(p, i) => <option value={i() + 1}>{p[0].name}</option>}</For></select></label>
+          <label><input type="checkbox" checked={dots()} onChange={e => setDots(e.currentTarget.checked)} /> Show the poles as points</label>
+          <Show when={busy()}><span class="muted small pfbusy">working…</span></Show></div>
+        <section class="panel"><h2>Pole figures <span class="muted small" style={{ "text-transform": "none" }}>{pfs()[0]?.orientations ?? 0} orientations, density in multiples of random</span></h2>
+          <div class="pfrow"><For each={pfs()}>{f => <PoleFigure f={f} dots={dots()} />}</For></div></section>
+        <section class="panel"><h2>Inverse pole figures</h2><div class="pfrow"><For each={ipfs()}>{f => <InversePF f={f} />}</For></div></section>
+      </>}</Show>
+    </div>
+  );
+};
