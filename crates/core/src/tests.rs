@@ -981,3 +981,47 @@ fn synthetic_structures_have_what_was_asked() {
     let g = crate::image::analyse(&crate::image::Ask { w: a.w, h: a.h, px: a.grey.clone(), scale: a.step, mode: "grains".into(), ..Default::default() }).unwrap().grains.unwrap();
     assert!(g.mean_ecd.is_some_and(|d| d > 15.0 && d < 32.0), "{g:?}");
 }
+
+#[test]
+fn orientations_match_the_textbook() {
+    use crate::orient::*;
+    for e in [[10.0, 20.0, 30.0], [200.0, 75.0, 310.0], [35.26, 45.0, 0.0]] { let b = to_euler(&from_euler(e)); assert!((0..3).all(|i| (b[i] - e[i]).abs() < 1e-6), "{e:?} → {b:?}") }
+    let (cub, hex) = (symmetry("cubic"), symmetry("hex"));
+    assert_eq!((cub.len(), hex.len()), (24, 12));
+    for m in cub.iter().chain(&hex) { let p = mul(m, &tr(m)); assert!((0..3).all(|i| (0..3).all(|j| (p[i][j] - if i == j { 1.0 } else { 0.0 }).abs() < 1e-9))) }
+    let e = |a| from_euler(a);
+    let (cube, goss, rcube) = (e([0.0, 0.0, 0.0]), e([0.0, 45.0, 0.0]), e([45.0, 0.0, 0.0]));
+    assert!((misorientation(&cube, &goss, &cub) - 45.0).abs() < 1e-6 && (misorientation(&cube, &rcube, &cub) - 45.0).abs() < 1e-6);
+    let twin = mul(&axis_angle([1.0, 1.0, 1.0], 60.0), &goss);
+    assert!((misorientation(&goss, &twin, &cub) - 60.0).abs() < 1e-6, "Σ3 twin is 60°");
+    assert!(misorientation(&cube, &mul(&cub[5], &cube), &cub) < 1e-6, "a symmetry rotation is no misorientation");
+    // Random pairs: no angle above 62.8° and a mean near 40.7° (the cubic random distribution).
+    let mut s = crate::synth::Rng(77);
+    let angs: Vec<f64> = (0..3000).map(|_| { let a = random([s.f(), s.f(), s.f()]); let b = random([s.f(), s.f(), s.f()]); misorientation(&a, &b, &cub) }).collect();
+    let mean = angs.iter().sum::<f64>() / angs.len() as f64;
+    assert!(angs.iter().all(|&a| a <= 62.81) && (mean - 40.7).abs() < 1.0, "{mean}");
+    // IPF colours: Cube's normal is [001] red, Goss's is [011] green, a <111> fibre is blue.
+    assert_eq!(ipf(&cube, [0.0, 0.0, 1.0], "cubic"), [255, 0, 0]);
+    assert_eq!(ipf(&goss, [0.0, 0.0, 1.0], "cubic"), [0, 255, 0]);
+    assert_eq!(ipf(&fibre([1.0, 1.0, 1.0], 33.0), [0.0, 0.0, 1.0], "cubic"), [0, 0, 255]);
+    assert_eq!(ipf(&cube, [0.0, 0.0, 1.0], "hex"), [255, 0, 0]);
+    assert!(ipf_key("cubic", 20).len() > 50 && ipf_key("hex", 20).len() > 50);
+}
+
+#[test]
+fn synthetic_textures_come_back() {
+    use crate::synth::*;
+    let rnd = generate(&Ask::default()).unwrap();
+    assert!(rnd.textured.is_none() && (rnd.mean_mis - 40.7).abs() < 3.0 && rnd.low_angle < 8.0, "{} {}", rnd.mean_mis, rnd.low_angle);
+    let cube = generate(&Ask { texture: "cube".into(), share: 1.0, scatter: 5.0, ..Ask::default() }).unwrap();
+    assert!(cube.textured.is_some_and(|t| t > 90.0) && cube.low_angle > 60.0 && cube.ipf.iter().filter(|c| c[0] > 200).count() * 10 > cube.grains * 8, "{:?} {}", cube.textured, cube.low_angle);
+    let half = generate(&Ask { texture: "goss".into(), share: 0.5, scatter: 5.0, ..Ask::default() }).unwrap();
+    assert!(half.textured.is_some_and(|t| t > 40.0 && t < 62.0), "{:?}", half.textured);
+    let fib = generate(&Ask { texture: "fibre111".into(), scatter: 5.0, ..Ask::default() }).unwrap();
+    assert!(fib.textured.is_some_and(|t| t > 90.0) && fib.ipf.iter().filter(|c| c[2] > 200).count() * 10 > fib.grains * 8);
+    let mg = generate(&Ask { crystal: "hex".into(), texture: "basal".into(), scatter: 5.0, ..Ask::default() }).unwrap();
+    assert!(mg.textured.is_some_and(|t| t > 90.0) && mg.ipf.iter().filter(|c| c[0] > 200).count() * 10 > mg.grains * 8);
+    assert!(generate(&Ask { crystal: "hex".into(), texture: "cube".into(), ..Ask::default() }).is_err() && generate(&Ask { texture: "nope".into(), ..Ask::default() }).is_err());
+    let t = ebsd_text(&Ask { w: 20, h: 16, size: 5.0, ..Ask::default() }).unwrap();
+    assert!(t.starts_with("# Datum Atlas orientation map") && t.lines().filter(|l| !l.starts_with('#')).count() == 320);
+}

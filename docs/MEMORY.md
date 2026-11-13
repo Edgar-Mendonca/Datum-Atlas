@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.12** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.12). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.13** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.13). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -96,6 +96,7 @@ flowchart LR
 | `ui/src/importer.tsx` | The import window (`importMaterials`) and the Databases section. |
 | `crates/core/src/eco.rs` | Eco audit: `data()` (from `data/eco.json`), `Eco`/`Opt`/`Part`/`Leg`/`Use` in the project, `audit` (five phases as ranges, notes for gaps, dominant phase and advice, break-even), `substitutes`, `check`. |
 | `docs/guide/en.md`, `img/`, `pdf/` | The Datum Atlas Guide: Markdown source (English), screenshots, the built PDF (attached to every release as `DatumAtlas-Guide-en.pdf`). `npm run guide` remakes the screenshots (`tests_ui/guide_shots.cjs`, the bridge with a bracket project) and the PDF (`scripts/guide.cjs`, Chromium, from Datum Plan's). |
+| `crates/core/src/orient.rs` | Orientations: Euler angles, symmetry, misorientation, textures, IPF colours (used by the generator and EBSD). |
 | `crates/core/src/synth.rs`, `ui/src/synth.tsx` | Synthetic grain maps; the Microstructure › Generator page. |
 | `crates/core/src/image.rs`, `ui/src/imaging.tsx` | Image analysis (threshold, phase fraction, particles); the Microstructure › Images page. |
 | `crates/core/src/lab.rs`, `ui/src/lab.tsx` | Hardness, fatigue and creep (`Project.lab`, `Op::Lab`) and a material from the test results; the Testing › Hardness, Fatigue and Creep pages. |
@@ -205,8 +206,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.10** | Image analysis 1 | `image.rs` (grey image in base64 from the window, ROI, box smoothing, Otsu or given threshold, area fraction, 8-connected particles with area, ECD, perimeter ×π/4, circularity, aspect from moments, edge rule, stats with D10/50/90 and bins, mask; made-up example); Microstructure › Images (`imaging.tsx`: decode in a canvas to ≤ 2.5 MP, scale from the bar, overlay, histogram, CSV) | ✅ |
 | **0.3.11** | Image analysis 2 | `image.rs` modes: grains (intercepts on test lines each way, Jeffries planimetric count, G by the standard relations), nodularity (circularity limit, by area and count), coating (thickness per column, profile); made-up examples per kind; the page runs one analysis per burst of changes and drops stale answers | ✅ |
 | **0.3.12** | Synthetic structures 1 | `synth.rs` (Laguerre tessellation with log-normal weights and bucketed search, elongation by stretching distance, second phase to whole grains, pores on boundaries, measured back by moments, grey picture, CSV); Microstructure › Generator (`synth.tsx`), send to Images calibrated | ✅ |
-| 0.3.13 | Synthetic structures 2 | Orientations and texture, with an orientation-coloured view. | 🔜 |
-| 0.3.14 | EBSD 1 | Read EBSD text exports; orientation, phase and quality maps. | ⬜ |
+| **0.3.13** | Synthetic structures 2 | `orient.rs` (Bunge Euler ↔ matrix, axis–angle, cubic/hex symmetry, misorientation, Shoemake random, components and fibres, IPF colours and key); generator textures with share and scatter, IPF colouring, texture and boundary misorientation measured back, orientation map as text | ✅ |
+| 0.3.14 | EBSD 1 | Read EBSD text exports; orientation, phase and quality maps. | 🔜 |
 | 0.3.15 | EBSD 2 | Grains, boundaries and twins, local misorientation, Schmid factors. | ⬜ |
 | 0.3.16 | EBSD 3 | Pole figures and inverse pole figures. | ⬜ |
 | 0.3.17 | DIC 1 | Strain maps from displacement fields, statistics and profiles. | ⬜ |
@@ -537,13 +538,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Panel headings are upper-case by style, which turned µm into MM; the size note in a heading keeps its case.
 - Released 0.3.12.
 
+### 2026-11-13: Session 18, continued (0.3.13: orientations and texture)
+- `orient.rs` keeps orientations as matrices g (sample → crystal) for colouring and as misorientation angles min over the symmetry rotations of one side (enough for the angle). Tests: random cubic mean 40.7°, max 62.8°, Σ3 = 60°.
+- The orientation map text (`# Datum Atlas orientation map`, columns x y phi1 Phi phi2 phase grain) is our own simple format for the EBSD pages.
+- Released 0.3.13.
+
 ---
 
 - 2026-11-13: Outside projects (the user's university repositories and others) are used for ideas and to check results only. Atlas writes its own code from textbook methods and published papers, cited like values; no code or data files are copied, so no code credit is owed.
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.13: Synthetic structures 2: orientations and texture, with an orientation-coloured map.
+**Next:** 0.3.14: EBSD 1: read orientation map exports (text); orientation, phase and quality maps.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

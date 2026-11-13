@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -270,6 +270,17 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("a second phase of the asked fraction (40 %)", sp2 > 35 && sp2 < 50, String(sp2));
   await p.fill(".synthpage .saspect", "1"); await p.dispatchEvent(".synthpage .saspect", "input"); await p.fill(".synthpage .sphase", "0"); await p.dispatchEvent(".synthpage .sphase", "input"); await sidle();
   await shot("generator");
+  await p.selectOption(".synthpage .stexture", "cube"); await sidle();
+  check("a Cube texture comes back: most grains within 15°, many low-angle boundaries", parseFloat(await p.textContent(".synthpage .stex")) > 80 && parseFloat(await p.textContent(".synthpage .slow")) > 40, await p.textContent(".synthpage .sres"));
+  await p.selectOption(".synthpage .scolour", "ipf"); await p.waitForTimeout(400);
+  check("the map can be coloured by orientation, with the IPF key", (await p.$$(".synthpage .ipfkey rect")).length > 100);
+  await shot("texture");
+  await p.selectOption(".synthpage .stexture", "random"); await sidle();
+  const mis = parseFloat(await p.textContent(".synthpage .smis"));
+  check("random grains have the random mean misorientation (about 40.7°)", mis > 37 && mis < 44, String(mis));
+  await p.selectOption(".synthpage .scrystal", "hex"); await p.selectOption(".synthpage .stexture", "basal"); await sidle();
+  check("a hexagonal basal texture", parseFloat(await p.textContent(".synthpage .stex")) > 80);
+  await p.selectOption(".synthpage .scrystal", "cubic"); await p.selectOption(".synthpage .scolour", "grains"); await sidle();
   await p.click(".synthpage .stoimg"); await p.waitForSelector(".imgpage .igrain"); await idle();
   check("the map opens in image analysis, calibrated, measuring grain size", (await p.inputValue(".imgpage .iscale")) === "1" && parseFloat(await p.textContent(".imgpage .igl")) > 8, await p.textContent(".imgpage .igrain"));
   await goTo(p, "Browse");

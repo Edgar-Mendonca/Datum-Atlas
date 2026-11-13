@@ -17,6 +17,7 @@ pub mod lab;
 pub mod micro;
 pub mod model;
 pub mod ops;
+pub mod orient;
 pub mod process;
 pub mod select;
 pub mod sheet;

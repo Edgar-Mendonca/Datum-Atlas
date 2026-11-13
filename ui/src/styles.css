@@ -907,3 +907,6 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .synthpage .icontrols input[type=number] { width: 80px; } .synthpage .icontrols input[type=range] { flex: 1; min-width: 140px; }
 .synthpage .ttools { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .synthpage .ires td:last-child { text-align: right; font-family: var(--mono); }
+
+.synthpage .ipfkey { width: 180px; height: auto; display: block; margin: 4px 0 8px; }
+.synthpage .scol { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }

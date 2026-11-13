@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.13 — 2026-11-13
+
+Generated structures gain crystal orientations and texture, with maps coloured by orientation.
+
+**Microstructure › Generator: orientations**
+- Each grain gets a crystal orientation, cubic or hexagonal: random, or near a texture for the share of grains you set, with a scatter. Textures: Cube, Goss, Brass, Copper, S and rotated Cube, the <111>, <100> and <110> fibres for cubic metals, and the basal texture for hexagonal ones.
+- **Colour by orientation:** the inverse pole figure (IPF) colour of the normal, X or Y direction, with the colour key.
+- Measured back: the share of grains within 15° of the texture, the share of low-angle boundaries (under 15°) and the mean misorientation across boundaries.
+- **Save as orientation map:** x, y, Euler angles, phase and grain per pixel, as text, for the EBSD pages that come next.
+
+**Checked**
+- Against the textbook: Euler angles round-trip; the cubic (24) and hexagonal (12) symmetry rotations; Cube to Goss is 45°; a Σ3 twin is 60°; random cubic grain pairs average 40.7° and never pass 62.8°; Cube shows red, Goss green and a <111> fibre blue.
+
 ## 0.3.12 — 2026-11-13
 
 A structure generator: synthetic 2D grain maps made to order, measured back, and ready for image analysis.

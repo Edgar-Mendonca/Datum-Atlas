@@ -32,7 +32,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "Northwind Engineering", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "0.3.3", copy_text: null, save_file: null };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key"];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (engine.includes(c)) { const r = await window.__engine(c, a); if ("err" in r) throw r.err; return r.ok; }
       if (c === "set_options") return (await window.__engine("state", {})).ok;
@@ -145,6 +145,9 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.selectOption(".imgpage .imode", "particles");
   await side("Generator"); await wait(2500);
   await shot("generator", [[".synthpage canvas", 1], [".synthpage .ssize", 2], [".synthpage .sseed", 3], [".synthpage .sres", 4], [".synthpage .stoimg", 5]]);
+  await p.selectOption(".synthpage .stexture", "goss"); await p.selectOption(".synthpage .scolour", "ipf"); await wait(2500);
+  await shot("texture", [[".synthpage canvas", 1], [".synthpage .ipfkey", 2], [".synthpage .stexture", 3], [".synthpage .sres", 4], [".synthpage .sebsd", 5]]);
+  await p.selectOption(".synthpage .stexture", "random"); await p.selectOption(".synthpage .scolour", "grains"); await wait(1500);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

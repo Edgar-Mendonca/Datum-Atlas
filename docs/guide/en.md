@@ -250,7 +250,15 @@ Particles touching the edge of the region are left out of the sizes, because the
 4. **Measured back:** grains, mean equivalent diameter and its spread, aspect ratio, second-phase and pore fractions, from the map itself (grains on its edge left out).
 5. **Measure in image analysis** opens the map's grey picture in Images, calibrated, with grain size chosen, so you can try the methods on a structure whose answer you know. **Save as picture**, or save the map as CSV (x, y, grain, phase).
 
-The grains are a power (Laguerre) tessellation of random seeds, the usual model of a random grain structure. It is a synthetic map, not a measurement. Orientations and texture come next.
+The grains are a power (Laguerre) tessellation of random seeds, the usual model of a random grain structure. It is a synthetic map, not a measurement.
+
+![A Goss-textured map coloured by orientation, with the IPF key.](img/texture.png)
+
+1. **Colour by orientation:** each grain in the inverse pole figure (IPF) colour of the chosen sample direction: the crystal direction lying along it, red at [001], green at [101], blue at [111] for cubic crystals ([0001], [21̄1̄0], [101̄0] for hexagonal).
+2. **The key:** the standard triangle with its colours.
+3. **Orientations:** the crystal (cubic or hexagonal) and the texture: random, a rolling or annealing component (Cube, Goss, Brass, Copper, S, rotated Cube), a fibre (<111>, <100> or <110> along the normal) or basal for hexagonal metals, with the share of grains that have it and their scatter.
+4. **Measured back:** the share of grains within 15° of the texture, the share of low-angle boundaries (under 15°) and the mean misorientation across boundaries (about 40.7° for random cubic grains).
+5. **Save as orientation map:** x, y, Euler angles, phase and grain per pixel, as text; the EBSD pages will open it.
 
 ## Crystal: the elements
 
