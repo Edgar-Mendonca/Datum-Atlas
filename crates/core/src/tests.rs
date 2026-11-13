@@ -960,3 +960,24 @@ fn grain_size_nodularity_and_coating_thickness() {
     let e = analyse(&Ask { w: gw, h: gh, px: b64_encode(&gp), scale: 0.5, mode: "grains".into(), ..Default::default() }).unwrap().grains.unwrap();
     assert!(e.inside + e.on_edge > 70 && e.inside + e.on_edge < 110 && e.mean_intercept.is_some(), "{e:?}");
 }
+
+#[test]
+fn synthetic_structures_have_what_was_asked() {
+    use crate::synth::*;
+    let a = generate(&Ask::default()).unwrap();
+    assert!(a.mean_ecd.is_some_and(|d| d > 25.0 * 0.75 && d < 25.0 * 1.15) && a.mean_aspect.is_some_and(|r| r < 2.0), "{:?} {:?}", a.mean_ecd, a.mean_aspect);
+    assert_eq!(a.labels, generate(&Ask::default()).unwrap().labels, "the same settings give the same map");
+    assert_ne!(a.labels, generate(&Ask { seed: 2, ..Ask::default() }).unwrap().labels);
+    let wide = generate(&Ask { spread: 0.0, ..Ask::default() }).unwrap();
+    let mixed = generate(&Ask { spread: 0.8, ..Ask::default() }).unwrap();
+    assert!(mixed.sd_ecd.unwrap() / mixed.mean_ecd.unwrap() > wide.sd_ecd.unwrap() / wide.mean_ecd.unwrap(), "a bigger spread gives more mixed sizes");
+    let long = generate(&Ask { aspect: 3.0, ..Ask::default() }).unwrap();
+    assert!(long.mean_aspect.is_some_and(|r| r > 3.0), "{:?}", long.mean_aspect);
+    let two = generate(&Ask { phase2: 0.3, pores: 0.04, ..Ask::default() }).unwrap();
+    assert!(two.phase2 > 25.0 && two.phase2 < 40.0 && two.pores > 3.0 && two.pores < 6.0, "{} {}", two.phase2, two.pores);
+    assert!(csv(&Ask { w: 20, h: 16, size: 5.0, ..Ask::default() }).is_ok_and(|s| s.lines().count() == 1 + 320 && s.starts_with("x (µm)")));
+    for bad in [Ask { w: 5, ..Ask::default() }, Ask { size: 1.0, ..Ask::default() }, Ask { aspect: 0.5, ..Ask::default() }, Ask { step: f64::NAN, ..Ask::default() }, Ask { w: 1200, h: 1200, size: 3.0, ..Ask::default() }] { assert!(generate(&bad).is_err()) }
+    // The grey picture measures back through image analysis.
+    let g = crate::image::analyse(&crate::image::Ask { w: a.w, h: a.h, px: a.grey.clone(), scale: a.step, mode: "grains".into(), ..Default::default() }).unwrap().grains.unwrap();
+    assert!(g.mean_ecd.is_some_and(|d| d > 15.0 && d < 32.0), "{g:?}");
+}

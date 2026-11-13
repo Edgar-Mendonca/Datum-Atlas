@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.12 — 2026-11-13
+
+A structure generator: synthetic 2D grain maps made to order, measured back, and ready for image analysis.
+
+**Microstructure › Generator**
+- Set the mean grain size, the size spread and the elongation, add a second phase (given to whole grains) and pores on the boundaries; the map redraws as you move the sliders.
+- What the map really contains is measured back: grains, mean equivalent diameter and its spread, aspect ratio, second-phase and pore fractions.
+- The same settings and seed always give the same map; New seed gives another.
+- **Measure in image analysis** opens the map's grey picture there, calibrated, so you can try the grain size methods on a structure whose answer you know.
+- Save the map as a picture, or as CSV (x, y, grain, phase).
+- The grains are a power (Laguerre) tessellation of random seeds, the usual model of a random grain structure; the page says it is synthetic, not a measurement.
+
+**Smaller things**
+- Units in panel headings keep their case (µm no longer shows as MM).
+
 ## 0.3.11 — 2026-11-13
 
 Image analysis gains grain size, graphite nodularity and coating thickness.

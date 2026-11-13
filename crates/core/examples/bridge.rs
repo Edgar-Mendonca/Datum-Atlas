@@ -41,6 +41,8 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "tensile_read" => { let p = fixture(a, "tensile.csv"); let t = sheet::read(std::path::Path::new(&p))?; let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect(); json!({ "path": p, "name": "tensile", "cols": datum_atlas_core::tensile::columns(&raw)? }) }
         "image_analyse" => json!(datum_atlas_core::image::analyse(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "image_example" => { let (w, h, px) = datum_atlas_core::image::example_of(a["kind"].as_str().unwrap_or("particles")); json!({ "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) }
+        "synth_generate" => json!(datum_atlas_core::synth::generate(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
+        "synth_csv" => json!(datum_atlas_core::synth::csv(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "lab_example" => json!(datum_atlas_core::lab::example()),
         "test_material" => json!(datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&s.doc.p.tensile), &datum_atlas_core::lab::run(&s.doc.p.lab), a["name"].as_str().unwrap_or(""), a["src"].as_str().unwrap_or(""))),
         "tensile_example" => json!(datum_atlas_core::tensile::example()),

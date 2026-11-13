@@ -240,6 +240,18 @@ Particles touching the edge of the region are left out of the sizes, because the
 
 **Nodularity** is the share of the graphite in round nodules (at least as round as the limit you set, 0.6 unless you change it), by area and by count. **Coating thickness** is the layer's length in every column of pixels, with its mean, spread, thinnest and thickest, and the profile along the image.
 
+## Microstructure: the structure generator
+
+![Microstructure › Generator: a synthetic grain map made to order and measured back.](img/generator.png)
+
+1. **The map:** a synthetic 2D grain structure, one colour per grain; phase 2 is darker and pores are black. Untick **Draw boundaries** to see the grains alone.
+2. **Settings:** the mean grain size, the size spread (0 even, 1 very mixed), the elongation (length over width), the second phase and the pores, and the map's size and step. The map redraws as you change them.
+3. **Seed:** the same settings and seed always give the same map; **New seed** gives another.
+4. **Measured back:** grains, mean equivalent diameter and its spread, aspect ratio, second-phase and pore fractions, from the map itself (grains on its edge left out).
+5. **Measure in image analysis** opens the map's grey picture in Images, calibrated, with grain size chosen, so you can try the methods on a structure whose answer you know. **Save as picture**, or save the map as CSV (x, y, grain, phase).
+
+The grains are a power (Laguerre) tessellation of random seeds, the usual model of a random grain structure. It is a synthetic map, not a measurement. Orientations and texture come next.
+
 ## Crystal: the elements
 
 ![Crystal › Elements: the periodic table, an element card and the composition box.](img/elements.png)

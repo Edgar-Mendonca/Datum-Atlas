@@ -172,6 +172,14 @@ async fn image_analyse(ask: datum_atlas_core::image::Ask) -> R<datum_atlas_core:
 #[tauri::command]
 fn image_example(kind: Option<String>) -> Value { let (w, h, px) = datum_atlas_core::image::example_of(kind.as_deref().unwrap_or("particles")); json!({ "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) }
 
+/// A synthetic grain map.
+#[tauri::command]
+async fn synth_generate(ask: datum_atlas_core::synth::Ask) -> R<datum_atlas_core::synth::Map> { datum_atlas_core::synth::generate(&ask) }
+
+/// A synthetic grain map as CSV text.
+#[tauri::command]
+async fn synth_csv(ask: datum_atlas_core::synth::Ask) -> R<String> { datum_atlas_core::synth::csv(&ask) }
+
 /// Made-up example hardness, fatigue and creep data, to try the pages.
 #[tauri::command]
 fn lab_example() -> datum_atlas_core::lab::Lab { datum_atlas_core::lab::example() }
@@ -718,7 +726,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

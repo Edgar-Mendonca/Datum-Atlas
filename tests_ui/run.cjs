@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -258,6 +258,20 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   const cm = parseFloat(await p.textContent(".imgpage .icm"));
   check("coating thickness of the made-up layer (about 60 µm)", cm > 50 && cm < 70, String(cm));
   await p.selectOption(".imgpage .imode", "particles");
+  // Microstructure › Generator: a map made to order, measured back, and sent to image analysis.
+  const sidle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".synthpage .sbusy")) ? 0 : quiet + 1; } };
+  await goTo(p, "Generator"); await sidle();
+  const secd = parseFloat(await p.textContent(".synthpage .secd"));
+  check("the generator makes a map of about the asked grain size (25 µm)", secd > 18 && secd < 29 && +(await p.textContent(".synthpage .sgrains")) > 100, String(secd));
+  await p.fill(".synthpage .saspect", "4"); await p.dispatchEvent(".synthpage .saspect", "input"); await sidle();
+  check("elongated grains measure elongated", parseFloat(await p.textContent(".synthpage .sasp")) > 3, await p.textContent(".synthpage .sasp"));
+  await p.fill(".synthpage .sphase", "0.4"); await p.dispatchEvent(".synthpage .sphase", "input"); await sidle();
+  const sp2 = parseFloat(await p.textContent(".synthpage .sp2"));
+  check("a second phase of the asked fraction (40 %)", sp2 > 35 && sp2 < 50, String(sp2));
+  await p.fill(".synthpage .saspect", "1"); await p.dispatchEvent(".synthpage .saspect", "input"); await p.fill(".synthpage .sphase", "0"); await p.dispatchEvent(".synthpage .sphase", "input"); await sidle();
+  await shot("generator");
+  await p.click(".synthpage .stoimg"); await p.waitForSelector(".imgpage .igrain"); await idle();
+  check("the map opens in image analysis, calibrated, measuring grain size", (await p.inputValue(".imgpage .iscale")) === "1" && parseFloat(await p.textContent(".imgpage .igl")) > 8, await p.textContent(".imgpage .igrain"));
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

@@ -407,3 +407,14 @@ fn random_images_never_panic() {
         if let Ok(a) = analyse(&q) { assert!(a.fraction.is_finite() && a.particles.iter().all(|p| p.ecd.is_finite() && p.circ.is_finite())); }
     }
 }
+
+#[test]
+fn random_generator_settings_never_panic() {
+    use crate::synth::{generate, Ask};
+    let mut r = Rng(0x1234_5678_ABCD_EF01);
+    for _ in 0..60 {
+        let q = Ask { w: *r.pick(&[0, 16, 40, 90]), h: *r.pick(&[0, 16, 33, 70]), step: *r.pick(&[0.0, 0.5, 1.0, 1e9]), size: *r.pick(&[0.0, 3.0, 8.0, 30.0, 1e9]), spread: r.num().abs().min(2.0),
+            aspect: *r.pick(&[0.5, 1.0, 3.0, 10.0]), phase2: *r.pick(&[0.0, 0.5, 0.9, 1.0]), pores: *r.pick(&[0.0, 0.1, 0.3, 0.5]), seed: r.next() };
+        if let Ok(m) = generate(&q) { assert!(m.phase2.is_finite() && m.pores.is_finite() && m.grains > 0) }
+    }
+}

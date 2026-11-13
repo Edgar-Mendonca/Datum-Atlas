@@ -16,6 +16,8 @@ interface Answer { threshold: number; otsu: number; hist: number[]; fraction: nu
 interface Img { name: string; w: number; h: number; px: string; made?: boolean }
 
 const MAXPX = 2_500_000;
+/** A picture another page sends here (the generator), with its scale. */
+export const [incoming, setIncoming] = createSignal<(Img & { scale?: number }) | null>(null);
 const toB64 = (b: Uint8Array) => { let s = ""; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode(...b.subarray(i, i + 0x8000)); return btoa(s); };
 const fromB64 = (s: string) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 const fx = (v: number | null | undefined, d = 2) => v == null ? "–" : v.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -40,6 +42,7 @@ export const ImagesPage = () => {
   const [pick, setPick] = createSignal<number[][] | null>(null), [barLen, setBarLen] = createSignal(50);
   const [mode, setMode] = createSignal("particles"), [lines, setLines] = createSignal(10), [round, setRound] = createSignal(0.6);
   let cv!: HTMLCanvasElement;
+  const inc = incoming(); if (inc) { setIncoming(null); setImg(inc); setScale(inc.scale ?? 0); setMode("grains"); }
   // Settings that change together (an example sets several) start one analysis; a stale answer is dropped.
   let seq = 0;
   const [busy, setBusy] = createSignal(false);
@@ -107,7 +110,7 @@ export const ImagesPage = () => {
       </div>
       <Show when={img()} fallback={<p class="muted tempty">Open a micrograph (PNG, JPEG, BMP or WebP), or try the made-up example. The picture stays on your computer; only its measurements are shown.</p>}>{i => <div class="imgrid">
         <section class="panel">
-          <h2>{i().name} <span class="muted small">{i().w} × {i().h} px</span></h2>
+          <h2>{i().name} <span class="muted small" style={{ "text-transform": "none" }}>{i().w} × {i().h} px</span></h2>
           <div class="ivwrap" classList={{ pick: !!pick() }}><canvas ref={cv} onClick={click} /></div>
           <p class="small ikey"><label><input type="checkbox" checked={overlay()} onChange={e => setOverlay(e.currentTarget.checked)} /> Overlay</label><i style={{ background: "#6C4AB6" }} />measured<i style={{ background: "#F2B233" }} />not counted (small or on the edge)<i style={{ background: "#888" }} />left out</p>
           <Show when={i().made}><p class="muted small">A made-up image: its scale bar is 100 px long, 50 µm.</p></Show>

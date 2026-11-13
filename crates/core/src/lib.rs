@@ -20,6 +20,7 @@ pub mod ops;
 pub mod process;
 pub mod select;
 pub mod sheet;
+pub mod synth;
 pub mod templates;
 pub mod tensile;
 pub mod units;
