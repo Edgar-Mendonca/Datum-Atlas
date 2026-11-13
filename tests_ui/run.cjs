@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -39,7 +39,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -297,6 +297,18 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("the made-up map has two phases", (await p.$$(".ebsdpage .ephases tbody tr")).length === 2);
   await p.selectOption(".ebsdpage .ekind", "ipf"); await eidle();
   await shot("ebsd");
+  const gidle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".ebsdpage .gbusy")) ? 0 : quiet + 1; } };
+  await goTo(p, "Grains"); await gidle();
+  const gn = +(await p.textContent(".ebsdpage .ggrains"));
+  check("EBSD grains are found from the orientations, with their size", gn > 80 && parseFloat(await p.textContent(".ebsdpage .gecd")) > 8 && parseFloat(await p.textContent(".ebsdpage .ghigh")) > 70, String(gn));
+  await p.fill(".ebsdpage .gtol", "30"); await p.press(".ebsdpage .gtol", "Tab"); await gidle();
+  check("a wider tolerance joins grains", +(await p.textContent(".ebsdpage .ggrains")) < gn);
+  await p.fill(".ebsdpage .gtol", "10"); await p.press(".ebsdpage .gtol", "Tab");
+  await p.selectOption(".ebsdpage .gkind", "schmid"); await gidle();
+  const sf = parseFloat(await p.textContent(".ebsdpage .gsf"));
+  check("Schmid factors (between 0.27 and 0.5)", sf > 0.3 && sf < 0.5, String(sf));
+  await p.selectOption(".ebsdpage .gkind", "boundaries"); await gidle();
+  await shot("ebsdgrains");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

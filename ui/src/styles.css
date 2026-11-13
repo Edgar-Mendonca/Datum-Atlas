@@ -919,3 +919,7 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .ebsdpage .ekeys { display: flex; gap: 18px; flex-wrap: wrap; } .ebsdpage .ipfkey { width: 170px; height: auto; }
 .ebsdpage .ekey i { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; }
 .ebsdpage .ires td:last-child { text-align: right; font-family: var(--mono); }
+
+.ebsdpage .icontrols { display: flex; flex-direction: column; gap: 8px; } .ebsdpage .icontrols label { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.ebsdpage .icontrols input[type=number] { width: 70px; }
+.ebsdpage .ramp { display: inline-block; width: 120px; height: 10px; margin: 0 8px 0 10px; vertical-align: -1px; background: linear-gradient(90deg, rgb(40,60,200), rgb(147,180,100), rgb(255,60,0)); }

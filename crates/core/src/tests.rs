@@ -1055,3 +1055,37 @@ fn ebsd_exports_are_read() {
     assert!(e.format == "datum" && (e.w, e.h) == (60, 40) && d[0..3] == m.ipf[l0], "{:?} vs {:?}", &d[0..3], m.ipf[l0]);
     assert!(parse("hello\nworld", "x.txt").is_err() && e.draw("quality", "z").is_err());
 }
+
+#[test]
+fn ebsd_grains_boundaries_twins_and_schmid() {
+    use crate::{ebsd::*, orient::*};
+    let id: M3 = [[1.0, 0.0, 0.0], [0.0, 1.0, 0.0], [0.0, 0.0, 1.0]];
+    let near = |a: f64, b: f64| (a - b).abs() < 1e-3;
+    // Schmid factors: FCC and BCC loaded along <001> give 1/√6, FCC along <111> 0.272; a hexagonal crystal pulled along a1: basal 0, prismatic 0.433.
+    assert!(near(schmid(&id, [0.0, 0.0, 1.0], &slip_systems("fcc")), 1.0 / 6f64.sqrt()) && near(schmid(&id, [0.0, 0.0, 1.0], &slip_systems("bcc")), 1.0 / 6f64.sqrt()));
+    assert!(near(schmid(&id, [1.0, 1.0, 1.0], &slip_systems("fcc")), 0.2722));
+    assert!(near(schmid(&id, [1.0, 0.0, 0.0], &slip_systems("basal")), 0.0) && near(schmid(&id, [1.0, 0.0, 0.0], &slip_systems("prismatic")), 0.433));
+    assert_eq!((slip_systems("fcc").len(), slip_systems("bcc").len()), (12, 12));
+    let cub = symmetry("cubic");
+    let goss = from_euler([0.0, 45.0, 0.0]);
+    assert!(is_sigma3(&goss, &mul(&axis_angle([1.0, 1.0, 1.0], 60.0), &goss), &cub) && !is_sigma3(&id, &goss, &cub));
+    // A 30 × 20 map: left Cube, right its Σ3 twin, a Goss block at the bottom; one row not indexed.
+    let twin = to_euler(&mul(&axis_angle([1.0, 1.0, 1.0], 60.0), &id));
+    let mut t = String::from("# Datum Atlas orientation map (test)\n# crystal cubic\n# step 1\n");
+    for y in 0..20 { for x in 0..30 {
+        let (e, ph) = if y == 19 { ([0.0; 3], 0) } else if y >= 14 { ([0.0, 45.0, 0.0], 1) } else if x < 15 { ([0.0, 0.0, 0.0], 1) } else { (twin, 1) };
+        t += &format!("{x} {y} {} {} {} {ph} 1\n", e[0], e[1], e[2]);
+    }}
+    let m = parse(&t, "t.txt").unwrap();
+    let (o, ids, bnd, kam, sch) = m.analyse(&GrainAsk::default());
+    assert!(o.grains == 3 && ids[0] != ids[29] && ids[0] != ids[15 * 30] && ids[19 * 30] == 0, "{o:?}");
+    assert!((o.twins - 14.0 / 44.0 * 100.0).abs() < 1e-9 && o.low == 0.0 && (o.high - 100.0).abs() < 1e-9 && bnd.contains(&3) && kam[0] == 0.0, "{o:?}");
+    assert!(sch[0] > 0.4 && o.schmid.is_some());
+    assert!(m.draw_grains("boundaries", &GrainAsk::default()).is_ok() && m.draw_grains("kam", &GrainAsk::default()).is_ok());
+    // A generated map: about as many grains as the generator made; random cubic, mostly high-angle.
+    let q = crate::synth::Ask { w: 150, h: 100, size: 12.0, ..Default::default() };
+    let g = crate::synth::generate(&q).unwrap();
+    let e = parse(&crate::synth::ebsd_text(&q).unwrap(), "g.txt").unwrap();
+    let (o, ..) = e.analyse(&GrainAsk::default());
+    assert!(o.grains as f64 > g.grains as f64 * 0.75 && o.grains <= g.grains && o.mean_ecd.is_some_and(|d| (d - 12.0).abs() < 1.5) && o.high > 90.0, "{} vs {}: {o:?}", o.grains, g.grains);
+}

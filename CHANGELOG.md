@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.3.15 — 2026-11-13
+
+EBSD gains grains, boundaries, twins, local misorientation and Schmid factors.
+
+**EBSD › Grains**
+- Grains found from the orientations: neighbouring points of the same phase closer than the tolerance (10° unless you change it), with a smallest grain size.
+- Boundaries by misorientation: high-angle (from 15°), low-angle (2–15°) and Σ3 twins (60° about <111>, within Brandon's limit), drawn over the pattern quality, with their shares by length and the boundary length per area.
+- Grain sizes (mean equivalent diameter and spread, mean area), leaving out grains on the edge.
+- **Local misorientation (KAM):** the mean misorientation of each point to its neighbours under 5°, a sign of stored strain.
+- **Schmid factors** for a load along X, Y or Z: {111}<110> (FCC) or {110}<111> (BCC) for cubic phases, basal and prismatic <a> slip for hexagonal ones.
+
+**Checked**
+- Schmid factors of 1/√6 for FCC and BCC loaded along <001> and 0.272 for FCC along <111>; 0 for basal and 0.433 for prismatic slip pulling a hexagonal crystal along a1; a Σ3 twin is recognised and Cube/Goss is not; a test map with a twin gives exactly the twin share of its boundary length; a generated map gives back its grain size.
+
 ## 0.3.14 — 2026-11-13
 
 A new module, EBSD: open orientation maps and see orientations, phases and pattern quality.

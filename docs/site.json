@@ -39,7 +39,7 @@
     "Testing: tensile results with statistics, hardness statistics, S–N curves with Basquin's law and creep rupture on a Larson–Miller plot; the results become a material of your own.",
     "Image analysis of micrographs: calibrate from the scale bar, then phase fraction, porosity, particles, grain size with G, graphite nodularity and coating thickness.",
     "A structure generator: synthetic grain maps with the size, spread, elongation, second phase, pores and texture you choose, coloured by orientation, measured back and ready for image analysis.",
-    "EBSD: open .ang and .ctf orientation maps and see them by orientation (IPF colours), phase and pattern quality."
+    "EBSD: open .ang and .ctf maps; orientation, phase and quality maps; grains, high- and low-angle boundaries, Σ3 twins, local misorientation and Schmid factors."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -51,17 +51,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.15",
-      "title": "EBSD 2",
-      "when": "Next",
-      "items": [
-        "Grains, boundaries and twins, local misorientation, Schmid factors."
-      ]
-    },
-    {
       "v": "0.3.16",
       "title": "EBSD 3",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Pole figures and inverse pole figures."
       ]

@@ -22,7 +22,7 @@ export const MODULES: Module[] = [
   { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your test data: tensile curves and results, hardness statistics, S–N curves and creep rupture on a Larson–Miller plot; the results become a material of your own.",
     pages: [["tensile", "curve", "Tensile"], ["hardness", "level", "Hardness"], ["fatigue", "xy", "Fatigue"], ["creep", "risk", "Creep"]], tabs: ["home", "data"] },
   { id: "ebsd", name: "EBSD", short: "EBSD", icon: "layout", about: "Orientation maps from EBSD: open .ang and .ctf exports and see orientations, phases and pattern quality; grains, boundaries, Schmid factors and pole figures follow.",
-    pages: [["ebsd", "layout", "Maps"]], tabs: ["home", "data"] },
+    pages: [["ebsd", "layout", "Maps"], ["ebsdgrains", "grains", "Grains"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */

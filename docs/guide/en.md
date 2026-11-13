@@ -95,7 +95,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures, Images | The typical structure of every class of material; image analysis of your micrographs |
 | **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
-| **EBSD** | Maps | Orientation maps from EBSD exports: orientation, phase and quality |
+| **EBSD** | Maps, Grains | Orientation maps from EBSD exports; grains, boundaries, twins, KAM, Schmid factors |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
@@ -272,7 +272,17 @@ The grains are a power (Laguerre) tessellation of random seeds, the usual model 
 5. **The map:** the file type, the number of points, the area, and the share of points indexed.
 6. **Phases:** each phase with its crystal type and its share of the map.
 
-A map on a hexagonal grid is shown on a square grid of the same step. Grains, boundaries and twins, local misorientation, Schmid factors and pole figures come next.
+A map on a hexagonal grid is shown on a square grid of the same step.
+
+![EBSD › Grains: boundaries over pattern quality, with the grain statistics.](img/ebsdgrains.png)
+
+1. **The map:** boundaries over the pattern quality (high-angle black, low-angle grey, Σ3 twins red), or the grains, the local misorientation (KAM) or the Schmid factor.
+2. **Show:** which of these to draw.
+3. **Grain tolerance:** neighbouring points of the same phase closer than this belong to one grain (10° is usual); grains smaller than the smallest size are left out.
+4. **Load along** X, Y or Z for the Schmid factor, with FCC or BCC slip systems for cubic phases (hexagonal phases use basal and prismatic <a> slip).
+5. **Results:** grains, their mean equivalent diameter, spread and area (grains on the edge left out), the shares of high-angle, low-angle and Σ3 twin boundaries by length, the boundary length per area, the mean KAM and the mean Schmid factor.
+
+Pole figures come next.
 
 ## Crystal: the elements
 

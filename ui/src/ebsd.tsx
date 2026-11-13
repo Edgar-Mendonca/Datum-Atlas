@@ -77,3 +77,54 @@ export const MapsPage = () => {
     </div>
   );
 };
+
+interface GrainOut { grains: number; inside: number; meanEcd: number | null; sdEcd: number | null; meanArea: number | null; high: number; low: number; twins: number; boundaryMmPerMm2: number; kam: number; schmid: number | null; bins: [number, number, number][] }
+
+export const GrainsPage = () => {
+  const [kind, setKind] = createSignal("boundaries"), [tol, setTol] = createSignal(10), [min, setMin] = createSignal(5), [load, setLoad] = createSignal("x"), [slip, setSlip] = createSignal("fcc");
+  const [out, setOut] = createSignal<GrainOut | null>(null), [busy, setBusy] = createSignal(false);
+  let cv!: HTMLCanvasElement, seq = 0;
+  createEffect(on([ebsdMap, kind, tol, min, load, slip], async ([m, k]) => {
+    if (!m || !cv) return;
+    const my = ++seq; await new Promise(r => setTimeout(r, 40)); if (my !== seq) return;
+    setBusy(true);
+    try { const r = await invoke<{ w: number; h: number; rgb: string; out: GrainOut }>("ebsd_grains", { kind: k, ask: { tol: tol(), min: min(), low: 2, load: load(), slip: slip() } }); if (my === seq) { paint(cv, r.w, r.h, r.rgb); setOut(r.out); } }
+    catch (e) { toast(String(e)); }
+    finally { if (my === seq) setBusy(false); }
+  }));
+  const fv = (v: number | null | undefined, d = 1) => v == null ? "–" : fx(v, d);
+  return (
+    <div class="page ebsdpage">
+      <h1>Grains and boundaries <Help k="egrains" /></h1>
+      <Show when={ebsdMap()} fallback={<p class="muted tempty">Open a map on the Maps page first.</p>}>{m => <div class="imgrid">
+        <section class="panel">
+          <h2>{m().name} <Show when={busy()}><span class="muted small gbusy">working…</span></Show></h2>
+          <div class="ivwrap"><canvas ref={cv} /></div>
+          <div class="ecolor"><label>Show <select class="gkind" value={kind()} onChange={e => setKind(e.currentTarget.value)}>
+            <option value="boundaries">Boundaries over pattern quality</option><option value="grains">Grains</option><option value="kam">Local misorientation (KAM)</option><option value="schmid">Schmid factor</option></select></label></div>
+          <Show when={kind() === "boundaries"}><p class="small ekey"><span><i style={{ background: "#000" }} />high-angle (≥ 15°)</span><span><i style={{ background: "#969696" }} />low-angle (2–15°)</span><span><i style={{ background: "#DC1E1E" }} />Σ3 twin</span></p></Show>
+          <Show when={kind() === "kam" || kind() === "schmid"}><p class="small ekey"><span class="ramp" />{kind() === "kam" ? "0° to 2° and above" : "0.25 to 0.5"}</p></Show>
+        </section>
+        <section class="panel icontrols">
+          <h2>Settings</h2>
+          <label>Grain tolerance <input type="number" class="gtol" min="1" max="30" value={tol()} onChange={e => setTol(Math.min(30, Math.max(1, +e.currentTarget.value)))} /> °</label>
+          <label>Smallest grain <input type="number" min="1" value={min()} onChange={e => setMin(Math.max(1, Math.round(+e.currentTarget.value)))} /> points</label>
+          <label>Load along <select class="gload" value={load()} onChange={e => setLoad(e.currentTarget.value)}><option value="x">X</option><option value="y">Y</option><option value="z">Z</option></select></label>
+          <label>Cubic slip systems <select class="gslip" value={slip()} onChange={e => setSlip(e.currentTarget.value)}><option value="fcc">{"{111}<110> (FCC)"}</option><option value="bcc">{"{110}<111> (BCC)"}</option></select></label>
+          <Show when={out()}>{o => <table class="ptable ires gres"><tbody>
+            <tr><td>Grains</td><td class="ggrains">{o().grains}</td></tr>
+            <tr><td>Mean equivalent diameter (not on the edge)</td><td class="gecd">{fv(o().meanEcd)} µm</td></tr>
+            <tr><td>Spread (sd)</td><td>{fv(o().sdEcd)} µm</td></tr>
+            <tr><td>Mean grain area</td><td>{fv(o().meanArea)} µm²</td></tr>
+            <tr><td>High-angle boundaries</td><td class="ghigh">{fv(o().high)} %</td></tr>
+            <tr><td>Low-angle boundaries</td><td>{fv(o().low)} %</td></tr>
+            <tr><td>Σ3 twin boundaries</td><td class="gtwin">{fv(o().twins)} %</td></tr>
+            <tr><td>Boundary length per area</td><td>{fv(o().boundaryMmPerMm2, 0)} mm/mm²</td></tr>
+            <tr><td>Mean local misorientation (KAM)</td><td>{fv(o().kam, 2)}°</td></tr>
+            <tr><td>Mean Schmid factor</td><td class="gsf">{fv(o().schmid, 3)}</td></tr></tbody></table>}</Show>
+          <p class="muted small">Shares of boundaries are by length. Phase boundaries are not counted.</p>
+        </section>
+      </div>}</Show>
+    </div>
+  );
+};

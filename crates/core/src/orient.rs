@@ -119,3 +119,42 @@ pub fn ipf_key(crystal: &str, n: usize) -> Vec<KeyPt> {
     }}
     out
 }
+
+/// The misorientation angle (degrees) and its rotation axis (unit, crystal axes), minimised over the symmetry.
+pub fn mis_axis(a: &M3, b: &M3, sym: &[M3]) -> (f64, V3) {
+    let d = mul(b, &tr(a));
+    let m = sym.iter().map(|s| mul(s, &d)).min_by(|x, y| angle(x).total_cmp(&angle(y))).unwrap_or(d);
+    let ax = [m[2][1] - m[1][2], m[0][2] - m[2][0], m[1][0] - m[0][1]];
+    let n = (ax[0] * ax[0] + ax[1] * ax[1] + ax[2] * ax[2]).sqrt();
+    (angle(&m), if n > 1e-9 { ax.map(|v| v / n) } else { [0.0, 0.0, 1.0] })
+}
+/// A Σ3 twin boundary in a cubic crystal: 60° about <111>, within Brandon's limit (15°/√3).
+pub fn is_sigma3(a: &M3, b: &M3, sym: &[M3]) -> bool {
+    let (ang, ax) = mis_axis(a, b, sym);
+    let k = (ax[0].abs() + ax[1].abs() + ax[2].abs()) / 3f64.sqrt(); // cos of the angle to the nearest <111>
+    let lim = 15.0 / 3f64.sqrt();
+    (ang - 60.0).abs() <= lim && k.clamp(-1.0, 1.0).acos().to_degrees() <= lim
+}
+/// Slip systems in crystal axes (unit plane normal, unit direction): "fcc" {111}<110>, "bcc" {110}<111>,
+/// "basal" and "prismatic" <a> slip of hexagonal metals.
+pub fn slip_systems(kind: &str) -> Vec<(V3, V3)> {
+    let u = |v: V3| { let n = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt(); v.map(|x| x / n) };
+    let mut out = vec![];
+    match kind {
+        "fcc" | "bcc" => {
+            let planes: Vec<V3> = [[1.0, 1.0, 1.0], [-1.0, 1.0, 1.0], [1.0, -1.0, 1.0], [1.0, 1.0, -1.0]].into();
+            let dirs: Vec<V3> = [[1.0, -1.0, 0.0], [1.0, 0.0, -1.0], [0.0, 1.0, -1.0], [1.0, 1.0, 0.0], [1.0, 0.0, 1.0], [0.0, 1.0, 1.0]].into();
+            for n in &planes { for d in &dirs { if (n[0] * d[0] + n[1] * d[1] + n[2] * d[2]).abs() < 1e-9 { out.push(if kind == "fcc" { (u(*n), u(*d)) } else { (u(*d), u(*n)) }) } } }
+        }
+        "basal" => for k in 0..3 { let t = (120.0 * k as f64).to_radians(); out.push(([0.0, 0.0, 1.0], [t.cos(), t.sin(), 0.0])) },
+        _ => for k in 0..3 { let t = (60.0 * k as f64).to_radians(); let n = (60.0 * k as f64 + 90.0).to_radians(); out.push(([n.cos(), n.sin(), 0.0], [t.cos(), t.sin(), 0.0])) },
+    }
+    out
+}
+/// The largest Schmid factor |cos φ cos λ| over the slip systems for a load along sample direction `l`.
+pub fn schmid(g: &M3, l: V3, sys: &[(V3, V3)]) -> f64 {
+    let c = apply(g, l);
+    let n = (c[0] * c[0] + c[1] * c[1] + c[2] * c[2]).sqrt();
+    let c = c.map(|v| v / n);
+    sys.iter().map(|(p, d)| ((c[0] * p[0] + c[1] * p[1] + c[2] * p[2]) * (c[0] * d[0] + c[1] * d[1] + c[2] * d[2])).abs()).fold(0.0, f64::max)
+}
