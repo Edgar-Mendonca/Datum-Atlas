@@ -45,6 +45,8 @@ impl Default for Options {
 }
 
 struct App {
+    /// The EBSD map open in Crystal › EBSD (not saved in the project).
+    ebsd: Option<datum_atlas_core::ebsd::Ebsd>,
     doc: Doc,
     opts: Options,
     rev: u64,
@@ -175,6 +177,34 @@ fn image_example(kind: Option<String>) -> Value { let (w, h, px) = datum_atlas_c
 /// A synthetic grain map.
 #[tauri::command]
 async fn synth_generate(ask: datum_atlas_core::synth::Ask) -> R<datum_atlas_core::synth::Map> { datum_atlas_core::synth::generate(&ask) }
+
+/// Open an EBSD map (.ang, .ctf, or a Datum Atlas orientation map); returns its summary.
+#[tauri::command]
+async fn ebsd_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<datum_atlas_core::ebsd::Summary>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "EBSD map", &["ang", "ctf", "txt"])) else { return Ok(None) };
+    let text = String::from_utf8_lossy(&std::fs::read(&path).map_err(|e| e.to_string())?).to_string();
+    let m = datum_atlas_core::ebsd::parse(&text, &path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())?;
+    let s = m.summary();
+    st.lock().ebsd = Some(m);
+    Ok(Some(s))
+}
+
+/// A made-up EBSD map from the structure generator (two phases, part Goss texture).
+#[tauri::command]
+fn ebsd_example(st: State<St>) -> R<datum_atlas_core::ebsd::Summary> {
+    let m = datum_atlas_core::ebsd::example()?;
+    let s = m.summary();
+    st.lock().ebsd = Some(m);
+    Ok(s)
+}
+
+/// A picture of the open EBSD map: "ipf" (dir x, y or z), "phase", "quality" or "confidence"; RGB, base64.
+#[tauri::command]
+fn ebsd_draw(st: State<St>, kind: String, dir: String) -> R<Value> {
+    let a = st.lock();
+    let m = a.ebsd.as_ref().ok_or("Open an EBSD map first.")?;
+    Ok(json!({ "w": m.w, "h": m.h, "rgb": m.draw(&kind, &dir)? }))
+}
 
 /// A synthetic grain map as an orientation map in text.
 #[tauri::command]
@@ -720,7 +750,7 @@ fn main() {
             let all: Vec<Database> = others.iter().map(|o| o.1.clone()).collect();
             let db = Db::new(db::builtin(), Some(&user)).with_others(&all);
             let p = fresh(&db, &opts, None).unwrap_or_default();
-            app.manage(St(Mutex::new(App { doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
+            app.manage(St(Mutex::new(App { ebsd: None, doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
             Ok(())
         })
         .on_window_event(|w, e| {
@@ -734,7 +764,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

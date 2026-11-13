@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.14 — 2026-11-13
+
+A new module, EBSD: open orientation maps and see orientations, phases and pattern quality.
+
+**EBSD › Maps**
+- Opens the common EBSD text exports (.ang and .ctf) and the orientation maps the structure generator saves.
+- Draws the map by orientation (the IPF colour of the normal, X or Y, with a colour key for each crystal type), by phase, by pattern quality (image quality or band contrast) or by confidence. Points that were not indexed stay black.
+- The map's size, step, area, the share of points indexed, and its phases with their crystal type and share.
+- Maps on a hexagonal grid are shown on a square grid of the same step, and the page says so.
+- **Example (made-up map)**: a two-phase map from the structure generator, half the grains near Goss.
+- Save the picture.
+
+**Checked**
+- A small .ang (Cube and Goss grains, one point not indexed) and a small .ctf (hexagonal, one point with an error code) read with the right grid, step, phases and colours; the generator's own map reads back with the same colours; damaged files never crash.
+
 ## 0.3.13 — 2026-11-13
 
 Generated structures gain crystal orientations and texture, with maps coloured by orientation.

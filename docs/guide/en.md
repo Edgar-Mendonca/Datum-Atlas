@@ -2,7 +2,7 @@
 
 ## Welcome
 
-Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure**, **Crystal** and **Testing**; image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
+Datum Atlas is a materials workbench: modules that share one library of referenced materials. Today they are **Library**, **Select**, **Eco**, **Make**, **Microstructure**, **Crystal**, **Testing** and **EBSD**; image analysis, EBSD, DIC, corrosion and heat treatment are on the way.
 
 The Select module helps you choose a material and show why it is the right one. Every material is drawn on property charts as a bubble spanning its range of values; design goals and performance indices turn what the part must do into a line on the chart; limits, lines, boxes and shapes narrow the field; and the materials that pass are ranked, with the reason every other one fails. Then you compare the best, add up their energy and CO₂ through the product's life, find the processes that can make the part and what it costs, and print a report that documents the choice.
 
@@ -95,6 +95,7 @@ Click the module at the top of the sidebar to switch. Each module shows its own 
 | **Make** | Process, Processes | Which processes can make the part, and the cost |
 | **Microstructure** | Structures, Images | The typical structure of every class of material; image analysis of your micrographs |
 | **Testing** | Tensile, Hardness, Fatigue, Creep | Your test data: tensile results with statistics, hardness statistics, S–N curves, creep rupture; the results become a material of your own |
+| **EBSD** | Maps | Orientation maps from EBSD exports: orientation, phase and quality |
 | **Crystal** | Elements, Lattice | The elements on a periodic table; compositions; crystal structures, spacings, angles, X-ray peaks and stereographic projections |
 
 The dimmed modules in the list are on the way; click one to see what it will do and when.
@@ -259,6 +260,19 @@ The grains are a power (Laguerre) tessellation of random seeds, the usual model 
 3. **Orientations:** the crystal (cubic or hexagonal) and the texture: random, a rolling or annealing component (Cube, Goss, Brass, Copper, S, rotated Cube), a fibre (<111>, <100> or <110> along the normal) or basal for hexagonal metals, with the share of grains that have it and their scatter.
 4. **Measured back:** the share of grains within 15° of the texture, the share of low-angle boundaries (under 15°) and the mean misorientation across boundaries (about 40.7° for random cubic grains).
 5. **Save as orientation map:** x, y, Euler angles, phase and grain per pixel, as text; the EBSD pages will open it.
+
+## EBSD: orientation maps
+
+![EBSD › Maps: the made-up two-phase map coloured by orientation.](img/ebsd.png)
+
+1. **Open a map:** a .ang or .ctf text export from an EBSD system, or an orientation map saved by the structure generator. **Example (made-up map)** opens a two-phase map from the generator.
+2. **The map:** one coloured square per point; points that were not indexed are black.
+3. **Show:** orientation (the IPF colour of the normal, X or Y: which crystal direction lies along it), phases, or pattern quality and confidence (image quality or band contrast, confidence index or band slope), which show where patterns were weak: boundaries, scratches, dirt.
+4. **The key** for each crystal type in the map.
+5. **The map:** the file type, the number of points, the area, and the share of points indexed.
+6. **Phases:** each phase with its crystal type and its share of the map.
+
+A map on a hexagonal grid is shown on a square grid of the same step. Grains, boundaries and twins, local misorientation, Schmid factors and pole figures come next.
 
 ## Crystal: the elements
 

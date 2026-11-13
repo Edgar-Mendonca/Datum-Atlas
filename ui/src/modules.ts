@@ -3,7 +3,7 @@
 // dimmed with their release (features.ts, area H).
 import type { View } from "./store";
 
-export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing";
+export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing" | "ebsd";
 export interface Module { id: ModId; name: string; short: string; icon: string; about: string; pages: [View, string, string][]; tabs: string[] }
 
 export const MODULES: Module[] = [
@@ -21,11 +21,13 @@ export const MODULES: Module[] = [
     pages: [["elements", "crystal", "Elements"], ["calc", "builder", "Lattice"]], tabs: ["home", "data"] },
   { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your test data: tensile curves and results, hardness statistics, S–N curves and creep rupture on a Larson–Miller plot; the results become a material of your own.",
     pages: [["tensile", "curve", "Tensile"], ["hardness", "level", "Hardness"], ["fatigue", "xy", "Fatigue"], ["creep", "risk", "Creep"]], tabs: ["home", "data"] },
+  { id: "ebsd", name: "EBSD", short: "EBSD", icon: "layout", about: "Orientation maps from EBSD: open .ang and .ctf exports and see orientations, phases and pattern quality; grains, boundaries, Schmid factors and pole figures follow.",
+    pages: [["ebsd", "layout", "Maps"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */
 export const PLANNED: [string, string, string][] = [
-  ["H5", "EBSD", "layout"], ["H6", "DIC", "xy"], ["H7", "Corrosion", "risk"], ["H8", "Heat treatment", "level"],
+  ["H6", "DIC", "xy"], ["H7", "Corrosion", "risk"], ["H8", "Heat treatment", "level"],
 ];
 
 export const moduleOf = (v: View): Module => MODULES.find(m => m.pages.some(p => p[0] === v)) ?? MODULES[1];

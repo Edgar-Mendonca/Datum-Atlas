@@ -1025,3 +1025,33 @@ fn synthetic_textures_come_back() {
     let t = ebsd_text(&Ask { w: 20, h: 16, size: 5.0, ..Ask::default() }).unwrap();
     assert!(t.starts_with("# Datum Atlas orientation map") && t.lines().filter(|l| !l.starts_with('#')).count() == 320);
 }
+
+#[test]
+fn ebsd_exports_are_read() {
+    use crate::ebsd::*;
+    // A small .ang: 4 × 3 points at 0.5 µm, cubic; one point not indexed (CI −1).
+    let mut ang = String::from("# TEM_PIXperUM 1.0\n# Phase 1\n# MaterialName  Iron\n# Symmetry 43\n# GRID: SqrGrid\n# XSTEP: 0.5\n# YSTEP: 0.5\n");
+    for j in 0..3 { for i in 0..4 { let ci = if (i, j) == (2, 1) { -1.0 } else { 0.9 }; ang += &format!("0.0 {} 0.0 {} {} {} {ci} 1\n", if i < 2 { 0.0 } else { std::f64::consts::FRAC_PI_4 }, i as f64 * 0.5, j as f64 * 0.5, 100 + i + j) } }
+    let a = parse(&ang, "map.ang").unwrap();
+    let s = a.summary();
+    assert!(a.format == "ang" && (a.w, a.h) == (4, 3) && (a.step - 0.5).abs() < 1e-9 && a.phases[0].name == "Iron" && a.phases[0].crystal == "cubic" && (s.indexed - 11.0 / 12.0 * 100.0).abs() < 1e-9, "{s:?}");
+    let ipf = crate::image::b64_decode(&a.draw("ipf", "z").unwrap()).unwrap();
+    assert!(ipf[0..3] == [255, 0, 0] && ipf[9..12] == [0, 255, 0] && ipf[(4 + 2) * 3..(4 + 2) * 3 + 3] == [0, 0, 0], "Cube red, Goss green, unindexed black");
+    assert!(a.draw("quality", "z").is_ok() && a.draw("phase", "z").is_ok());
+    // A small .ctf: 3 × 2, hexagonal (Laue 9), degrees; one point with an error code.
+    let mut ctf = String::from("Channel Text File\nPrj test\nXCells\t3\nYCells\t2\nXStep\t1\nYStep\t1\nPhases\t1\n3.21;3.21;5.21\t90;90;120\tMagnesium\t9\t194\nPhase\tX\tY\tBands\tError\tEuler1\tEuler2\tEuler3\tMAD\tBC\tBS\n");
+    for j in 0..2 { for i in 0..3 { ctf += &format!("1\t{i}\t{j}\t8\t{}\t10\t0\t0\t0.5\t120\t140\n", if (i, j) == (1, 1) { 3 } else { 0 }) } }
+    let c = parse(&ctf, "map.ctf").unwrap();
+    assert!(c.format == "ctf" && (c.w, c.h) == (3, 2) && c.phases[0].crystal == "hex" && c.phases[0].name == "Magnesium" && c.phase[4] == 0 && c.phase[0] == 1);
+    let ci = crate::image::b64_decode(&c.draw("ipf", "z").unwrap()).unwrap();
+    assert!(ci[0..3] == [255, 0, 0], "basal normal is red for hexagonal");
+    // Datum Atlas's own map, from the generator: same grid, same colours.
+    let q = crate::synth::Ask { w: 60, h: 40, size: 10.0, texture: "goss".into(), ..Default::default() };
+    let m = crate::synth::generate(&q).unwrap();
+    let e = parse(&crate::synth::ebsd_text(&q).unwrap(), "gen.txt").unwrap();
+    let lab = crate::image::b64_decode(&m.labels).unwrap();
+    let l0 = u16::from_le_bytes([lab[0], lab[1]]) as usize;
+    let d = crate::image::b64_decode(&e.draw("ipf", "z").unwrap()).unwrap();
+    assert!(e.format == "datum" && (e.w, e.h) == (60, 40) && d[0..3] == m.ipf[l0], "{:?} vs {:?}", &d[0..3], m.ipf[l0]);
+    assert!(parse("hello\nworld", "x.txt").is_err() && e.draw("quality", "z").is_err());
+}

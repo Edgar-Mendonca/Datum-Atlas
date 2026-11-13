@@ -418,3 +418,15 @@ fn random_generator_settings_never_panic() {
         if let Ok(m) = generate(&q) { assert!(m.phase2.is_finite() && m.pores.is_finite() && m.grains > 0) }
     }
 }
+
+#[test]
+fn damaged_ebsd_exports_never_panic() {
+    let mut r = Rng(0xC2B2_AE3D_27D4_EB4F);
+    let good = "# Phase 1\n# Symmetry 43\n# XSTEP: 1\n# YSTEP: 1\n0 0 0 0 0 1 0.5 1\n0 0 0 1 0 1 0.5 1\n0 0 0 0 1 1 0.5 1\n0 0 0 1 1 1 0.5 1\n";
+    let bits = ["0", "1", "-1", "1e300", "NaN", " ", "\t", "\n", "#", "Phase", "X", "1e9", ";", "inf"];
+    for case in 0..400 {
+        let mut s: String = good.into();
+        if case % 2 == 0 { s = (0..r.below(60)).map(|_| *r.pick(&bits)).collect() } else { for _ in 0..r.below(8) { let k = r.below(s.len() as u64) as usize; if s.is_char_boundary(k) { s.insert_str(k, r.pick(&bits)) } } }
+        for name in ["a.ang", "a.ctf", "a.txt"] { if let Ok(m) = crate::ebsd::parse(&s, name) { let _ = m.draw("ipf", "z"); let _ = m.summary(); } }
+    }
+}

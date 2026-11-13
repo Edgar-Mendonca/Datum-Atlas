@@ -910,3 +910,12 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 
 .synthpage .ipfkey { width: 180px; height: auto; display: block; margin: 4px 0 8px; }
 .synthpage .scol { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+
+/* EBSD › Maps */
+.ebsdpage .ttools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.ebsdpage .imgrid { display: grid; grid-template-columns: minmax(420px, 1.5fr) minmax(300px, 1fr); gap: 14px; }
+.ebsdpage .ivwrap { line-height: 0; } .ebsdpage .ivwrap canvas { width: 100%; height: auto; image-rendering: pixelated; border: 1px solid var(--line); }
+.ebsdpage .ecolor { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+.ebsdpage .ekeys { display: flex; gap: 18px; flex-wrap: wrap; } .ebsdpage .ipfkey { width: 170px; height: auto; }
+.ebsdpage .ekey i { display: inline-block; width: 10px; height: 10px; margin: 0 4px 0 10px; }
+.ebsdpage .ires td:last-child { text-align: right; font-family: var(--mono); }
