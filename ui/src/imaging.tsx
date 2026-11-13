@@ -9,7 +9,10 @@ import { Help } from "./help";
 interface Part { area: number; ecd: number; perim: number; circ: number; aspect: number; cx: number; cy: number; edge: boolean }
 interface Answer { threshold: number; otsu: number; hist: number[]; fraction: number; unit: string; particles: Part[];
   stats: { count: number; density: number | null; mean: number | null; sd: number | null; d10: number | null; d50: number | null; d90: number | null; aspect: number | null; circ: number | null; meanArea: number | null };
-  bins: [number, number, number][]; mask: string; notes: string[] }
+  bins: [number, number, number][]; mask: string; notes: string[];
+  grains: { intercepts: number; length: number; meanIntercept: number | null; gIntercept: number | null; inside: number; onEdge: number; perMm2: number | null; meanArea: number | null; gArea: number | null; meanEcd: number | null; segs: number[][] } | null;
+  nodularity: { byArea: number | null; byCount: number | null; nodules: number; others: number; nodulesPerMm2: number | null } | null;
+  coating: { columns: number; mean: number | null; sd: number | null; min: number | null; max: number | null; profile: [number, number][] } | null }
 interface Img { name: string; w: number; h: number; px: string; made?: boolean }
 
 const MAXPX = 2_500_000;
@@ -35,14 +38,23 @@ export const ImagesPage = () => {
   const [dark, setDark] = createSignal(true), [smooth, setSmooth] = createSignal(0), [minA, setMinA] = createSignal(4), [edge, setEdge] = createSignal(true), [overlay, setOverlay] = createSignal(true);
   const [res, setRes] = createSignal<Answer | null>(null), [err, setErr] = createSignal("");
   const [pick, setPick] = createSignal<number[][] | null>(null), [barLen, setBarLen] = createSignal(50);
+  const [mode, setMode] = createSignal("particles"), [lines, setLines] = createSignal(10), [round, setRound] = createSignal(0.6);
   let cv!: HTMLCanvasElement;
+  // Settings that change together (an example sets several) start one analysis; a stale answer is dropped.
+  let seq = 0;
+  const [busy, setBusy] = createSignal(false);
   const run = async () => {
+    const my = ++seq;
+    await new Promise(r => setTimeout(r, 40));
+    if (my !== seq) return;
     const i = img(); if (!i) return;
+    setBusy(true);
     const roi = [0, 0, i.w, Math.max(2, Math.round(i.h * (1 - bottom() / 100)))];
-    try { setRes(await invoke<Answer>("image_analyse", { ask: { w: i.w, h: i.h, px: i.px, scale: scale(), roi, smooth: smooth(), threshold: auto() ? null : t(), dark: dark(), min_area: minA(), edge: edge() } })); setErr(""); }
-    catch (e) { setErr(String(e)); setRes(null); }
+    try { const a = await invoke<Answer>("image_analyse", { ask: { w: i.w, h: i.h, px: i.px, scale: scale(), roi, smooth: smooth(), threshold: auto() ? null : t(), dark: dark(), min_area: minA(), edge: edge(), mode: mode(), lines: lines(), round: round() } }); if (my === seq) { setRes(a); setErr(""); } }
+    catch (e) { if (my === seq) { setErr(String(e)); setRes(null); } }
+    finally { if (my === seq) setBusy(false); }
   };
-  createEffect(on([img, scale, bottom, auto, t, dark, smooth, minA, edge], () => { run(); }));
+  createEffect(on([img, scale, bottom, auto, t, dark, smooth, minA, edge, mode, lines, round], () => { run(); }));
   createEffect(() => { const r = res(); if (r && auto()) setT(r.threshold); });
   // Draw the grey image and, over it, the engine's mask: violet counted, amber not counted, grey outside.
   createEffect(() => {
@@ -58,6 +70,8 @@ export const ImagesPage = () => {
       d.data.set([R, G, B, 255], 4 * k);
     }
     cv.getContext("2d")!.putImageData(d, 0, 0);
+    const sg = ov ? r?.grains?.segs : null;
+    if (sg) { const x = cv.getContext("2d")!; x.strokeStyle = "rgba(242,178,51,.8)"; x.lineWidth = Math.max(1, i.w / 600); x.beginPath(); for (const s of sg) { x.moveTo(s[0], s[1]); x.lineTo(s[2], s[3]); } x.stroke(); }
     const p = pick(); if (p?.length) { const x = cv.getContext("2d")!; x.strokeStyle = "#F2B233"; x.lineWidth = Math.max(2, i.w / 300); x.beginPath(); x.moveTo(p[0][0], p[0][1]); if (p[1]) x.lineTo(p[1][0], p[1][1]); x.stroke(); }
   });
   const click = (e: MouseEvent) => {
@@ -68,7 +82,11 @@ export const ImagesPage = () => {
     else setPick(n);
   };
   const open = (e: Event) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; if (f) decode(f).then(i => { setImg(i); setScale(0); setBottom(0); }, () => toast("That picture could not be read. Save it as PNG or JPEG and try again.")); };
-  const example = async () => { const e = await call<{ w: number; h: number; px: string }>("image_example"); if (e) { setImg({ name: "Example (made-up image)", ...e, made: true }); setScale(0.5); setBottom(9); setSmooth(1); } };
+  const example = async () => {
+    const kind = { particles: "particles", grains: "grains", nodularity: "nodular", coating: "coating" }[mode()] ?? "particles";
+    const e = await call<{ w: number; h: number; px: string }>("image_example", { kind });
+    if (e) { setImg({ name: "Example (made-up image)", ...e, made: kind === "particles" || kind === "nodular" }); setScale(0.5); setBottom(kind === "particles" || kind === "nodular" ? 9 : 0); setSmooth(kind === "coating" ? 1 : kind === "grains" ? 0 : 1); setDark(kind !== "coating"); setAuto(true); }
+  };
   const csv = async () => {
     const r = res(); if (!r) return;
     const u = r.unit, rows = [[`Area (${u}²)`, `Equivalent diameter (${u})`, `Perimeter (${u})`, "Circularity", "Aspect ratio", `x (${u})`, `y (${u})`, "Touches the edge"].join(","),
@@ -94,6 +112,9 @@ export const ImagesPage = () => {
         </section>
         <section class="panel icontrols">
           <h2>Settings</h2>
+          <label>Measure <select class="imode" value={mode()} onChange={e => { const m = e.currentTarget.value; setMode(m); if (m === "coating") setDark(false); else setDark(true); }}><option value="particles">Phase fraction and particles</option><option value="grains">Grain size (the phase is the boundaries)</option><option value="nodularity">Graphite nodularity</option><option value="coating">Coating thickness (the phase is the coating)</option></select> <Help k={mode() === "particles" ? "images" : mode()} /></label>
+          <Show when={mode() === "grains"}><label>Test lines each way <input type="number" min="1" max="50" value={lines()} onChange={e => setLines(Math.min(50, Math.max(1, Math.round(+e.currentTarget.value))))} /></label></Show>
+          <Show when={mode() === "nodularity"}><label>A nodule is at least <input type="number" class="iround" step="0.05" min="0" max="1" value={round()} onChange={e => setRound(Math.min(1, Math.max(0, +e.currentTarget.value)))} /> round (circularity)</label></Show>
           <label>Scale <input type="number" class="iscale" step="0.0001" value={scale()} onChange={e => setScale(Math.max(0, +e.currentTarget.value))} /> µm per pixel <Show when={!scale()}><span class="muted small">(0: sizes in pixels)</span></Show></label>
           <label>Scale bar <input type="number" value={barLen()} onChange={e => setBarLen(+e.currentTarget.value)} /> µm <button class="btn sm ibar" onClick={() => { setPick([]); toast("Click both ends of the scale bar on the image.", true); }}>Set from the scale bar</button></label>
           <label>Ignore the bottom <input type="number" class="ibottom" min="0" max="50" value={bottom()} onChange={e => setBottom(Math.min(50, Math.max(0, +e.currentTarget.value)))} /> % (the data bar)</label>
@@ -108,7 +129,7 @@ export const ImagesPage = () => {
         </section>
         <Show when={res()}>{r => <>
           <section class="panel">
-            <h2>Results</h2>
+            <h2>Results <Show when={busy()}><span class="muted small ibusy">working…</span></Show></h2>
             <table class="ptable ires"><tbody>
               <tr><td>Area fraction of the phase</td><td class="ifrac">{fx(r().fraction)} %</td></tr>
               <tr><td>Particles measured</td><td class="icount">{r().stats.count}</td></tr>
@@ -120,6 +141,26 @@ export const ImagesPage = () => {
               <tr><td>Mean aspect ratio</td><td>{fx(r().stats.aspect)}</td></tr>
               <tr><td>Threshold (Otsu's: {r().otsu})</td><td>{r().threshold}</td></tr>
             </tbody></table>
+            <Show when={r().grains}>{g => <table class="ptable ires igrain"><tbody>
+              <tr><td>Mean lineal intercept</td><td class="igl">{fx(g().meanIntercept)} {u()}</td></tr>
+              <tr><td>Grain size number G (intercept)</td><td class="igg">{fx(g().gIntercept, 1)}</td></tr>
+              <tr><td>Intercepts on {fx(g().length, 0)} {u()} of test line</td><td>{g().intercepts}</td></tr>
+              <tr><td>Grains inside / on the edge</td><td>{g().inside} / {g().onEdge}</td></tr>
+              <tr><td>Grains per mm²</td><td>{fx(g().perMm2, 0)}</td></tr>
+              <tr><td>Mean grain area</td><td>{fx(g().meanArea)} {u()}²</td></tr>
+              <tr><td>Mean grain diameter (inside grains)</td><td>{fx(g().meanEcd)} {u()}</td></tr>
+              <tr><td>Grain size number G (area)</td><td>{fx(g().gArea, 1)}</td></tr></tbody></table>}</Show>
+            <Show when={r().nodularity}>{n => <table class="ptable ires inod"><tbody>
+              <tr><td>Nodularity by area</td><td class="inoda">{fx(n().byArea, 1)} %</td></tr>
+              <tr><td>Nodularity by count</td><td>{fx(n().byCount, 1)} %</td></tr>
+              <tr><td>Nodules / other graphite</td><td>{n().nodules} / {n().others}</td></tr>
+              <tr><td>Nodules per mm²</td><td>{fx(n().nodulesPerMm2, 0)}</td></tr></tbody></table>}</Show>
+            <Show when={r().coating}>{c => <><table class="ptable ires icoat"><tbody>
+              <tr><td>Mean thickness</td><td class="icm">{fx(c().mean)} {u()}</td></tr>
+              <tr><td>Standard deviation</td><td>{fx(c().sd)} {u()}</td></tr>
+              <tr><td>Thinnest / thickest</td><td>{fx(c().min)} / {fx(c().max)} {u()}</td></tr>
+              <tr><td>Columns measured</td><td>{c().columns}</td></tr></tbody></table>
+              <svg class="isize" viewBox="0 0 400 120">{(() => { const p = c().profile, xm = Math.max(...p.map(q => q[0]), 1), ym = Math.max(...p.map(q => q[1]), 1); return <><polyline fill="none" stroke="#6C4AB6" stroke-width="1.5" points={p.map(q => `${10 + 380 * q[0] / xm},${105 - 95 * q[1] / ym}`).join(" ")} /><line x1="10" x2="390" y1="105" y2="105" stroke="var(--text2)" /><text x="390" y="118" text-anchor="end" font-size="10" fill="var(--text)">Thickness along the image (max {fx(ym)} {u()})</text></>; })()}</svg></>}</Show>
             <For each={r().notes}>{n => <p class="small tnote">{n}</p>}</For>
           </section>
           <section class="panel">

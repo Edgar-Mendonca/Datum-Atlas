@@ -3,7 +3,7 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.3.10";
+export const VERSION_NOW = "0.3.11";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
@@ -20,6 +20,7 @@ const PAST: Record<string, string> = {
   "0.3.8": "Testing: tensile test data, curves and results",
   "0.3.9": "Testing: hardness, fatigue and creep; test results become your own material",
   "0.3.10": "Image analysis: phase fraction, porosity and particles",
+  "0.3.11": "Image analysis: grain size, nodularity, coating thickness",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */

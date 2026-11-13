@@ -37,7 +37,7 @@
     "Modules sharing one library: Library, Select, Eco, Make, Microstructure and Crystal, with a switcher.",
     "The 118 elements on a periodic table, compositions in weight and atom percent, and crystal calculators: spacings, angles, X-ray powder patterns and stereographic projections.",
     "Testing: tensile results with statistics, hardness statistics, S–N curves with Basquin's law and creep rupture on a Larson–Miller plot; the results become a material of your own.",
-    "Image analysis of micrographs: calibrate from the scale bar, threshold one phase, and measure its area fraction and its particles' sizes and shapes."
+    "Image analysis of micrographs: calibrate from the scale bar, then phase fraction, porosity, particles, grain size with G, graphite nodularity and coating thickness."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -49,17 +49,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.11",
-      "title": "Image analysis 2",
-      "when": "Next",
-      "items": [
-        "Grain size by intercept and area, nodularity and coating thickness."
-      ]
-    },
-    {
       "v": "0.3.12",
       "title": "Synthetic structures 1",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Generate 2D grain structures with size spreads, aspect ratios, phases and pores."
       ]

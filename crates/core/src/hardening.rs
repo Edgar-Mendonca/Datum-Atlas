@@ -403,7 +403,7 @@ fn random_images_never_panic() {
         let (w, h) = (1 + r.below(40) as usize, 1 + r.below(40) as usize);
         let px: Vec<u8> = (0..w * h).map(|_| r.below(256) as u8).collect();
         let q = Ask { w, h, px: if r.below(10) == 0 { "!!".into() } else { b64_encode(&px) }, scale: r.num(), roi: [r.below(50) as usize, r.below(50) as usize, r.below(50) as usize, r.below(50) as usize],
-            smooth: r.below(3) as u8, threshold: if r.below(2) == 0 { None } else { Some(r.below(256) as u8) }, dark: r.below(2) == 0, min_area: r.below(5) as usize, edge: r.below(2) == 0 };
+            smooth: r.below(3) as u8, threshold: if r.below(2) == 0 { None } else { Some(r.below(256) as u8) }, dark: r.below(2) == 0, min_area: r.below(5) as usize, edge: r.below(2) == 0, mode: r.pick(&["particles", "grains", "nodularity", "coating"]).to_string(), lines: r.below(60) as usize, round: r.num() };
         if let Ok(a) = analyse(&q) { assert!(a.fraction.is_finite() && a.particles.iter().all(|p| p.ecd.is_finite() && p.circ.is_finite())); }
     }
 }

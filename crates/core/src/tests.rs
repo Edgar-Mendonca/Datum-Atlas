@@ -935,3 +935,28 @@ fn image_analysis_measures_known_particles() {
     let e = analyse(&Ask { w: ew, h: eh, px: b64_encode(&ep), roi: [0, 0, ew, 440], smooth: 1, scale: 0.5, ..Default::default() }).unwrap();
     assert!(e.stats.count >= 50 && e.stats.count <= 60 && e.stats.mean.is_some_and(|d| d > 6.0 && d < 14.0), "{:?}", e.stats);
 }
+
+#[test]
+fn grain_size_nodularity_and_coating_thickness() {
+    use crate::image::*;
+    let near = |v: Option<f64>, x: f64, tol: f64| v.is_some_and(|v| (v - x).abs() <= tol);
+    // A square grid of 20 µm grains with one-pixel dark boundaries: mean intercept 20 µm, G = 8.0.
+    let (w, h) = (200usize, 200usize);
+    let px: Vec<u8> = (0..w * h).map(|i| if (i % w) % 20 == 0 || (i / w) % 20 == 0 { 30 } else { 200 }).collect();
+    let q = Ask { w, h, px: b64_encode(&px), scale: 1.0, mode: "grains".into(), ..Default::default() };
+    let g = analyse(&q).unwrap().grains.unwrap();
+    assert!(g.intercepts == 200 && near(g.mean_intercept, 20.0, 1e-9) && near(g.g_intercept, 8.0, 0.01) && g.segs.len() == 20, "{g:?}");
+    assert!(g.inside == 81 && g.on_edge == 19 && near(g.mean_ecd, 2.0 * (361.0f64 / std::f64::consts::PI).sqrt(), 1e-6) && g.g_area.is_some(), "{g:?}");
+    // Coating: a bright layer exactly 30 px thick.
+    let px: Vec<u8> = (0..w * h).map(|i| if (50..80).contains(&(i / w)) { 220 } else { 40 }).collect();
+    let c = analyse(&Ask { w, h, px: b64_encode(&px), scale: 2.0, dark: false, mode: "coating".into(), ..Default::default() }).unwrap().coating.unwrap();
+    assert!(near(c.mean, 60.0, 1e-9) && near(c.sd, 0.0, 1e-9) && c.columns == 200, "{c:?}");
+    // Nodularity on the made-up image: round nodules and flakes are told apart.
+    let (ew, eh, ep) = example_of("nodular");
+    let n = analyse(&Ask { w: ew, h: eh, px: b64_encode(&ep), roi: [0, 0, ew, 440], smooth: 1, scale: 0.5, mode: "nodularity".into(), ..Default::default() }).unwrap().nodularity.unwrap();
+    assert!(n.nodules > 25 && n.others > 10 && n.by_count.is_some_and(|v| v > 50.0 && v < 80.0), "{n:?}");
+    // The made-up grain image gives a grain count of the right order (90 seeds).
+    let (gw, gh, gp) = example_of("grains");
+    let e = analyse(&Ask { w: gw, h: gh, px: b64_encode(&gp), scale: 0.5, mode: "grains".into(), ..Default::default() }).unwrap().grains.unwrap();
+    assert!(e.inside + e.on_edge > 70 && e.inside + e.on_edge < 110 && e.mean_intercept.is_some(), "{e:?}");
+}

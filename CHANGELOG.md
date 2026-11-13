@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.11 — 2026-11-13
+
+Image analysis gains grain size, graphite nodularity and coating thickness.
+
+**Microstructure › Images: what to measure**
+- **Grain size:** by the intercept method (test lines each way, the boundaries they cross counted) and by area (grains counted, those on the edge as halves), with the mean intercept, grains per mm², mean grain area and diameter, and the grain size number G from the standard relations. The test lines are drawn over the image.
+- **Graphite nodularity:** each graphite particle at least as round as the limit you set (0.6 unless you change it) is a nodule; nodularity by area and by count, and nodules per mm².
+- **Coating thickness:** the thickness of a layer in every column across the image, with its mean, spread, thinnest and thickest, and the profile along the image.
+- A made-up example for each: grains, cast iron with nodules and flakes, and a coated sample.
+
+**Smaller things**
+- The page measures once when several settings change together, and says when it is working; answers that arrive late are dropped.
+
+**Checked**
+- A grid of 20 µm grains gives a mean intercept of 20 µm and G = 8.0; a 30-pixel layer at 2 µm per pixel gives 60 µm with no spread; nodules and flakes are told apart.
+
 ## 0.3.10 — 2026-11-13
 
 Image analysis of your micrographs: calibrate, threshold, and measure a phase's area fraction and its particles.

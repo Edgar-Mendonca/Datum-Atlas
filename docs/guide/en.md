@@ -230,7 +230,15 @@ Image analysis of your own micrographs, a structure generator, EBSD and DIC will
 6. **Results:** the area fraction of the phase (phase fraction or porosity), the number of particles and their number per mm², the equivalent circle diameter (mean, standard deviation, D10, D50, D90), mean area, circularity and aspect ratio.
 7. **Size distribution:** a histogram of equivalent diameters and a table of the particles; **Particles to CSV** saves them all.
 
-Particles touching the edge of the region are left out of the sizes, because their whole size is not seen; they still count in the area fraction. Grain size by the intercept method, nodularity and coating thickness come next.
+Particles touching the edge of the region are left out of the sizes, because their whole size is not seen; they still count in the area fraction.
+
+![Grain size of the made-up grain image, with the test lines drawn over it.](img/grains.png)
+
+1. **Measure:** besides phase fraction and particles, choose **Grain size** (the phase is the grain boundaries, usually darker), **Graphite nodularity** (the phase is the graphite) or **Coating thickness** (the phase is the coating, turned to run across the image). Each has a made-up example.
+2. **Grain size** lays test lines across the image each way (drawn in amber) and counts the boundaries they cross: the mean lineal intercept is the line length over the count. It also counts the grains, those on the edge as halves, for the mean grain area.
+3. **The results:** the mean intercept and grains per mm², with the grain size number G from the standard relations (G = −6.644 log₁₀ ℓ − 3.288 with ℓ in mm; G = 3.322 log₁₀ N − 2.954 with N per mm²).
+
+**Nodularity** is the share of the graphite in round nodules (at least as round as the limit you set, 0.6 unless you change it), by area and by count. **Coating thickness** is the layer's length in every column of pixels, with its mean, spread, thinnest and thickest, and the profile along the image.
 
 ## Crystal: the elements
 

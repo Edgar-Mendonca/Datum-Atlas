@@ -138,8 +138,11 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await shot("creep", [[".labpage .cvals", 1], [".labpage .lmpc", 2], [".labpage .cat0", 3], [".labpage .lplot", 4], [".labpage .cres2", 5]]);
   await side("Hardness"); await wait(400);
   await shot("hardness", [[".labpage .hvals", 1], [".labpage .hres", 2], [".labpage .mkmat", 3]]);
-  await side("Images"); await p.click(".imgpage .iex"); await wait(900);
+  await side("Images"); await p.click(".imgpage .iex"); await wait(2500);
   await shot("images", [[".imgpage .iopen", 1], [".imgpage canvas", 2], [".imgpage .iscale", 3], [".imgpage .ibottom", 4], [".imgpage .ihist", 5], [".imgpage .ires", 6], [".imgpage .isize", 7]]);
+  await p.selectOption(".imgpage .imode", "grains"); await p.click(".imgpage .iex"); await wait(2500);
+  await shot("grains", [[".imgpage .imode", 1], [".imgpage canvas", 2], [".imgpage .igrain", 3]]);
+  await p.selectOption(".imgpage .imode", "particles");
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

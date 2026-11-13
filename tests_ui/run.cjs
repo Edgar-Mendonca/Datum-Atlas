@@ -233,20 +233,31 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.click(".dlg footer .btn.pri"); await p.waitForTimeout(400);
   check("…and it is saved with its values", (await p.textContent(".sheetpage h1").catch(() => "")).includes("(tested)"), await p.textContent("#toast").catch(() => "") + " / " + (await p.textContent(".dlg").catch(() => "")).slice(0, 400));
   if (await p.$(".dlg")) { await p.keyboard.press("Escape"); await p.waitForTimeout(200); }
+  /** Waits until the page has stopped measuring and stays stopped (an example loads, then measures). */
+  const idle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".imgpage .ibusy")) ? 0 : quiet + 1; } };
   // Microstructure › Images: the made-up image, its particles, a manual threshold, the bright phase.
   await goTo(p, "Images");
   check("Image analysis starts empty and says how to begin", (await p.textContent(".imgpage .tempty")).includes("Open a micrograph"));
-  await p.click(".imgpage .iex"); await p.waitForSelector(".imgpage .ires"); await p.waitForTimeout(400);
+  await p.click(".imgpage .iex"); await p.waitForSelector(".imgpage .ires"); await idle();
   const icount = +(await p.textContent(".imgpage .icount"));
   check("the made-up image's particles are found and measured in µm", icount >= 50 && icount <= 60 && (await p.textContent(".imgpage .iecd")).includes("µm") && (await p.$$(".imgpage .isize rect")).length > 3, String(icount));
   const f0 = await p.textContent(".imgpage .ifrac");
-  await p.click(".imgpage .iauto"); await p.fill(".imgpage .ithr", "20"); await p.dispatchEvent(".imgpage .ithr", "input"); await p.waitForTimeout(400);
+  await p.click(".imgpage .iauto"); await p.fill(".imgpage .ithr", "20"); await p.dispatchEvent(".imgpage .ithr", "input"); await idle();
   check("a hand-set threshold changes the area fraction", (await p.textContent(".imgpage .ifrac")) !== f0, f0 + " → " + await p.textContent(".imgpage .ifrac"));
-  await p.click(".imgpage .iauto"); await p.waitForTimeout(300);
-  await p.fill(".imgpage .iscale", "0"); await p.press(".imgpage .iscale", "Tab"); await p.waitForTimeout(300);
+  await p.click(".imgpage .iauto"); await idle();
+  await p.fill(".imgpage .iscale", "0"); await p.press(".imgpage .iscale", "Tab"); await idle();
   check("without a scale the sizes are in pixels and a note says so", (await p.textContent(".imgpage .iecd")).includes("px") && (await p.textContent(".imgpage")).includes("Not calibrated"));
-  await p.fill(".imgpage .iscale", "0.5"); await p.press(".imgpage .iscale", "Tab"); await p.waitForTimeout(300);
+  await p.fill(".imgpage .iscale", "0.5"); await p.press(".imgpage .iscale", "Tab"); await idle();
   await shot("images");
+  await p.selectOption(".imgpage .imode", "grains"); await p.click(".imgpage .iex"); await idle();
+  check("grain size by intercept and by area, with G", +(await p.textContent(".imgpage .igg")) > 5 && (await p.textContent(".imgpage .igl")).includes("µm"), await p.textContent(".imgpage .igrain"));
+  await p.selectOption(".imgpage .imode", "nodularity"); await p.click(".imgpage .iex"); await idle();
+  const nod = parseFloat(await p.textContent(".imgpage .inoda"));
+  check("graphite nodularity tells nodules from flakes", nod > 40 && nod < 95, String(nod));
+  await p.selectOption(".imgpage .imode", "coating"); await p.click(".imgpage .iex"); await idle();
+  const cm = parseFloat(await p.textContent(".imgpage .icm"));
+  check("coating thickness of the made-up layer (about 60 µm)", cm > 50 && cm < 70, String(cm));
+  await p.selectOption(".imgpage .imode", "particles");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

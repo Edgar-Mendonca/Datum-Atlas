@@ -170,7 +170,7 @@ async fn image_analyse(ask: datum_atlas_core::image::Ask) -> R<datum_atlas_core:
 
 /// A made-up test image (grey, base64).
 #[tauri::command]
-fn image_example() -> Value { let (w, h, px) = datum_atlas_core::image::example(); json!({ "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) }
+fn image_example(kind: Option<String>) -> Value { let (w, h, px) = datum_atlas_core::image::example_of(kind.as_deref().unwrap_or("particles")); json!({ "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) }
 
 /// Made-up example hardness, fatigue and creep data, to try the pages.
 #[tauri::command]
