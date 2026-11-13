@@ -84,7 +84,9 @@ export const ImagesPage = () => {
   const open = (e: Event) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; if (f) decode(f).then(i => { setImg(i); setScale(0); setBottom(0); }, () => toast("That picture could not be read. Save it as PNG or JPEG and try again.")); };
   const example = async () => {
     const kind = { particles: "particles", grains: "grains", nodularity: "nodular", coating: "coating" }[mode()] ?? "particles";
+    setBusy(true);
     const e = await call<{ w: number; h: number; px: string }>("image_example", { kind });
+    if (!e) setBusy(false);
     if (e) { setImg({ name: "Example (made-up image)", ...e, made: kind === "particles" || kind === "nodular" }); setScale(0.5); setBottom(kind === "particles" || kind === "nodular" ? 9 : 0); setSmooth(kind === "coating" ? 1 : kind === "grains" ? 0 : 1); setDark(kind !== "coating"); setAuto(true); }
   };
   const csv = async () => {
@@ -111,7 +113,7 @@ export const ImagesPage = () => {
           <Show when={i().made}><p class="muted small">A made-up image: its scale bar is 100 px long, 50 µm.</p></Show>
         </section>
         <section class="panel icontrols">
-          <h2>Settings</h2>
+          <h2>Settings <Show when={busy()}><span class="muted small ibusy">working…</span></Show></h2>
           <label>Measure <select class="imode" value={mode()} onChange={e => { const m = e.currentTarget.value; setMode(m); if (m === "coating") setDark(false); else setDark(true); }}><option value="particles">Phase fraction and particles</option><option value="grains">Grain size (the phase is the boundaries)</option><option value="nodularity">Graphite nodularity</option><option value="coating">Coating thickness (the phase is the coating)</option></select> <Help k={mode() === "particles" ? "images" : mode()} /></label>
           <Show when={mode() === "grains"}><label>Test lines each way <input type="number" min="1" max="50" value={lines()} onChange={e => setLines(Math.min(50, Math.max(1, Math.round(+e.currentTarget.value))))} /></label></Show>
           <Show when={mode() === "nodularity"}><label>A nodule is at least <input type="number" class="iround" step="0.05" min="0" max="1" value={round()} onChange={e => setRound(Math.min(1, Math.max(0, +e.currentTarget.value)))} /> round (circularity)</label></Show>
@@ -129,7 +131,7 @@ export const ImagesPage = () => {
         </section>
         <Show when={res()}>{r => <>
           <section class="panel">
-            <h2>Results <Show when={busy()}><span class="muted small ibusy">working…</span></Show></h2>
+            <h2>Results</h2>
             <table class="ptable ires"><tbody>
               <tr><td>Area fraction of the phase</td><td class="ifrac">{fx(r().fraction)} %</td></tr>
               <tr><td>Particles measured</td><td class="icount">{r().stats.count}</td></tr>

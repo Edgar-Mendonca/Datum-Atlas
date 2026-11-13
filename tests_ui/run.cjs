@@ -249,12 +249,12 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("without a scale the sizes are in pixels and a note says so", (await p.textContent(".imgpage .iecd")).includes("px") && (await p.textContent(".imgpage")).includes("Not calibrated"));
   await p.fill(".imgpage .iscale", "0.5"); await p.press(".imgpage .iscale", "Tab"); await idle();
   await shot("images");
-  await p.selectOption(".imgpage .imode", "grains"); await p.click(".imgpage .iex"); await idle();
+  await p.selectOption(".imgpage .imode", "grains"); await idle(); await p.click(".imgpage .iex"); await p.waitForFunction(() => document.querySelector(".imgpage .ibottom")?.value === "0", null, { timeout: 20000 }); await idle();
   check("grain size by intercept and by area, with G", +(await p.textContent(".imgpage .igg")) > 5 && (await p.textContent(".imgpage .igl")).includes("µm"), await p.textContent(".imgpage .igrain"));
-  await p.selectOption(".imgpage .imode", "nodularity"); await p.click(".imgpage .iex"); await idle();
+  await p.selectOption(".imgpage .imode", "nodularity"); await idle(); await p.click(".imgpage .iex"); await idle();
   const nod = parseFloat(await p.textContent(".imgpage .inoda"));
   check("graphite nodularity tells nodules from flakes", nod > 40 && nod < 95, String(nod));
-  await p.selectOption(".imgpage .imode", "coating"); await p.click(".imgpage .iex"); await idle();
+  await p.selectOption(".imgpage .imode", "coating"); await idle(); await p.click(".imgpage .iex"); await idle();
   const cm = parseFloat(await p.textContent(".imgpage .icm"));
   check("coating thickness of the made-up layer (about 60 µm)", cm > 50 && cm < 70, String(cm));
   await p.selectOption(".imgpage .imode", "particles");
