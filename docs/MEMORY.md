@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.18** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.18). Plans: [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.18** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.18). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -572,6 +572,10 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - The made-up field over the EBSD example integrates a per-grain strain (proportional to the Schmid factor, softened by three 3 × 3 averages) along x for u and along y for v; it keeps some row banding from the integration, which is fine for an example labelled made-up.
 - The user asked to carry on to EBSD and high-resolution DIC overnight: 0.3.10 to 0.3.18 released in this session.
 - Released 0.3.18.
+
+### 2026-11-14: Session 18, continued (research brainstorm, PLAN-0.6)
+- The user asked for a thorough brainstorm from the projects and course material they used at university. Three parallel reviews (feature inventories only; copyleft project read from its documentation and examples only, no code): EBSD/HR-DIC analysis, a materials-structure library, a crystal-plasticity kit, and the course notebooks.
+- Result: [PLAN-0.6.md](PLAN-0.6.md), 29 ideas in five groups (EBSD/DIC to research grade, Crystal, Corrosion and heat treatment, data tools, a simulation bridge) with methods and papers, a suggested order (0.3.19, 0.3.20, then a 0.4.x research series) and questions. Waiting for the user's answers; the user is meanwhile trying 0.3.18 on Windows with their own data.
 
 ---
 
