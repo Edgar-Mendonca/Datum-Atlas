@@ -1,6 +1,6 @@
 [package]
 name = "datum-atlas-core"
-version = "0.3.19"
+version = "0.3.20"
 edition = "2021"
 description = "Datum Atlas engine: materials, units, property charts (bubbles and hulls), selection stages and .datlas files."
 license = "MIT"
@@ -10,3 +10,4 @@ serde.workspace = true
 serde_json.workspace = true
 rust_xlsxwriter = { version = "0.101.0", default-features = false }
 calamine = { version = "0.38.0", default-features = false }
+miniz_oxide = "0.9"

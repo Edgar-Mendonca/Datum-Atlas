@@ -30,6 +30,10 @@ pub enum Op {
     Tensile { tensile: crate::tensile::Tensile },
     /// Replaces the hardness, fatigue and creep tests.
     Lab { lab: crate::lab::Lab },
+    /// Keeps (or with no item, removes) research work: "image", "ebsd" or "dic". The shell packs the item.
+    Research { which: String, item: Option<Box<crate::research::Item>> },
+    /// Stores a page setting with the kept research work.
+    ResearchSet { which: String, key: String, value: serde_json::Value },
     Name { name: String },
     Notes { text: String },
     /// Applies a design goal to a chart ("" to explore). The shell turns it into the edits.
@@ -182,6 +186,12 @@ fn exec(p: &mut Project, op: Op) -> Result<(), String> {
                 return Err("Mass, section and batch are numbers above zero (a batch of at least one); tolerance, roughness and price zero or more.".into());
             }
             p.process = sel;
+        }
+        Op::Research { which, item } => *p.research.slot(&which)? = item.map(|i| *i),
+        Op::ResearchSet { which, key, value } => {
+            let i = p.research.slot(&which)?.as_mut().ok_or("Nothing is open there.")?;
+            if !i.settings.is_object() { i.settings = serde_json::json!({}); }
+            i.settings[key] = value;
         }
         Op::Name { name } => {
             let name = name.trim().to_string();

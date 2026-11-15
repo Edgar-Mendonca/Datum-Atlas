@@ -191,6 +191,8 @@ pub struct Project {
     pub tensile: crate::tensile::Tensile,
     /// Hardness, fatigue and creep tests.
     pub lab: crate::lab::Lab,
+    /// Research work kept with the project: the micrograph, the EBSD map and the DIC field, with their settings.
+    pub research: crate::research::Research,
 }
 
 /// A property of your own: a formula of other properties (`[E]^0.5/[rho]`), saved with the
@@ -216,7 +218,7 @@ pub fn pname(k: &str) -> String {
 
 impl Default for Project {
     fn default() -> Self {
-        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![], eco: crate::eco::Eco::default(), process: crate::process::ProcSel::default(), tensile: crate::tensile::Tensile::default(), lab: crate::lab::Lab::default() }
+        Self { format: FORMAT, name: "Selection1".into(), notes: String::new(), charts: vec![], stages: Stages::default(), next_id: 1, ui: serde_json::json!({}), formulas: vec![], compare: vec![], radar: vec![], eco: crate::eco::Eco::default(), process: crate::process::ProcSel::default(), tensile: crate::tensile::Tensile::default(), lab: crate::lab::Lab::default(), research: Default::default() }
     }
 }
 
@@ -376,6 +378,8 @@ impl Project {
         self.eco.normalize();
         self.process.normalize();
     }
+    /// The project without the packed research data, for the window.
+    pub fn lite(&self) -> Self { Self { research: self.research.lite(), ..self.clone() } }
     pub fn from_json(text: &str) -> Result<Self, String> {
         let mut p: Project = serde_json::from_str(text).map_err(|e| e.to_string())?;
         if p.format > FORMAT {

@@ -5,7 +5,7 @@ mod py;
 mod runtime;
 mod update;
 
-use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, eco, export, process, goals, select, sheet, templates, Database, Material, Project, Source, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, eco, export, process, goals, research::{Item, Open}, select, sheet, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use py::{Engine, Py};
@@ -48,10 +48,8 @@ impl Default for Options {
 }
 
 struct App {
-    /// The EBSD map open in Crystal › EBSD (not saved in the project).
-    ebsd: Option<datum_atlas_core::ebsd::Ebsd>,
-    /// The displacement field open in DIC (not saved in the project).
-    dic: Option<datum_atlas_core::dic::Dic>,
+    /// The project's EBSD map and DIC field, unpacked once (the project keeps them packed).
+    open: Open,
     doc: Doc,
     opts: Options,
     rev: u64,
@@ -87,8 +85,8 @@ type R<T> = Result<T, String>;
 /// What the window gets after every change: the project, each chart laid out, and the results.
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
-struct Out<'a> {
-    project: &'a Project,
+struct Out {
+    project: Project,
     path: Option<String>,
     dirty: bool,
     undo: bool,
@@ -110,7 +108,7 @@ fn out(a: &App) -> Value {
     let db = a.db.with_formulas(&d.p.formulas);
     let charts = d.p.charts.iter().map(|c| chart::build(&db, c)).collect();
     serde_json::to_value(Out {
-        project: &d.p, path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
+        project: d.p.lite(), path: d.path.as_ref().map(|p| p.display().to_string()), dirty: d.dirty, undo: d.can_undo(), redo: d.can_redo(), rev: a.rev,
         charts, results: select::run(&db, &d.p), compare: compare::build(&db, &d.p), eco: eco::audit(&db, &d.p.eco), process: process::select(&db, &d.p), tensile: datum_atlas_core::tensile::run(&d.p.tensile), lab: datum_atlas_core::lab::run(&d.p.lab), db_rev: a.db_rev,
     })
     .unwrap_or_default()
@@ -183,39 +181,57 @@ fn image_example(kind: Option<String>) -> Value { let (w, h, px) = datum_atlas_c
 #[tauri::command]
 async fn synth_generate(ask: datum_atlas_core::synth::Ask) -> R<datum_atlas_core::synth::Map> { datum_atlas_core::synth::generate(&ask) }
 
-/// Open an EBSD map (.ang, .ctf, or a Datum Atlas orientation map); returns its summary.
+/// Keeps research work in the project (or removes it) and returns the project.
+fn keep(a: &mut App, which: &str, item: Option<Item>) -> R<Value> {
+    a.doc.apply(Op::Research { which: which.into(), item: item.map(Box::new) })?;
+    a.rev += 1;
+    Ok(out(a))
+}
+
+/// Keeps a grey picture (decoded by the window) in the project for image analysis.
 #[tauri::command]
-async fn ebsd_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<datum_atlas_core::ebsd::Summary>> {
+fn image_keep(st: State<St>, name: String, w: usize, h: usize, px: String, made: bool) -> R<Value> {
+    let it = Item::image(&name, w, h, &datum_atlas_core::image::b64_decode(&px)?, made)?;
+    keep(&mut st.lock(), "image", Some(it))
+}
+
+/// The picture kept in the project: name, size and grey pixels (base64), or null.
+#[tauri::command]
+fn image_kept(st: State<St>) -> R<Value> {
+    let a = st.lock();
+    let Some(i) = &a.doc.p.research.image else { return Ok(Value::Null) };
+    let (w, h, px) = i.image_px()?;
+    Ok(json!({ "name": i.info["name"], "made": i.info["made"], "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }))
+}
+
+/// Open an EBSD map (.ang, .ctf, or a Datum Atlas orientation map) and keep it in the project.
+#[tauri::command]
+async fn ebsd_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<Value>> {
     let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "EBSD map", &["ang", "ctf", "txt"])) else { return Ok(None) };
     let text = String::from_utf8_lossy(&std::fs::read(&path).map_err(|e| e.to_string())?).to_string();
     let m = datum_atlas_core::ebsd::parse(&text, &path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())?;
-    let s = m.summary();
-    st.lock().ebsd = Some(m);
-    Ok(Some(s))
+    keep(&mut st.lock(), "ebsd", Some(Item::ebsd(&m))).map(Some)
 }
 
 /// A made-up EBSD map from the structure generator (two phases, part Goss texture).
 #[tauri::command]
-fn ebsd_example(st: State<St>) -> R<datum_atlas_core::ebsd::Summary> {
-    let m = datum_atlas_core::ebsd::example()?;
-    let s = m.summary();
-    st.lock().ebsd = Some(m);
-    Ok(s)
-}
+fn ebsd_example(st: State<St>) -> R<Value> { keep(&mut st.lock(), "ebsd", Some(Item::ebsd(&datum_atlas_core::ebsd::example()?))) }
 
 /// A picture of the open EBSD map: "ipf" (dir x, y or z), "phase", "quality" or "confidence"; RGB, base64.
 #[tauri::command]
 fn ebsd_draw(st: State<St>, kind: String, dir: String) -> R<Value> {
-    let a = st.lock();
-    let m = a.ebsd.as_ref().ok_or("Open an EBSD map first.")?;
+    let mut g = st.lock();
+    let a = &mut *g;
+    let m = a.open.ebsd(&a.doc.p.research)?;
     Ok(json!({ "w": m.w, "h": m.h, "rgb": m.draw(&kind, &dir)? }))
 }
 
 /// Grains, boundaries, local misorientation or Schmid factors of the open EBSD map: picture and statistics.
 #[tauri::command]
 async fn ebsd_grains(st: State<'_, St>, kind: String, ask: datum_atlas_core::ebsd::GrainAsk) -> R<Value> {
-    let a = st.lock();
-    let m = a.ebsd.as_ref().ok_or("Open an EBSD map first.")?;
+    let mut g = st.lock();
+    let a = &mut *g;
+    let m = a.open.ebsd(&a.doc.p.research)?;
     let (rgb, out) = m.draw_grains(&kind, &ask)?;
     Ok(json!({ "w": m.w, "h": m.h, "rgb": rgb, "out": out }))
 }
@@ -223,32 +239,32 @@ async fn ebsd_grains(st: State<'_, St>, kind: String, ask: datum_atlas_core::ebs
 /// A pole figure ("pf", family) or inverse pole figure ("ipf", sample direction) of one phase of the open EBSD map.
 #[tauri::command]
 async fn ebsd_figure(st: State<'_, St>, kind: String, phase: u8, of: String) -> R<datum_atlas_core::ebsd::Figure> {
-    let a = st.lock();
-    let m = a.ebsd.as_ref().ok_or("Open an EBSD map first.")?;
+    let mut g = st.lock();
+    let a = &mut *g;
+    let m = a.open.ebsd(&a.doc.p.research)?;
     if kind == "ipf" { m.inverse_pole_figure(phase, &of) } else { m.pole_figure(phase, &of, 41) }
 }
 
-/// Open a displacement field (CSV, text or spreadsheet with x, y, u, v); returns its summary.
+/// Open a displacement field (CSV, text or spreadsheet with x, y, u, v) and keep it in the project.
 #[tauri::command]
-async fn dic_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<datum_atlas_core::dic::Summary>> {
+async fn dic_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<Value>> {
     let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Displacement field", &["csv", "txt", "dat", "xlsx"])) else { return Ok(None) };
     let t = sheet::read(&path)?;
     let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect();
     let d = datum_atlas_core::dic::parse(&raw, &path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default())?;
-    let s = d.summary();
-    st.lock().dic = Some(d);
-    Ok(Some(s))
+    keep(&mut st.lock(), "dic", Some(Item::dic(&d))).map(Some)
 }
 
 /// A made-up displacement field.
 #[tauri::command]
-fn dic_example(st: State<St>) -> datum_atlas_core::dic::Summary { let d = datum_atlas_core::dic::example(); let s = d.summary(); st.lock().dic = Some(d); s }
+fn dic_example(st: State<St>) -> R<Value> { keep(&mut st.lock(), "dic", Some(Item::dic(&datum_atlas_core::dic::example()))) }
 
 /// A strain component of the open field: picture, colour range and statistics.
 #[tauri::command]
 fn dic_draw(st: State<St>, key: String) -> R<Value> {
-    let a = st.lock();
-    let d = a.dic.as_ref().ok_or("Open a displacement field first.")?;
+    let mut g = st.lock();
+    let a = &mut *g;
+    let d = a.open.dic(&a.doc.p.research)?;
     let (rgb, range) = d.draw(&key, None);
     Ok(json!({ "w": d.w, "h": d.h, "rgb": rgb, "range": range, "stats": datum_atlas_core::dic::COMPONENTS.iter().map(|c| d.stats(c.0)).collect::<Vec<_>>() }))
 }
@@ -256,8 +272,9 @@ fn dic_draw(st: State<St>, key: String) -> R<Value> {
 /// A strain component along a line between two grid points.
 #[tauri::command]
 fn dic_profile(st: State<St>, key: String, a: [f64; 2], b: [f64; 2]) -> R<Vec<[f64; 2]>> {
-    let s = st.lock();
-    Ok(s.dic.as_ref().ok_or("Open a displacement field first.")?.profile(&key, a, b, 200))
+    let mut g = st.lock();
+    let s = &mut *g;
+    Ok(s.open.dic(&s.doc.p.research)?.profile(&key, a, b, 200))
 }
 
 /// A graph drawn by the Python engine (matplotlib) from a spec: SVG and what the window needs for hover.
@@ -301,22 +318,21 @@ async fn restart_engine(app: AppHandle) -> R<Value> {
 /// Strain by grain: the open DIC field over the open EBSD map.
 #[tauri::command]
 async fn dic_link(st: State<'_, St>, ask: datum_atlas_core::dic::LinkAsk) -> R<datum_atlas_core::dic::Linked> {
-    let a = st.lock();
-    let m = a.ebsd.as_ref().ok_or("Open an EBSD map on EBSD › Maps first.")?;
-    let d = a.dic.as_ref().ok_or("Open a displacement field on DIC › Strain maps first.")?;
+    let mut g = st.lock();
+    let a = &mut *g;
+    let (m, d) = a.open.both(&a.doc.p.research)?;
     datum_atlas_core::dic::by_grain(d, m, &ask)
 }
 
-/// A made-up linked example: the EBSD example map and a field over it; returns both summaries.
+/// A made-up linked example: the EBSD example map and a field over it, both kept in the project.
 #[tauri::command]
 fn dic_link_example(st: State<St>) -> R<Value> {
     let m = datum_atlas_core::ebsd::example()?;
     let d = datum_atlas_core::dic::example_on(&m);
-    let v = json!({ "ebsd": m.summary(), "dic": d.summary() });
     let mut a = st.lock();
-    a.ebsd = Some(m);
-    a.dic = Some(d);
-    Ok(v)
+    a.doc.apply(Op::Batch(vec![Op::Research { which: "ebsd".into(), item: Some(Box::new(Item::ebsd(&m))) }, Op::Research { which: "dic".into(), item: Some(Box::new(Item::dic(&d))) }]))?;
+    a.rev += 1;
+    Ok(out(&a))
 }
 
 /// A synthetic grain map as an orientation map in text.
@@ -863,7 +879,7 @@ fn main() {
             let all: Vec<Database> = others.iter().map(|o| o.1.clone()).collect();
             let db = Db::new(db::builtin(), Some(&user)).with_others(&all);
             let p = fresh(&db, &opts, None).unwrap_or_default();
-            app.manage(St(Mutex::new(App { ebsd: None, dic: None, doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
+            app.manage(St(Mutex::new(App { open: Open::default(), doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
             app.manage(Engine(Mutex::new(Py::default())));
             // Start Python now (unpacking it on the first start) so the first graph appears quickly.
             let h = app.handle().clone();
@@ -886,7 +902,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, graph, graph_export, engine, restart_engine,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, graph, graph_export, engine, restart_engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

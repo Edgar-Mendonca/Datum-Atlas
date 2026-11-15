@@ -2,7 +2,8 @@
 // the engine (image.rs): area fraction, particles, sizes and shapes. The window only decodes the
 // picture into grey bytes and draws the engine's mask over it.
 import { For, Show, createEffect, createSignal, on } from "solid-js";
-import { call, toast } from "./store";
+import { call, setOut, toast } from "./store";
+import { forget, keptId, keepSettings } from "./kept";
 import { invoke } from "./api";
 import { Help } from "./help";
 import { Graph } from "./graph";
@@ -43,10 +44,16 @@ export const ImagesPage = () => {
   const [pick, setPick] = createSignal<number[][] | null>(null), [barLen, setBarLen] = createSignal(50);
   const [mode, setMode] = createSignal("particles"), [lines, setLines] = createSignal(10), [round, setRound] = createSignal(0.6);
   let cv!: HTMLCanvasElement;
-  const inc = incoming(); if (inc) { setIncoming(null); setImg(inc); setScale(inc.scale ?? 0); setMode("grains"); }
+  const [busy, setBusy] = createSignal(false);
+  // The picture and its settings are kept in the project.
+  keepSettings("image", "s", () => ({ scale: scale(), bottom: bottom(), auto: auto(), t: t(), dark: dark(), smooth: smooth(), minA: minA(), edge: edge(), mode: mode(), lines: lines(), round: round(), barLen: barLen() }),
+    v => { setScale(v.scale); setBottom(v.bottom); setAuto(v.auto); setT(v.t); setDark(v.dark); setSmooth(v.smooth); setMinA(v.minA); setEdge(v.edge); setMode(v.mode); setLines(v.lines); setRound(v.round); setBarLen(v.barLen); });
+  createEffect(on(() => keptId("image"), async id => { setRes(null); const i = id ? await call<Img | null>("image_kept") : null; if (id === keptId("image")) setImg(i ?? null); }));
+  /** Keeps a picture in the project, then sets what goes with it. */
+  const keepImg = async (i: Img, then?: () => void) => { setBusy(true); const o = await call("image_keep", { name: i.name, w: i.w, h: i.h, px: i.px, made: !!i.made }); setBusy(false); if (o) { setOut(o); then?.(); } };
+  const inc = incoming(); if (inc) { setIncoming(null); keepImg(inc, () => { setScale(inc.scale ?? 0); setMode("grains"); }); }
   // Settings that change together (an example sets several) start one analysis; a stale answer is dropped.
   let seq = 0;
-  const [busy, setBusy] = createSignal(false);
   const run = async () => {
     const my = ++seq;
     await new Promise(r => setTimeout(r, 40));
@@ -85,13 +92,14 @@ export const ImagesPage = () => {
     if (n.length === 2) { const len = Math.hypot(n[1][0] - n[0][0], n[1][1] - n[0][1]); if (len > 1) { setScale(+(barLen() / len).toPrecision(5)); toast(`Scale: ${(barLen() / len).toPrecision(4)} µm per pixel (${len.toFixed(1)} px = ${barLen()} µm).`, true); } setPick(null); }
     else setPick(n);
   };
-  const open = (e: Event) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; if (f) decode(f).then(i => { setImg(i); setScale(0); setBottom(0); }, () => toast("That picture could not be read. Save it as PNG or JPEG and try again.")); };
+  const open = (e: Event) => { const f = (e.currentTarget as HTMLInputElement).files?.[0]; if (f) decode(f).then(i => { const m = mode(), dk = dark(), sm = smooth(); keepImg(i, () => { setMode(m); setDark(dk); setSmooth(sm); }); }, () => toast("That picture could not be read. Save it as PNG or JPEG and try again.")); };
   const example = async () => {
     const kind = { particles: "particles", grains: "grains", nodularity: "nodular", coating: "coating" }[mode()] ?? "particles";
     setBusy(true);
     const e = await call<{ w: number; h: number; px: string }>("image_example", { kind });
     if (!e) setBusy(false);
-    if (e) { setImg({ name: "Example (made-up image)", ...e, made: kind === "particles" || kind === "nodular" }); setScale(0.5); setBottom(kind === "particles" || kind === "nodular" ? 9 : 0); setSmooth(kind === "coating" ? 1 : kind === "grains" ? 0 : 1); setDark(kind !== "coating"); setAuto(true); }
+    const m = mode();
+    if (e) await keepImg({ name: "Example (made-up image)", ...e, made: kind === "particles" || kind === "nodular" }, () => { setMode(m); setScale(0.5); setBottom(kind === "particles" || kind === "nodular" ? 9 : 0); setSmooth(kind === "coating" ? 1 : kind === "grains" ? 0 : 1); setDark(kind !== "coating"); setAuto(true); });
   };
   const csv = async () => {
     const r = res(); if (!r) return;
@@ -108,8 +116,9 @@ export const ImagesPage = () => {
         <label class="btn iopen">Open an image…<input type="file" accept="image/png,image/jpeg,image/bmp,image/webp,image/gif" style={{ display: "none" }} onChange={open} /></label>
         <button class="btn iex" onClick={example} title="A made-up test image with dark round particles and a data bar">Example (made-up image)</button>
         <Show when={res()}><button class="btn sm" onClick={csv}>Particles to CSV</button></Show>
+        <Show when={img()}><button class="btn sm iforget" onClick={() => forget("image")} title="Take the picture out of this project (Undo brings it back)">Remove from the project</button></Show>
       </div>
-      <Show when={img()} fallback={<p class="muted tempty">Open a micrograph (PNG, JPEG, BMP or WebP), or try the made-up example. The picture stays on your computer; only its measurements are shown.</p>}>{i => <div class="imgrid">
+      <Show when={img()} fallback={<p class="muted tempty">Open a micrograph (PNG, JPEG, BMP or WebP), or try the made-up example. The picture is kept in your project file, with its settings.</p>}>{i => <div class="imgrid">
         <section class="panel">
           <h2>{i().name} <span class="muted small" style={{ "text-transform": "none" }}>{i().w} × {i().h} px</span></h2>
           <div class="ivwrap" classList={{ pick: !!pick() }}><canvas ref={cv} onClick={click} /></div>

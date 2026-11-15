@@ -42,7 +42,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "graph", "graph_export", "engine", "restart_engine"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -339,10 +339,29 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   // DIC › By grain: the made-up map and field; strain follows the Schmid factor.
   const lidle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".dicpage .lbusy")) ? 0 : quiet + 1; } };
   await goTo(p, "By grain"); await p.click(".dicpage .lex"); await p.waitForSelector(".dicpage .lgtab"); await lidle();
+  await p.waitForFunction(() => parseFloat(document.querySelector(".dicpage .lr")?.textContent ?? "0") > 0.6, null, { timeout: 30000 }).catch(() => {});
   const lr = parseFloat(await p.textContent(".dicpage .lr"));
   check("strain by grain: grains listed, strain follows the Schmid factor (r > 0.6)", +(await p.textContent(".dicpage .lgrains")) > 50 && lr > 0.6, String(lr));
   check("slip traces and the strain–Schmid plot are drawn", (await graphOf(".dicpage", "Schmid factor")).includes("Schmid factor"));
   await shot("bygrain");
+  // 0.3.20: the research work is kept in the project, with each page's settings.
+  const rs = () => p.evaluate(async () => (await window.__TAURI__.core.invoke("state")).project.research);
+  let r20 = await rs();
+  check("the picture, the EBSD map and the DIC field are kept in the project (the window gets no pixels)", !!r20.image?.id && !!r20.ebsd?.id && !!r20.dic?.id && r20.ebsd.data === "" && r20.image.info.name.includes("Generated map") && r20.dic.settings?.link?.key === undefined, JSON.stringify(r20).slice(0, 400));
+  await goTo(p, "Maps"); await eidle(); await p.selectOption(".ebsdpage .ekind", "phase"); await p.waitForTimeout(900); await eidle();
+  r20 = await rs();
+  check("a page's settings are kept with its work", r20.ebsd.settings?.maps?.kind === "phase", JSON.stringify(r20.ebsd.settings));
+  await p.evaluate(async () => await window.__TAURI__.core.invoke("save", { asNew: false }));
+  await p.click(".ebsdpage .eforget"); await p.waitForSelector(".ebsdpage .tempty");
+  check("Remove from the project takes the map out", !(await rs()).ebsd);
+  await p.click(".tabs .file"); await p.click(".bs aside button:has-text('Open')"); await p.waitForTimeout(500);
+  await goTo(p, "Maps"); await p.waitForSelector(".ebsdpage .esum"); await eidle();
+  check("opening the saved project brings the map back, shown as it was left", (await p.inputValue(".ebsdpage .ekind")) === "phase" && (await p.textContent(".ebsdpage .ekey")).includes("not indexed"));
+  await goTo(p, "Images"); await p.waitForSelector(".imgpage .igrain"); await idle();
+  check("…and the picture, still calibrated and measuring grain size", (await p.inputValue(".imgpage .iscale")) === "1" && (await p.inputValue(".imgpage .imode")) === "grains" && parseFloat(await p.textContent(".imgpage .igl")) > 8);
+  await goTo(p, "By grain"); await p.waitForSelector(".dicpage .lgtab"); await lidle();
+  await p.waitForFunction(() => parseFloat(document.querySelector(".dicpage .lr")?.textContent ?? "0") > 0.6, null, { timeout: 30000 }).catch(() => {});
+  check("…and the DIC field over the map", parseFloat(await p.textContent(".dicpage .lr")) > 0.6);
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

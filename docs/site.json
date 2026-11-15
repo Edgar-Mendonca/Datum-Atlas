@@ -41,7 +41,8 @@
     "A structure generator: synthetic grain maps with the size, spread, elongation, second phase, pores and texture you choose, coloured by orientation, measured back and ready for image analysis.",
     "EBSD: open .ang and .ctf maps; orientation, phase and quality maps; grains, boundaries, Σ3 twins, local misorientation, Schmid factors, pole figures and inverse pole figures.",
     "DIC: strain maps from displacement fields, with statistics and profiles, and strain by grain linked to an EBSD map, with Schmid factors and slip traces.",
-    "A built-in Python engine, as in the other Datum apps: analysis graphs drawn by matplotlib, with hover values and export for publication."
+    "A built-in Python engine, as in the other Datum apps: analysis graphs drawn by matplotlib, with hover values and export for publication.",
+    "Images, EBSD maps and DIC fields saved in the project with their settings, so research work opens again as it was left."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -53,17 +54,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.20",
-      "title": "Keep research work in the project",
-      "when": "Next",
-      "items": [
-        "Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review."
-      ]
-    },
-    {
       "v": "0.3.21",
       "title": "Corrosion",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics."
       ]

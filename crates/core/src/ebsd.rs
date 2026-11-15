@@ -2,9 +2,9 @@
 //! orientation map text, put the points on a square grid, and draw maps: orientation (IPF colour of
 //! a sample direction), phase, and pattern quality or confidence. Unindexed points stay empty.
 use crate::{image::b64_encode, orient};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Phase { pub name: String, pub crystal: String }
 
 /// A map on a square grid. Per point: Bunge Euler angles (degrees), phase (0 = not indexed),

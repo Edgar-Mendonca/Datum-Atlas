@@ -2,7 +2,8 @@
 // it: orientation (IPF colours), phases, pattern quality, confidence. The engine (ebsd.rs) keeps the
 // map and makes the pictures; this page only shows them.
 import { For, Show, createEffect, createSignal, on } from "solid-js";
-import { call, toast } from "./store";
+import { call, setOut, toast } from "./store";
+import { forget, kept, keptId, keepSettings } from "./kept";
 import { invoke } from "./api";
 import { Help } from "./help";
 import { IpfKey } from "./synth";
@@ -13,8 +14,9 @@ const FMT: Record<string, string> = { ang: ".ang text export", ctf: ".ctf text e
 const fx = (v: number, d = 1) => v.toLocaleString("en-GB", { minimumFractionDigits: d, maximumFractionDigits: d });
 const fromB64 = (s: string) => Uint8Array.from(atob(s), c => c.charCodeAt(0));
 
-/** The map open in the EBSD pages. */
-export const [ebsdMap, setEbsdMap] = createSignal<Summary | null>(null);
+/** The map open in the EBSD pages, kept in the project; `ebsdId` changes only when another map is opened. */
+export const ebsdMap = (): Summary | null => kept("ebsd")?.info ?? null;
+export const ebsdId = () => keptId("ebsd");
 
 /** Draw an RGB picture from the engine on a canvas. */
 export const paint = (cv: HTMLCanvasElement, w: number, h: number, rgb: string) => {
@@ -27,9 +29,9 @@ export const paint = (cv: HTMLCanvasElement, w: number, h: number, rgb: string) 
 export const MapsPage = () => {
   const [kind, setKind] = createSignal("ipf"), [dir, setDir] = createSignal("z"), [busy, setBusy] = createSignal(false);
   let cv!: HTMLCanvasElement;
-  const open = async () => { setBusy(true); try { const s = await call<Summary | null>("ebsd_open", {}); if (s) { setKind("ipf"); setEbsdMap(s); } } finally { setBusy(false); } };
-  const example = async () => { setBusy(true); try { const s = await call<Summary>("ebsd_example"); if (s) { setKind("ipf"); setEbsdMap(s); } } finally { setBusy(false); } };
-  createEffect(on([ebsdMap, kind, dir], async ([m, k, d]) => {
+  keepSettings("ebsd", "maps", () => ({ kind: kind(), dir: dir() }), v => { setKind(v.kind); setDir(v.dir); });
+  const load = async (cmd: string) => { setBusy(true); try { setOut(await call(cmd, {})); } finally { setBusy(false); } };
+  createEffect(on([ebsdId, kind, dir], async ([m, k, d]) => {
     if (!m || !cv) return;
     setBusy(true);
     try { const r = await invoke<{ w: number; h: number; rgb: string }>("ebsd_draw", { kind: k, dir: d }); paint(cv, r.w, r.h, r.rgb); }
@@ -41,9 +43,9 @@ export const MapsPage = () => {
     <div class="page ebsdpage">
       <h1>EBSD maps <Help k="ebsd" /></h1>
       <div class="ttools">
-        <button class="btn eopen" onClick={open}>Open a map…</button>
-        <button class="btn eex" onClick={example} title="A made-up map from the structure generator">Example (made-up map)</button>
-        <Show when={ebsdMap()}><button class="btn sm" onClick={save}>Save as picture</button></Show>
+        <button class="btn eopen" onClick={() => load("ebsd_open")}>Open a map…</button>
+        <button class="btn eex" onClick={() => load("ebsd_example")} title="A made-up map from the structure generator">Example (made-up map)</button>
+        <Show when={ebsdMap()}><button class="btn sm" onClick={save}>Save as picture</button><button class="btn sm eforget" onClick={() => forget("ebsd")} title="Take the map out of this project (Undo brings it back)">Remove from the project</button></Show>
         <Show when={busy()}><span class="muted small ebusy">working…</span></Show>
       </div>
       <Show when={ebsdMap()} fallback={<p class="muted tempty">Open an EBSD map: a .ang or .ctf text export, or an orientation map saved by the structure generator. Or try the made-up example.</p>}>{m => <div class="imgrid">
@@ -84,7 +86,8 @@ export const GrainsPage = () => {
   const [kind, setKind] = createSignal("boundaries"), [tol, setTol] = createSignal(10), [min, setMin] = createSignal(5), [load, setLoad] = createSignal("x"), [slip, setSlip] = createSignal("fcc");
   const [out, setOut] = createSignal<GrainOut | null>(null), [busy, setBusy] = createSignal(false);
   let cv!: HTMLCanvasElement, seq = 0;
-  createEffect(on([ebsdMap, kind, tol, min, load, slip], async ([m, k]) => {
+  keepSettings("ebsd", "grains", () => ({ kind: kind(), tol: tol(), min: min(), load: load(), slip: slip() }), v => { setKind(v.kind); setTol(v.tol); setMin(v.min); setLoad(v.load); setSlip(v.slip); });
+  createEffect(on([ebsdId, kind, tol, min, load, slip], async ([m, k]) => {
     if (!m || !cv) return;
     const my = ++seq; await new Promise(r => setTimeout(r, 40)); if (my !== seq) return;
     setBusy(true);
@@ -156,8 +159,9 @@ const InversePF = (p: { f: Figure }) => {
 export const PoleFiguresPage = () => {
   const [phase, setPhase] = createSignal(1), [dots, setDots] = createSignal(false), [busy, setBusy] = createSignal(false);
   const [pfs, setPfs] = createSignal<Figure[]>([]), [ipfs, setIpfs] = createSignal<Figure[]>([]);
-  createEffect(on([ebsdMap, phase], async ([m, ph]) => {
-    if (!m) return;
+  keepSettings("ebsd", "pf", () => ({ phase: phase(), dots: dots() }), v => { setPhase(v.phase); setDots(v.dots); });
+  createEffect(on([ebsdId, phase], async ([, ph]) => {
+    const m = ebsdMap(); if (!m) return;
     const crystal = m.phases[ph - 1]?.[0].crystal ?? "cubic";
     setBusy(true);
     try {

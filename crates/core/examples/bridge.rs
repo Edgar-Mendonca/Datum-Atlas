@@ -2,7 +2,7 @@
 //! ({"cmd": "...", "args": {...}}), one JSON answer per line on stdout ({"ok": ...} or {"err": "..."}).
 //! It answers the shell's commands that need the engine, without files or the OS:
 //! cargo run -q -p datum-atlas-core --example bridge
-use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, eco, process, goals, select, sheet, templates, Database, Material, Source, Val, FORMAT};
+use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, eco, process, goals, research::{Item, Open}, select, sheet, templates, Database, Material, Source, Val, FORMAT};
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
@@ -27,16 +27,18 @@ fn py(w: &mut Option<PyW>, q: Value) -> Result<Value, String> {
     if r["ok"] == true { Ok(r) } else { Err(r["error"].as_str().unwrap_or("The graph engine failed.").to_string()) }
 }
 
-struct St { py: Option<PyW>, ebsd: Option<datum_atlas_core::ebsd::Ebsd>, dic: Option<datum_atlas_core::dic::Dic>, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
+struct St { py: Option<PyW>, open: Open, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
 
 /// A file of the UI tests, when the window asks without a path (the shell would open a dialog).
 fn fixture(a: &Value, name: &str) -> String { a["path"].as_str().map(String::from).unwrap_or_else(|| format!("{}/../../tests_ui/{name}", env!("CARGO_MANIFEST_DIR"))) }
 fn rebuild(s: &mut St) { s.db = Db::new(db::builtin(), Some(&s.user)).with_others(&s.others); s.db_rev += 1; }
 
+fn keep(s: &mut St, which: &str, it: Item) -> Result<Value, String> { s.doc.apply(Op::Research { which: which.into(), item: Some(Box::new(it)) })?; Ok(out(s)) }
+
 fn out(s: &St) -> Value {
     let db = s.db.with_formulas(&s.doc.p.formulas);
     let charts: Vec<_> = s.doc.p.charts.iter().map(|c| chart::build(&db, c)).collect();
-    json!({ "project": s.doc.p, "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "eco": eco::audit(&db, &s.doc.p.eco), "process": process::select(&db, &s.doc.p), "tensile": datum_atlas_core::tensile::run(&s.doc.p.tensile), "lab": datum_atlas_core::lab::run(&s.doc.p.lab), "dbRev": s.db_rev })
+    json!({ "project": s.doc.p.lite(), "path": null, "dirty": s.doc.dirty, "undo": s.doc.can_undo(), "redo": s.doc.can_redo(), "rev": s.rev, "charts": charts, "results": select::run(&db, &s.doc.p), "compare": compare::build(&db, &s.doc.p), "eco": eco::audit(&db, &s.doc.p.eco), "process": process::select(&db, &s.doc.p), "tensile": datum_atlas_core::tensile::run(&s.doc.p.tensile), "lab": datum_atlas_core::lab::run(&s.doc.p.lab), "dbRev": s.db_rev })
 }
 
 fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
@@ -66,17 +68,19 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "synth_ebsd" => json!(datum_atlas_core::synth::ebsd_text(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "ipf_key" => json!(datum_atlas_core::orient::ipf_key(a["crystal"].as_str().unwrap_or("cubic"), 40)),
         "synth_csv" => json!(datum_atlas_core::synth::csv(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
-        "ebsd_open" => { let p = fixture(a, "map.ang"); let m = datum_atlas_core::ebsd::parse(&std::fs::read_to_string(&p).map_err(|e| e.to_string())?, "map.ang")?; let v = json!(m.summary()); s.ebsd = Some(m); v }
-        "ebsd_example" => { let m = datum_atlas_core::ebsd::example()?; let v = json!(m.summary()); s.ebsd = Some(m); v }
-        "ebsd_draw" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; json!({ "w": m.w, "h": m.h, "rgb": m.draw(a["kind"].as_str().unwrap_or("ipf"), a["dir"].as_str().unwrap_or("z"))? }) }
-        "ebsd_grains" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; let q: datum_atlas_core::ebsd::GrainAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let (rgb, o) = m.draw_grains(a["kind"].as_str().unwrap_or("grains"), &q)?; json!({ "w": m.w, "h": m.h, "rgb": rgb, "out": o }) }
-        "ebsd_figure" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map first.")?; let (ph, of) = (a["phase"].as_u64().unwrap_or(1) as u8, a["of"].as_str().unwrap_or("100")); json!(if a["kind"] == "ipf" { m.inverse_pole_figure(ph, of)? } else { m.pole_figure(ph, of, 41)? }) }
-        "dic_open" => { let p = fixture(a, "field.csv"); let t = sheet::read(std::path::Path::new(&p))?; let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect(); let d = datum_atlas_core::dic::parse(&raw, "field.csv")?; let v = json!(d.summary()); s.dic = Some(d); v }
-        "dic_example" => { let d = datum_atlas_core::dic::example(); let v = json!(d.summary()); s.dic = Some(d); v }
-        "dic_draw" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let k = a["key"].as_str().unwrap_or("exx"); let (rgb, range) = d.draw(k, None); json!({ "w": d.w, "h": d.h, "rgb": rgb, "range": range, "stats": datum_atlas_core::dic::COMPONENTS.iter().map(|c| d.stats(c.0)).collect::<Vec<_>>() }) }
-        "dic_profile" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let pa: [f64; 2] = serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?; let pb: [f64; 2] = serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?; json!(d.profile(a["key"].as_str().unwrap_or("exx"), pa, pb, 200)) }
-        "dic_link" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map on EBSD › Maps first.")?; let d = s.dic.as_ref().ok_or("Open a displacement field on DIC › Strain maps first.")?; json!(datum_atlas_core::dic::by_grain(d, m, &serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?) }
-        "dic_link_example" => { let m = datum_atlas_core::ebsd::example()?; let d = datum_atlas_core::dic::example_on(&m); let v = json!({ "ebsd": m.summary(), "dic": d.summary() }); s.ebsd = Some(m); s.dic = Some(d); v }
+        "image_keep" => { let it = Item::image(a["name"].as_str().unwrap_or(""), a["w"].as_u64().unwrap_or(0) as usize, a["h"].as_u64().unwrap_or(0) as usize, &datum_atlas_core::image::b64_decode(a["px"].as_str().unwrap_or(""))?, a["made"].as_bool().unwrap_or(false))?; keep(s, "image", it)? }
+        "image_kept" => match &s.doc.p.research.image { None => Value::Null, Some(i) => { let (w, h, px) = i.image_px()?; json!({ "name": i.info["name"], "made": i.info["made"], "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) } },
+        "ebsd_open" => { let p = fixture(a, "map.ang"); let m = datum_atlas_core::ebsd::parse(&std::fs::read_to_string(&p).map_err(|e| e.to_string())?, "map.ang")?; keep(s, "ebsd", Item::ebsd(&m))? }
+        "ebsd_example" => keep(s, "ebsd", Item::ebsd(&datum_atlas_core::ebsd::example()?))?,
+        "ebsd_draw" => { let m = s.open.ebsd(&s.doc.p.research)?; json!({ "w": m.w, "h": m.h, "rgb": m.draw(a["kind"].as_str().unwrap_or("ipf"), a["dir"].as_str().unwrap_or("z"))? }) }
+        "ebsd_grains" => { let m = s.open.ebsd(&s.doc.p.research)?; let q: datum_atlas_core::ebsd::GrainAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let (rgb, o) = m.draw_grains(a["kind"].as_str().unwrap_or("grains"), &q)?; json!({ "w": m.w, "h": m.h, "rgb": rgb, "out": o }) }
+        "ebsd_figure" => { let m = s.open.ebsd(&s.doc.p.research)?; let (ph, of) = (a["phase"].as_u64().unwrap_or(1) as u8, a["of"].as_str().unwrap_or("100")); json!(if a["kind"] == "ipf" { m.inverse_pole_figure(ph, of)? } else { m.pole_figure(ph, of, 41)? }) }
+        "dic_open" => { let p = fixture(a, "field.csv"); let t = sheet::read(std::path::Path::new(&p))?; let raw: Vec<Vec<String>> = std::iter::once(t.head).chain(t.rows).collect(); let d = datum_atlas_core::dic::parse(&raw, "field.csv")?; keep(s, "dic", Item::dic(&d))? }
+        "dic_example" => keep(s, "dic", Item::dic(&datum_atlas_core::dic::example()))?,
+        "dic_draw" => { let d = s.open.dic(&s.doc.p.research)?; let k = a["key"].as_str().unwrap_or("exx"); let (rgb, range) = d.draw(k, None); json!({ "w": d.w, "h": d.h, "rgb": rgb, "range": range, "stats": datum_atlas_core::dic::COMPONENTS.iter().map(|c| d.stats(c.0)).collect::<Vec<_>>() }) }
+        "dic_profile" => { let d = s.open.dic(&s.doc.p.research)?; let pa: [f64; 2] = serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?; let pb: [f64; 2] = serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?; json!(d.profile(a["key"].as_str().unwrap_or("exx"), pa, pb, 200)) }
+        "dic_link" => { let (m, d) = s.open.both(&s.doc.p.research)?; json!(datum_atlas_core::dic::by_grain(d, m, &serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?) }
+        "dic_link_example" => { let m = datum_atlas_core::ebsd::example()?; let d = datum_atlas_core::dic::example_on(&m); s.doc.apply(Op::Batch(vec![Op::Research { which: "ebsd".into(), item: Some(Box::new(Item::ebsd(&m))) }, Op::Research { which: "dic".into(), item: Some(Box::new(Item::dic(&d))) }]))?; out(s) }
         "graph" => py(&mut s.py, json!({ "cmd": "render", "spec": a["spec"] }))?,
         "graph_export" => { py(&mut s.py, json!({ "cmd": "export", "spec": a["spec"], "fmt": a["fmt"], "dpi": 300 }))?; json!(format!("{}.{}", a["name"].as_str().unwrap_or("graph"), a["fmt"].as_str().unwrap_or("png"))) }
         "engine" => { let v = py(&mut s.py, json!({ "cmd": "ping" })).ok(); json!({ "versions": v, "error": null }) }
@@ -101,6 +105,9 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         }
         "delete_material" => { let id = a["id"].as_str().unwrap_or(""); s.user.materials.retain(|m| m.id != id); rebuild(s); out(s) }
         "databases" => { let mut v = vec![json!({ "name": "My materials", "path": "My materials.datdb", "count": s.user.materials.len(), "mine": true })]; v.extend(s.others.iter().enumerate().map(|(k, d)| json!({ "name": d.name, "path": format!("db{k}"), "count": d.materials.len(), "mine": false }))); json!(v) }
+        // A project file in the temp folder: save, then open it again (the shell asks where).
+        "save" => { s.doc.save(&std::env::temp_dir().join("datum-atlas-bridge.datlas"))?; let mut o = out(s); o["path"] = json!("bridge.datlas"); o }
+        "open" => { s.doc = Doc::open(&a["path"].as_str().map(std::path::PathBuf::from).unwrap_or_else(|| std::env::temp_dir().join("datum-atlas-bridge.datlas")))?; out(s) }
         "open_database" => { let (d, _) = db::read_user(&std::fs::read_to_string(fixture(a, "team.datdb")).map_err(|e| e.to_string())?)?; s.others.push(d); rebuild(s); out(s) }
         "close_database" => { let k = a["path"].as_str().and_then(|p| p.strip_prefix("db")).and_then(|k| k.parse::<usize>().ok()).unwrap_or(usize::MAX); if k < s.others.len() { s.others.remove(k); } rebuild(s); out(s) }
         "import_preview" => { let p = fixture(a, "import.csv"); let t = sheet::read(std::path::Path::new(&p))?; json!({ "path": p, "head": t.head, "rows": t.rows, "count": t.rows.len(), "guess": t.guess }) }
@@ -126,7 +133,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
 fn main() {
     let user = Database { format: FORMAT, name: "My materials".into(), ..Default::default() };
     let d = Db::new(db::builtin(), Some(&user));
-    let mut s = St { py: None, ebsd: None, dic: None, doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
+    let mut s = St { py: None, open: Open::default(), doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
     let stdout = std::io::stdout();
     for line in std::io::stdin().lock().lines().map_while(Result::ok) {
         let q: Value = serde_json::from_str(&line).unwrap_or_default();

@@ -2,10 +2,11 @@
 // colour scale, the statistics of every component, and a profile along a line drawn on the map.
 // The engine (dic.rs) keeps the field and works out the strains.
 import { For, Show, createEffect, createSignal, on } from "solid-js";
-import { call, toast } from "./store";
+import { call, setOut, toast } from "./store";
+import { forget, kept, keptId, keepSettings } from "./kept";
 import { invoke } from "./api";
 import { Help } from "./help";
-import { ebsdMap, paint, setEbsdMap } from "./ebsd";
+import { ebsdId, ebsdMap, paint } from "./ebsd";
 import { Graph } from "./graph";
 
 interface Summary { name: string; w: number; h: number; dx: number; dy: number; points: number; valid: number; notes: string[] }
@@ -15,21 +16,24 @@ const DISP = new Set(["u", "v", "rot"]);
 /** A strain as a percentage; displacements and rotation as they are. */
 const sv = (key: string, v: number | null | undefined) => v == null ? "–" : DISP.has(key) ? v.toPrecision(4) : `${(v * 100).toFixed(3)} %`;
 
-export const [dicField, setDicField] = createSignal<Summary | null>(null);
+/** The displacement field, kept in the project; `dicId` changes only when another field is opened. */
+export const dicField = (): Summary | null => kept("dic")?.info ?? null;
+const dicId = () => keptId("dic");
 
 export const StrainPage = () => {
   const [key, setKey] = createSignal("eeq"), [busy, setBusy] = createSignal(false);
   const [range, setRange] = createSignal<[number, number]>([0, 1]), [stats, setStats] = createSignal<Stat[]>([]);
   const [line, setLine] = createSignal<number[][]>([]), [prof, setProf] = createSignal<[number, number][]>([]);
   let cv!: HTMLCanvasElement, ov!: HTMLCanvasElement;
-  const load = async (cmd: string) => { setBusy(true); try { const s = await call<Summary | null>(cmd, {}); if (s) { setLine([]); setProf([]); setDicField(s); } } finally { setBusy(false); } };
-  createEffect(on([dicField, key], async ([f, k]) => {
+  keepSettings("dic", "maps", () => ({ key: key(), line: line() }), v => { setKey(v.key); setLine(v.line); if (v.line.length < 2) setProf([]); });
+  const load = async (cmd: string) => { setBusy(true); try { setOut(await call(cmd, {})); } finally { setBusy(false); } };
+  createEffect(on([dicId, key], async ([f, k]) => {
     if (!f || !cv) return;
     setBusy(true);
     try { const r = await invoke<{ w: number; h: number; rgb: string; range: [number, number]; stats: Stat[] }>("dic_draw", { key: k }); paint(cv, r.w, r.h, r.rgb); setRange(r.range); setStats(r.stats); }
     catch (e) { toast(String(e)); } finally { setBusy(false); }
   }));
-  createEffect(on([line, key], async ([l, k]) => {
+  createEffect(on([line, key, dicId], async ([l, k]) => {
     const f = dicField(); if (!ov || !f) return;
     ov.width = f.w * 4; ov.height = f.h * 4;
     const x = ov.getContext("2d")!; x.clearRect(0, 0, ov.width, ov.height);
@@ -53,7 +57,7 @@ export const StrainPage = () => {
       <div class="ttools">
         <button class="btn dopen" onClick={() => load("dic_open")}>Open a displacement field…</button>
         <button class="btn dex" onClick={() => load("dic_example")}>Example (made-up field)</button>
-        <Show when={dicField()}><button class="btn sm" onClick={save}>Save as picture</button></Show>
+        <Show when={dicField()}><button class="btn sm" onClick={save}>Save as picture</button><button class="btn sm dforget" onClick={() => forget("dic")} title="Take the field out of this project (Undo brings it back)">Remove from the project</button></Show>
         <Show when={busy()}><span class="muted small dbusy">working…</span></Show>
       </div>
       <Show when={dicField()} fallback={<p class="muted tempty">Open a displacement field exported from your DIC software: a CSV, text or spreadsheet file with columns x, y, u and v (one length unit). Or try the made-up example.</p>}>{f => <div class="imgrid">
@@ -88,8 +92,10 @@ export const ByGrainPage = () => {
   const [tol, setTol] = createSignal(10), [load, setLoad] = createSignal("x"), [slip, setSlip] = createSignal("fcc"), [traces, setTraces] = createSignal(true);
   const [res, setRes] = createSignal<Linked | null>(null), [busy, setBusy] = createSignal(false);
   let cv!: HTMLCanvasElement, ov!: HTMLCanvasElement, seq = 0;
-  const example = async () => { setBusy(true); try { const r = await call<{ ebsd: any; dic: Summary }>("dic_link_example"); if (r) { setEbsdMap(r.ebsd); setDicField(r.dic); } } finally { setBusy(false); } };
-  createEffect(on([ebsdMap, dicField, key, fit, off, scale, tol, load, slip], async () => {
+  keepSettings("dic", "link", () => ({ key: key(), fit: fit(), off: off(), scale: scale(), tol: tol(), load: load(), slip: slip(), traces: traces() }),
+    v => { setKey(v.key); setFit(v.fit); setOff(v.off); setScale(v.scale); setTol(v.tol); setLoad(v.load); setSlip(v.slip); setTraces(v.traces); });
+  const example = async () => { setBusy(true); try { setOut(await call("dic_link_example")); } finally { setBusy(false); } };
+  createEffect(on([ebsdId, dicId, key, fit, off, scale, tol, load, slip], async () => {
     if (!ebsdMap() || !dicField() || !cv) return;
     const my = ++seq; await new Promise(r => setTimeout(r, 40)); if (my !== seq) return;
     setBusy(true);

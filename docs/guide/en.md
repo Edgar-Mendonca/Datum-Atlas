@@ -220,6 +220,10 @@ These are **schematics** drawn by Datum Atlas from a recipe for each class, neve
 
 Image analysis of your own micrographs, a structure generator, EBSD and DIC will join this module.
 
+## Keeping research work in the project
+
+The micrograph on Microstructure › Images, the EBSD map and the DIC displacement field are saved in the project file (.datlas), compressed, together with what each page was set to: the scale, the threshold and the measurement on Images; what the EBSD pages show, the grain tolerance, the loading direction and the pole-figure phase; the strain component and the profile line on DIC, and the settings of Strain by grain. Open the project again and the pages come back as you left them. **Remove from the project** on each page takes the work out (Undo brings it back), which also keeps the file small.
+
 ## Microstructure: image analysis
 
 ![Microstructure › Images: the made-up example with its particles measured.](img/images.png)

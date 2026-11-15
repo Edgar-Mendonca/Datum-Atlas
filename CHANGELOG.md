@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.3.20 — 2026-11-15
+
+Research work is now saved with the project: open it again and the pages come back as you left them.
+
+**Saved in the project**
+- The micrograph on Microstructure › Images, with its scale, threshold, measurement and the other settings.
+- The EBSD map, with what each EBSD page shows: the map colouring, the grain tolerance and smallest grain, the loading direction and slip systems, the pole-figure phase.
+- The DIC displacement field, with the strain component, the profile line and the settings of Strain by grain.
+- The data is compressed inside the .datlas file. **Remove from the project** on each page takes it out again (Undo brings it back).
+- Opening another map or field, Undo and Redo, and New all update the pages.
+
+**Checked**
+- Engine tests: maps, fields and pictures come back exactly as saved; a damaged file gives a message, never a crash.
+- UI tests: save a project, remove the map, open the project again: the map, the picture and the field return with their settings.
+
 ## 0.3.19 — 2026-11-15
 
 Datum Atlas gets its own Python engine, as the other Datum apps have, and the analysis graphs are now drawn by it.
