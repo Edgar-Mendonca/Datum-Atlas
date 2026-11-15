@@ -1,6 +1,6 @@
 # Datum Atlas: research depth (brainstorm, after 0.3.18)
 
-Status: **brainstorm, questions open** (§6). Written 2026-11-14 after 0.3.18. The user asked for a strong brainstorm of what Atlas can still gain, from the open projects and course material they used at university. They were reviewed for **what they do and which published methods they use**; Atlas writes its own code from those methods and papers (decision of 2026-11-13). Nothing in this plan copies code or data files.
+Status: **roadmap agreed in outline** (§7); questions 2–6 of §6 still open. Python engine: decided (§7). Written 2026-11-14 after 0.3.18. The user asked for a strong brainstorm of what Atlas can still gain, from the open projects and course material they used at university. They were reviewed for **what they do and which published methods they use**; Atlas writes its own code from those methods and papers (decision of 2026-11-13). Nothing in this plan copies code or data files.
 
 What Atlas has now: Library, Select, Eco, Make, Microstructure (structures, image analysis, generator with texture), Crystal (elements, lattice calculators, approximate X-ray), Testing (tensile, hardness, fatigue, creep), EBSD (maps, grains, boundaries, twins, KAM, Schmid, pole figures) and DIC (strain maps, strain by grain, slip traces). Corrosion (0.3.19) and heat treatment with phase diagrams (0.3.20) are next on the roadmap.
 
@@ -93,3 +93,34 @@ A proposal. Every step is one small release as before, each checked and publishe
 4. **Your data:** can your own EBSD and HR-DIC data (from your university work) be used as test cases, privately or as examples?
 5. **CIF (#14):** worth the size now, or later?
 6. Anything here you do not want, or anything missing that you used often?
+
+---
+
+## 7. Decisions of 2026-11-15 and the roadmap
+
+**Python engine: bundled, as in Datum Plot and Datum Sim.** The user chose this after the family apps were checked:
+- The release workflow takes the official embeddable CPython 3.13 for Windows, installs pinned libraries into it (`py/requirements.txt`), tests it, and zips it as the runtime pack inside the installer.
+- On first start the app unpacks it into the user's local app data (`runtime/N`, "Preparing the Python engine (first start only)…"); it unpacks again only when N (`py/runtime.txt`) changes. No admin rights; any other Python on the computer is untouched.
+- The Rust engine stays in charge: it keeps Python workers running and talks to them in JSON lines (as Datum Plot's `py.rs`, `runtime.rs` and `py/worker.py`, copied, not reinvented). A request that hangs restarts its worker; if Python is missing, the rest of Atlas works and says what is missing.
+- Size: the installer grows from about 3 MB to roughly 60–120 MB (Datum Sim with numpy, SciPy and one more library is about 55 MB; Datum Plot with more about 115 MB). Every update is that size. Accepted (the user had allowed 50–100 MB; a download on first use was considered and set aside as more work).
+- Uses: graphs that look as good as Datum Plot's (matplotlib), publication export, phase diagrams (a thermodynamics library), heavy numerics. Live interaction (selection charts, maps, sliders) stays in the window.
+
+**Roadmap** (small releases, each checked and published; the user reviews 0.3.18 first):
+
+| Release | Theme | Contents |
+| --- | --- | --- |
+| 0.3.19 | Python engine and better graphs | A built-in Python engine as in the other Datum apps; graphs drawn by matplotlib with export for publication. |
+| 0.3.20 | Keep research work in the project | Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review. |
+| 0.3.21 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics. |
+| 0.3.22 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. |
+| 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. |
+| 0.4.1 | Research depth 2: active slip systems | A grain inspector, slip bands matched to traces, the relative displacement ratio. |
+| 0.4.2 | Research depth 3: slip bands and strain steps | Slip bands found automatically; several DIC strain steps in one experiment. |
+| 0.4.3 | Research depth 4: dislocations and boundaries | GND density, misorientation to the grain mean, distance to boundaries, Σ boundary labels, more slip systems. |
+| 0.4.4 | X-ray | Real X-ray peak heights and measured patterns over calculated ones. |
+| 0.4.5 | Elastic constants | Single-crystal elastic constants: moduli by direction, also per EBSD grain. |
+| 0.4.6 | Fit and statistics | Fit any table with uncertainties, statistics and t-tests, supply risk. |
+| 0.4.7 | Simulation export | Grain maps written as crystal-plasticity simulation input. |
+| later | More | CIF and space groups, neutron and electron diffraction, Wulff shapes, X-ray texture, simulation results import, more EBSD/DIC file formats; the items left from PLAN-0.4.0 between releases where easiest |
+
+**Where we begin: 0.3.19, the Python engine.** It is the foundation the rest stands on (graphs, phase diagrams, fitting), it copies proven family code, and it makes the graphs the user found plain look right at once. 0.3.20 then makes research work safe to keep (images, EBSD and DIC are not saved with the project today), with the fixes from the user's review folded in.

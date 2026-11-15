@@ -155,7 +155,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(500);
   check("“Typical structure” opens the Microstructure module on that material", (await p.textContent(".side .modsw")).includes("Micro") && !!(await p.$(".structpage .focus .micro svg")) && (await p.$$(".structpage .scard")).length >= 30);
   await p.click(".side .modsw");
-  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Corrosion (0.3.19)"));
+  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Corrosion (0.3.21)"));
   await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
   // Crystal › Elements: the periodic table, an element card, colour by a property, composition.
   await goTo(p, "Elements");

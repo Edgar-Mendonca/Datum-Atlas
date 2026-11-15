@@ -101,8 +101,8 @@ export const FEATURES: Feature[] = [
   ["H4", "Synthetic structures", "0.3.12", "Generate 2D grain structures with size spreads, phases, pores, orientations and texture."],
   ["H5", "EBSD", "0.3.14", "Orientation maps, grains, boundaries and twins, local misorientation, pole figures, Schmid factors."],
   ["H6", "DIC", "0.3.17", "Strain maps from displacement fields, statistics, and strain by grain linked to EBSD, with slip traces."],
-  ["H7", "Corrosion", "0.3.19", "Galvanic compatibility, resistance by environment, corrosion allowance."],
-  ["H8", "Heat treatment", "0.3.20", "Hardenability, tempering, welding preheat, and phase diagrams with the lever rule."],
+  ["H7", "Corrosion", "0.3.21", "Galvanic compatibility, resistance by environment, corrosion allowance."],
+  ["H8", "Heat treatment", "0.3.22", "Hardenability, tempering, welding preheat, and phase diagrams with the lever rule."],
 ];
 export const feature = (id: string) => FEATURES.find(f => f[0] === id);
 const parts = (v: string) => [...v.split(".").map(Number), 0, 0].slice(0, 3);

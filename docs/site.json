@@ -53,18 +53,98 @@
   "roadmap": [
     {
       "v": "0.3.19",
-      "title": "Corrosion",
+      "title": "Python engine and better graphs",
       "when": "Next",
       "items": [
-        "Galvanic compatibility, resistance by environment, corrosion allowance."
+        "A built-in Python engine as in the other Datum apps; graphs drawn by matplotlib with export for publication."
       ]
     },
     {
       "v": "0.3.20",
+      "title": "Keep research work in the project",
+      "when": "Soon",
+      "items": [
+        "Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review."
+      ]
+    },
+    {
+      "v": "0.3.21",
+      "title": "Corrosion",
+      "when": "Soon",
+      "items": [
+        "Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics."
+      ]
+    },
+    {
+      "v": "0.3.22",
       "title": "Heat treatment and phase diagrams",
       "when": "Soon",
       "items": [
-        "Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule."
+        "Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments."
+      ]
+    },
+    {
+      "v": "0.4.0",
+      "title": "Research depth 1: DIC and EBSD together",
+      "when": "Soon",
+      "items": [
+        "Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit."
+      ]
+    },
+    {
+      "v": "0.4.1",
+      "title": "Research depth 2: active slip systems",
+      "when": "Soon",
+      "items": [
+        "A grain inspector, slip bands matched to traces, the relative displacement ratio."
+      ]
+    },
+    {
+      "v": "0.4.2",
+      "title": "Research depth 3: slip bands and strain steps",
+      "when": "Soon",
+      "items": [
+        "Slip bands found automatically; several DIC strain steps in one experiment."
+      ]
+    },
+    {
+      "v": "0.4.3",
+      "title": "Research depth 4: dislocations and boundaries",
+      "when": "Soon",
+      "items": [
+        "GND density, misorientation to the grain mean, distance to boundaries, Σ boundary labels, more slip systems."
+      ]
+    },
+    {
+      "v": "0.4.4",
+      "title": "X-ray",
+      "when": "Soon",
+      "items": [
+        "Real X-ray peak heights and measured patterns over calculated ones."
+      ]
+    },
+    {
+      "v": "0.4.5",
+      "title": "Elastic constants",
+      "when": "Soon",
+      "items": [
+        "Single-crystal elastic constants: moduli by direction, also per EBSD grain."
+      ]
+    },
+    {
+      "v": "0.4.6",
+      "title": "Fit and statistics",
+      "when": "Soon",
+      "items": [
+        "Fit any table with uncertainties, statistics and t-tests, supply risk."
+      ]
+    },
+    {
+      "v": "0.4.7",
+      "title": "Simulation export",
+      "when": "Soon",
+      "items": [
+        "Grain maps written as crystal-plasticity simulation input."
       ]
     },
     {

@@ -214,8 +214,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.16** | EBSD 3 | `ebsd.rs` pole figures (families per crystal, up to 4,000 orientations, 5° Gaussian axial density in mrd on a 41 × 41 grid) and inverse pole figures (sample direction reduced to the standard triangle); EBSD › Pole figures page | ✅ |
 | **0.3.17** | DIC 1 | `dic.rs` (parse x, y, u, v tables onto a grid with gaps; central differences; εxx, εyy, εxy, ε1, ε2, γmax, ω, von Mises with εzz = −(εxx + εyy); stats with 5/95 %; diverging or sequential pictures with 1–99 % range; bilinear profiles; made-up field); the field lives in the shell (`App.dic`); DIC module › Strain maps (`dic.tsx`) | ✅ |
 | **0.3.18** | DIC 2 | `dic::by_grain` (field sampled at each EBSD point, fit or offset/scale; per-grain mean and sd, Schmid factor, IPF colour, centroid, slip traces as surface angles of each plane with its best Schmid factor; Pearson r against Schmid); `example_on` (each grain strained with its Schmid factor, softened); DIC › By grain page (strain with boundaries, traces overlay, scatter, table) | ✅ |
-| 0.3.19 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance. | 🔜 |
-| 0.3.20 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule. | ⬜ |
+| 0.3.19 | Python engine and better graphs | A built-in Python engine as in the other Datum apps; graphs drawn by matplotlib with export for publication. | 🔜 |
+| 0.3.20 | Keep research work in the project | Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review. | ⬜ |
+| 0.3.21 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics. | ⬜ |
+| 0.3.22 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | ⬜ |
+| 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. | ⬜ |
+| 0.4.1 | Research depth 2: active slip systems | A grain inspector, slip bands matched to traces, the relative displacement ratio. | ⬜ |
+| 0.4.2 | Research depth 3: slip bands and strain steps | Slip bands found automatically; several DIC strain steps in one experiment. | ⬜ |
+| 0.4.3 | Research depth 4: dislocations and boundaries | GND density, misorientation to the grain mean, distance to boundaries, Σ boundary labels, more slip systems. | ⬜ |
+| 0.4.4 | X-ray | Real X-ray peak heights and measured patterns over calculated ones. | ⬜ |
+| 0.4.5 | Elastic constants | Single-crystal elastic constants: moduli by direction, also per EBSD grain. | ⬜ |
+| 0.4.6 | Fit and statistics | Fit any table with uncertainties, statistics and t-tests, supply risk. | ⬜ |
+| 0.4.7 | Simulation export | Grain maps written as crystal-plasticity simulation input. | ⬜ |
 | later | Pending from PLAN-0.4.0 | Display and export, processes by alloy type, metal and polymer grades and checks, equivalent designations, hybrids, restricted and critical substances; fracture; mesh export to Datum Mesh; download-on-demand data; HDF5 and makers' formats; 3D | ⬜ |
 | 0.4.0 | Data at temperature | Properties against temperature, simple curves, more processes with process charts, material cards for simulation | ⬜ |
 | 1.0.0 | Stable | ~1,000 materials with pictures, signed installer | ⬜ |
@@ -577,13 +587,18 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - The user asked for a thorough brainstorm from the projects and course material they used at university. Three parallel reviews (feature inventories only; copyleft project read from its documentation and examples only, no code): EBSD/HR-DIC analysis, a materials-structure library, a crystal-plasticity kit, and the course notebooks.
 - Result: [PLAN-0.6.md](PLAN-0.6.md), 29 ideas in five groups (EBSD/DIC to research grade, Crystal, Corrosion and heat treatment, data tools, a simulation bridge) with methods and papers, a suggested order (0.3.19, 0.3.20, then a 0.4.x research series) and questions. Waiting for the user's answers; the user is meanwhile trying 0.3.18 on Windows with their own data.
 
+### 2026-11-15: Session 18, continued (Python decision and roadmap)
+- Checked Datum Plot and Datum Sim (read-only clones): both bundle an embeddable CPython 3.13 runtime pack in the installer (Plot about 115 MB, Sim about 55 MB), unpack it on first start, and talk to Python workers in JSON lines (`src-tauri/src/runtime.rs`, `py.rs`, `py/worker.py`, release workflow step). The user chose the same for Atlas.
+- Roadmap set in PLAN-0.6 §7: 0.3.19 Python engine and graphs, 0.3.20 research work saved in the project, 0.3.21 corrosion, 0.3.22 heat treatment and phase diagrams, then 0.4.0–0.4.7 research depth. Corrosion and heat treatment moved back two in features.ts and site.json.
+
 ---
 
+- 2026-11-15: Python engine bundled in the installer exactly as Datum Plot and Datum Sim do it (embeddable CPython 3.13 + pinned wheels as a runtime pack, unpacked on first start into local app data, JSON-line workers driven by the Rust engine). Live charts stay in the window; matplotlib draws the analysis graphs and publication figures. See PLAN-0.6 §7.
 - 2026-11-13: Outside projects (the user's university repositories and others) are used for ideas and to check results only. Atlas writes its own code from textbook methods and published papers, cited like values; no code or data files are copied, so no code credit is owed.
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.19: Corrosion: galvanic compatibility, resistance by environment, corrosion allowance. Then 0.3.20 heat treatment and phase diagrams.
+**Next:** 0.3.19: the Python engine (bundled as in Datum Plot) and better graphs; after the user's review of 0.3.18 ([PLAN-0.6.md](PLAN-0.6.md) §7).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
