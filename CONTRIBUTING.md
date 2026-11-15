@@ -25,7 +25,8 @@ Never copy, or check against, a proprietary or licensed materials database or an
 cargo clippy --workspace --all-targets -- -D warnings
 cargo test --workspace            # engine and data tests, including the hardening tests
 npm run check:ui                  # type-check the window
-npm run test:ui                   # UI tests (Playwright, with the real engine)
+python -m unittest discover -s py/tests   # the Python engine (graphs); pip install -r py/requirements.txt
+npm run test:ui                   # UI tests (Playwright, with the real engine; DATUM_PYTHON=python for the graphs)
 cargo deny check                  # licences, advisories, sources (cargo install cargo-deny)
 ```
 

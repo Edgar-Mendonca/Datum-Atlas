@@ -5,6 +5,7 @@ import { For, Show, createEffect, createSignal, on } from "solid-js";
 import { call, toast } from "./store";
 import { invoke } from "./api";
 import { Help } from "./help";
+import { Graph } from "./graph";
 
 interface Part { area: number; ecd: number; perim: number; circ: number; aspect: number; cx: number; cy: number; edge: boolean }
 interface Answer { threshold: number; otsu: number; hist: number[]; fraction: number; unit: string; particles: Part[];
@@ -165,16 +166,18 @@ export const ImagesPage = () => {
               <tr><td>Standard deviation</td><td>{fx(c().sd)} {u()}</td></tr>
               <tr><td>Thinnest / thickest</td><td>{fx(c().min)} / {fx(c().max)} {u()}</td></tr>
               <tr><td>Columns measured</td><td>{c().columns}</td></tr></tbody></table>
-              <svg class="isize" viewBox="0 0 400 120">{(() => { const p = c().profile, xm = Math.max(...p.map(q => q[0]), 1), ym = Math.max(...p.map(q => q[1]), 1); return <><polyline fill="none" stroke="#6C4AB6" stroke-width="1.5" points={p.map(q => `${10 + 380 * q[0] / xm},${105 - 95 * q[1] / ym}`).join(" ")} /><line x1="10" x2="390" y1="105" y2="105" stroke="var(--text2)" /><text x="390" y="118" text-anchor="end" font-size="10" fill="var(--text)">Thickness along the image (max {fx(ym)} {u()})</text></>; })()}</svg></>}</Show>
+              <Graph spec={{ x: { label: `Distance along the image (${u()})` }, y: { label: `Thickness (${u()})`, min: 0 }, legend: false, series: [{ x: c().profile.map(q => q[0]), y: c().profile.map(q => q[1]) }], lines: c().mean != null ? [{ y: c().mean!, label: "Mean" }] : [] }}
+                name="Coating thickness" ratio={0.38} fallback={<svg class="isize" viewBox="0 0 400 120">{(() => { const p = c().profile, xm = Math.max(...p.map(q => q[0]), 1), ym = Math.max(...p.map(q => q[1]), 1); return <><polyline fill="none" stroke="#6C4AB6" stroke-width="1.5" points={p.map(q => `${10 + 380 * q[0] / xm},${105 - 95 * q[1] / ym}`).join(" ")} /><line x1="10" x2="390" y1="105" y2="105" stroke="var(--text2)" /><text x="390" y="118" text-anchor="end" font-size="10" fill="var(--text)">Thickness along the image (max {fx(ym)} {u()})</text></>; })()}</svg>} /></>}</Show>
             <For each={r().notes}>{n => <p class="small tnote">{n}</p>}</For>
           </section>
           <section class="panel">
             <h2>Size distribution</h2>
             <Show when={r().bins.length} fallback={<p class="muted small">No particles measured.</p>}>
-              <svg class="isize" viewBox="0 0 400 170">{(() => { const mx = Math.max(...r().bins.map(b => b[2]), 1), n = r().bins.length, bw = 360 / n; return <>
+              <Graph spec={{ x: { label: `Equivalent diameter (${u()})` }, y: { label: "Particles", min: 0 }, legend: false, series: [{ kind: "bar", edge: true, x: r().bins.map(b => b[0]), y: r().bins.map(b => b[2]), barWidth: r().bins.length ? (r().bins[0][1] - r().bins[0][0]) * 0.92 : 1 }] }}
+                name="Size distribution" ratio={0.5} fallback={<svg class="isize" viewBox="0 0 400 170">{(() => { const mx = Math.max(...r().bins.map(b => b[2]), 1), n = r().bins.length, bw = 360 / n; return <>
                 <For each={r().bins}>{(b, k) => <><rect x={30 + k() * bw} y={140 - 120 * b[2] / mx} width={bw - 2} height={120 * b[2] / mx} fill="#6C4AB6" fill-opacity=".8"><title>{`${fx(b[0])}–${fx(b[1])} ${u()}: ${b[2]}`}</title></rect>
                   <Show when={k() % 2 === 0}><text x={30 + k() * bw} y="155" font-size="9" fill="var(--text2)">{fx(b[0], 1)}</text></Show></>}</For>
-                <line x1="30" x2="390" y1="140" y2="140" stroke="var(--text2)" /><text x="390" y="168" text-anchor="end" font-size="10" fill="var(--text)">Equivalent diameter ({u()})</text><text x="28" y="14" text-anchor="end" font-size="9" fill="var(--text2)">{mx}</text></>; })()}</svg>
+                <line x1="30" x2="390" y1="140" y2="140" stroke="var(--text2)" /><text x="390" y="168" text-anchor="end" font-size="10" fill="var(--text)">Equivalent diameter ({u()})</text><text x="28" y="14" text-anchor="end" font-size="9" fill="var(--text2)">{mx}</text></>; })()}</svg>} />
             </Show>
             <div class="hscroll lscroll"><table class="ptable iparts"><thead><tr><th>#</th><th>Area ({u()}²)</th><th>Diameter ({u()})</th><th>Circularity</th><th>Aspect</th><th>Edge</th></tr></thead>
               <tbody><For each={r().particles.slice(0, 200)}>{(p, k) => <tr classList={{ off: p.edge }}><td>{k() + 1}</td><td>{fx(p.area)}</td><td>{fx(p.ecd)}</td><td>{fx(p.circ, 3)}</td><td>{fx(p.aspect)}</td><td>{p.edge ? "yes" : ""}</td></tr>}</For></tbody></table></div>

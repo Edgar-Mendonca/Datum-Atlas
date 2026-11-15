@@ -5,6 +5,7 @@ import { For, Show, createEffect, createResource, createSignal } from "solid-js"
 import { call, db, openSheet, show, srcOf } from "./store";
 import { invoke } from "./api";
 import { Help } from "./help";
+import { Graph } from "./graph";
 
 export interface Element { z: number; symbol: string; name: string; mass: number; radioactive: boolean; category: string; group: number | null; period: number; row: number; col: number;
   state?: string; density?: number; melt?: number; boil?: number; structure?: string; electroneg?: number; a?: number; c?: number; note?: string; src: string; massSrc: string }
@@ -228,7 +229,10 @@ export const CalcPage = () => {
             <label>2θ up to (°) <Num v={ask().max} step={5} set={v => upd(q => { q.max = v; })} /></label>
           </div>
           <Show when={a()}>{x => <>
-            <PeaksChart ps={x().peaks} max={Math.min(175, Math.max(5, ask().max))} four={x().structure.system === "hexagonal"} />
+            <Graph spec={{ x: { label: "2θ (°)", min: 0, max: Math.min(175, Math.max(5, ask().max)) }, y: { label: "Relative intensity", min: 0, max: 108 }, legend: false,
+              series: [{ kind: "stem", x: x().peaks.map(q => q.twoTheta), y: x().peaks.map(q => q.intensity), labels: x().peaks.map(q => q.hkil ? mi(q.hkil) : mi(q.hkl)), width: 2 }],
+              marks: x().peaks.filter(q => q.intensity > 8).map(q => ({ x: q.twoTheta, y: q.intensity, text: x().structure.system === "hexagonal" && q.hkil ? mi(q.hkil, "", "") : mi(q.hkl, "", ""), size: 0.1 })) }}
+              name={`X-ray pattern ${x().structure.name}`} ratio={0.36} fallback={<PeaksChart ps={x().peaks} max={Math.min(175, Math.max(5, ask().max))} four={x().structure.system === "hexagonal"} />} />
             <div class="hscroll"><table class="ptable peaks"><thead><tr><th>hkl</th><th>Multiplicity</th><th>d (Å)</th><th>2θ (°)</th><th>Intensity</th></tr></thead>
               <tbody><For each={x().peaks}>{q => <tr><td>{q.hkil ? mi(q.hkil) : mi(q.hkl)}</td><td>{q.mult}</td><td>{q.d.toFixed(4)}</td><td>{q.twoTheta.toFixed(3)}</td><td>{q.intensity.toFixed(1)}</td></tr>}</For></tbody></table></div>
             <p class="muted small">Positions from Bragg's law are exact for the cell. Intensities are approximate: each atom scatters in proportion to its atomic number, without the fall-off with angle, temperature or texture, so use them to see which lines are there and roughly how strong.</p></>}</Show>

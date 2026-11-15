@@ -40,7 +40,8 @@
     "Image analysis of micrographs: calibrate from the scale bar, then phase fraction, porosity, particles, grain size with G, graphite nodularity and coating thickness.",
     "A structure generator: synthetic grain maps with the size, spread, elongation, second phase, pores and texture you choose, coloured by orientation, measured back and ready for image analysis.",
     "EBSD: open .ang and .ctf maps; orientation, phase and quality maps; grains, boundaries, Σ3 twins, local misorientation, Schmid factors, pole figures and inverse pole figures.",
-    "DIC: strain maps from displacement fields, with statistics and profiles, and strain by grain linked to an EBSD map, with Schmid factors and slip traces."
+    "DIC: strain maps from displacement fields, with statistics and profiles, and strain by grain linked to an EBSD map, with Schmid factors and slip traces.",
+    "A built-in Python engine, as in the other Datum apps: analysis graphs drawn by matplotlib, with hover values and export for publication."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -52,17 +53,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.19",
-      "title": "Python engine and better graphs",
-      "when": "Next",
-      "items": [
-        "A built-in Python engine as in the other Datum apps; graphs drawn by matplotlib with export for publication."
-      ]
-    },
-    {
       "v": "0.3.20",
       "title": "Keep research work in the project",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review."
       ]

@@ -32,7 +32,7 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, units: "si", paper: "A4", landscape: true, company: "Northwind Engineering", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "0.3.3", copy_text: null, save_file: null };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "graph", "graph_export", "engine", "restart_engine"];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       if (engine.includes(c)) { const r = await window.__engine(c, a); if ("err" in r) throw r.err; return r.ok; }
       if (c === "set_options") return (await window.__engine("state", {})).ok;
@@ -129,17 +129,17 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await p.click('.elpage .el:has(b:text-is("Fe"))'); await p.click(".elcard .tocalc"); await wait(700);
   await shot("lattice", [[".calcpage .csrc", 1], [".calcpage .cellview", 2], [".calcpage .cfacts", 3], [".calcpage .h1", 4], [".calcpage .stereo", 5]]);
   await p.evaluate(() => document.querySelector(".calcpage .panel.wide")?.scrollIntoView()); await wait(300);
-  await shot("xrd", [[".calcpage .tube", 1], [".calcpage .xrd", 2], [".calcpage .peaks", 3]], ".calcpage .panel.wide");
+  await shot("xrd", [[".calcpage .tube", 1], [".calcpage .pgraph", 2], [".calcpage .peaks", 3]], ".calcpage .panel.wide");
   await side("Tensile"); await p.click(".tenspage .texample"); await wait(700);
-  await shot("tensile", [[".tenspage .timport", 1], [".tenspage .tfit0", 2], [".tenspage .tcurve", 3], [".tenspage .tspec", 4], [".tenspage .tres", 5]]);
+  await shot("tensile", [[".tenspage .timport", 1], [".tenspage .tfit0", 2], [".tenspage .pgraph", 3], [".tenspage .tspec", 4], [".tenspage .tres", 5]]);
   await side("Fatigue"); await p.click(".labpage .labex"); await wait(600);
-  await shot("fatigue", [[".labpage .fvals", 1], [".labpage .fatat", 2], [".labpage .lplot", 3], [".labpage .fres", 4]]);
+  await shot("fatigue", [[".labpage .fvals", 1], [".labpage .fatat", 2], [".labpage .pgraph", 3], [".labpage .fres", 4]]);
   await side("Creep"); await wait(500);
-  await shot("creep", [[".labpage .cvals", 1], [".labpage .lmpc", 2], [".labpage .cat0", 3], [".labpage .lplot", 4], [".labpage .cres2", 5]]);
+  await shot("creep", [[".labpage .cvals", 1], [".labpage .lmpc", 2], [".labpage .cat0", 3], [".labpage .pgraph", 4], [".labpage .cres2", 5]]);
   await side("Hardness"); await wait(400);
   await shot("hardness", [[".labpage .hvals", 1], [".labpage .hres", 2], [".labpage .mkmat", 3]]);
   await side("Images"); await p.click(".imgpage .iex"); await wait(2500);
-  await shot("images", [[".imgpage .iopen", 1], [".imgpage canvas", 2], [".imgpage .iscale", 3], [".imgpage .ibottom", 4], [".imgpage .ihist", 5], [".imgpage .ires", 6], [".imgpage .isize", 7]]);
+  await shot("images", [[".imgpage .iopen", 1], [".imgpage canvas", 2], [".imgpage .iscale", 3], [".imgpage .ibottom", 4], [".imgpage .ihist", 5], [".imgpage .ires", 6], [".imgpage .pgraph", 7]]);
   await p.selectOption(".imgpage .imode", "grains"); await p.click(".imgpage .iex"); await wait(2500);
   await shot("grains", [[".imgpage .imode", 1], [".imgpage canvas", 2], [".imgpage .igrain", 3]]);
   await p.selectOption(".imgpage .imode", "particles");
@@ -156,9 +156,9 @@ const op = o => ask("apply", { op: o }).then(r => { if (r.err) throw new Error(r
   await shot("polefig", [[".pfpage .pfphase", 1], [".pfpage .pfrow", 2], [".pfpage .panel:last-child .pfrow", 3]]);
   await side("Strain maps"); await p.click(".dicpage .dex"); await wait(2500);
   { const b = await p.$eval(".dicpage .dov", c => { const r = c.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }); await p.mouse.click(b[0] + b[2] * 0.1, b[1] + b[3] * 0.6); await p.mouse.click(b[0] + b[2] * 0.9, b[1] + b[3] * 0.6); await wait(800); }
-  await shot("dic", [[".dicpage .dopen", 1], [".dicpage .dwrap", 2], [".dicpage .dkey", 3], [".dicpage .dprof", 4], [".dicpage .dstats", 5]]);
+  await shot("dic", [[".dicpage .dopen", 1], [".dicpage .dwrap", 2], [".dicpage .dkey", 3], [".dicpage .pgraph", 4], [".dicpage .dstats", 5]]);
   await side("By grain"); await p.click(".dicpage .lex"); await wait(6000);
-  await shot("bygrain", [[".dicpage .dwrap", 1], [".dicpage .lkey", 2], [".dicpage .lfit", 3], [".dicpage .lr", 4], [".dicpage .dscat", 5], [".dicpage .lgtab", 6]]);
+  await shot("bygrain", [[".dicpage .dwrap", 1], [".dicpage .lkey", 2], [".dicpage .lfit", 3], [".dicpage .lr", 4], [".dicpage .pgraph", 5], [".dicpage .lgtab", 6]]);
   await side("Index"); await shot("index");
   await side("Eco"); await shot("eco", [[".otabs", 1], [".ecoparts", 2], [".ecokpi", 3], [".ecodom", 4], [".ecocharts", 5]]);
   await p.click(".otabs button >> nth=1"); await wait(300);

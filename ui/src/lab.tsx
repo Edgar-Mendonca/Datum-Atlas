@@ -6,6 +6,7 @@ import { act, call, out, P, toast } from "./store";
 import type { Material } from "./api";
 import { editMaterial } from "./material";
 import { Help } from "./help";
+import { Graph, type Spec } from "./graph";
 
 export interface HardSet { name: string; scale: string; values: number[] }
 export interface FatPoint { s: number; n: number; runout: boolean }
@@ -36,6 +37,13 @@ export const makeMaterial = async () => {
 };
 const MakeBtn = () => <button class="btn mkmat" title="A material of your own from every test result in this project" onClick={makeMaterial}>Make a material of the results</button>;
 const Example = () => <button class="btn labex" title="Made-up hardness, fatigue and creep data, to try the pages" onClick={async () => { const e = await call<Lab>("lab_example"); if (e) await act({ Lab: { lab: e } }); }}>Example (made-up data)</button>;
+
+/** The same plot as a graph spec. */
+const plotSpec = (p: { pts: { x: number; y: number; open?: boolean; title: string }[]; line?: [number, number][]; q?: [number, number]; lx: boolean; xl: string; yl: string; name: string }): Spec => ({
+  x: { label: p.xl, log: p.lx }, y: { label: p.yl, log: true },
+  series: [{ name: p.name, kind: "scatter", x: p.pts.map(q => q.x), y: p.pts.map(q => q.y), open: p.pts.map(q => !!q.open), labels: p.pts.map(q => q.title), color: "#6C4AB6" },
+    ...(p.line ? [{ name: "Fit", x: p.line.map(q => q[0]), y: p.line.map(q => q[1]), color: "#3B4859", width: 1.4 }] : [])],
+  marks: p.q ? [{ x: p.q[0], y: p.q[1], color: "#F2B233", marker: "o", size: 10, fill: "none" }] : [] });
 
 /** A log–log or log–linear scatter with a fitted line. */
 const Plot = (p: { pts: { x: number; y: number; open?: boolean; title: string }[]; line?: [number, number][]; q?: [number, number]; lx: boolean; xl: string; yl: string }) => {
@@ -98,7 +106,8 @@ export const FatiguePage = () => {
           <For each={L().fatigue}>{(p, i) => <tr><td>{p.s}</td><td>{sci(p.n)}</td><td>{p.runout ? "run-out" : ""}</td><td><button class="lnk" onClick={() => save(l => { l.fatigue.splice(i(), 1); })}>✕</button></td></tr>}</For></tbody></table></div></Show>
       </section>
       <section class="panel"><h2>S–N curve</h2>
-        <Plot pts={L().fatigue.map(p => ({ x: p.n, y: p.s, open: p.runout, title: `${p.s} MPa, ${sci(p.n)} cycles${p.runout ? ", run-out" : ""}` }))} line={line()} lx xl="Cycles to failure N" yl="Stress amplitude σa (MPa)" q={f()?.strength != null ? [L().fat_at, f()!.strength!] : undefined} />
+        {(() => { const a = { pts: L().fatigue.map(p => ({ x: p.n, y: p.s, open: p.runout, title: `${p.s} MPa, ${sci(p.n)} cycles${p.runout ? ", run-out" : ""}` })), line: line(), lx: true, xl: "Cycles to failure N", yl: "Stress amplitude σa (MPa)", q: f()?.strength != null ? [L().fat_at, f()!.strength!] as [number, number] : undefined };
+          return <Show when={a.pts.length}><Graph spec={plotSpec({ ...a, name: "Tests" })} name="S-N curve" ratio={0.62} fallback={<Plot {...a} />} /></Show>; })()}
         <Show when={f()}>{x => <div class="fres"><p>Basquin: σa = <b>{fx(x().sf, 0)}</b> MPa × (2N)<sup>{fx(x().b, 4)}</sup> &nbsp; R² = {fx(x().r2, 3)}, from {x().broken} broken specimens</p>
           <p class="fstr">Fatigue strength at {sci(x().at)} cycles: <b>{fx(x().strength, 0)} MPa</b></p>
           <Show when={x().note}><p class="small tnote">{x().note}</p></Show></div>}</Show></section>
@@ -128,7 +137,8 @@ export const CreepPage = () => {
           <For each={L().creep}>{(p, i) => <tr><td>{p.s}</td><td>{p.t}</td><td>{sci(p.h)}</td><td>{fx(c()?.p[i()]?.[0], 2)}</td><td><button class="lnk" onClick={() => save(l => { l.creep.splice(i(), 1); })}>✕</button></td></tr>}</For></tbody></table></div></Show>
       </section>
       <section class="panel"><h2>Larson–Miller plot</h2>
-        <Plot pts={(c()?.p ?? []).map((q, i) => ({ x: q[0], y: q[1], title: `${q[1]} MPa at ${L().creep[i]?.t} °C, ${sci(L().creep[i]?.h ?? 0)} h` }))} line={line()} lx={false} xl="Larson–Miller parameter P = T (C + log t) / 1000 (T in K, t in h)" yl="Stress (MPa)" q={c()?.stress != null && c()?.pAt != null ? [c()!.pAt!, c()!.stress!] : undefined} />
+        {(() => { const a = { pts: (c()?.p ?? []).map((q, i) => ({ x: q[0], y: q[1], title: `${q[1]} MPa at ${L().creep[i]?.t} °C, ${sci(L().creep[i]?.h ?? 0)} h` })), line: line(), lx: false, xl: "Larson–Miller parameter P = T (C + log t) / 1000 (T in K, t in h)", yl: "Stress (MPa)", q: c()?.stress != null && c()?.pAt != null ? [c()!.pAt!, c()!.stress!] as [number, number] : undefined };
+          return <Show when={a.pts.length}><Graph spec={plotSpec({ ...a, name: "Tests" })} name="Larson-Miller plot" ratio={0.62} fallback={<Plot {...a} />} /></Show>; })()}
         <Show when={c()}>{x => <div class="cres2"><p>C = <b>{fx(x().c, 1)}</b>{x().found ? " (found: the best fit)" : ""}; log σ = {fx(x().a?.[0], 3)} {x().a ? (x().a![1] < 0 ? "−" : "+") : ""} {fx(x().a ? Math.abs(x().a![1]) : null, 4)} P &nbsp; R² = {fx(x().r2, 3)}</p>
           <p class="cstr">Stress to rupture at {L().creep_at[0]} °C in {sci(L().creep_at[1])} h: <b>{fx(x().stress, 0)} MPa</b></p>
           <Show when={x().note}><p class="small tnote">{x().note}</p></Show></div>}</Show></section>

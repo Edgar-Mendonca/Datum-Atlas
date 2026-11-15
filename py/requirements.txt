@@ -1,0 +1,4 @@
+# Bundled with Datum Atlas (pinned; the release workflow installs these into the embedded Python).
+# Bump py/runtime.txt whenever this list changes.
+numpy==2.5.4
+matplotlib==3.11.2

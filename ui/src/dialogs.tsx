@@ -150,3 +150,6 @@ export const confirmClose = (then: () => void) => openDialog(() => (
     <p>Do you want to save the changes to “{P().name}”?</p>
   </Dialog>
 ));
+
+/** A short message from the Help tab (engine versions). */
+export const toastInfo = (t: string) => toast(t, true);

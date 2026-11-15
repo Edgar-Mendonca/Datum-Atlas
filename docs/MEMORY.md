@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.18** (released 2026-11-13: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.18). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.19** (released 2026-11-15: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.19). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -100,6 +100,7 @@ flowchart LR
 | `crates/core/src/ebsd.rs`, `ui/src/ebsd.tsx` | EBSD maps: reading exports, drawing maps (the open map lives in the shell); the EBSD module. |
 | `crates/core/src/orient.rs` | Orientations: Euler angles, symmetry, misorientation, textures, IPF colours (used by the generator and EBSD). |
 | `crates/core/src/synth.rs`, `ui/src/synth.tsx` | Synthetic grain maps; the Microstructure › Generator page. |
+| `py/`, `src-tauri/src/runtime.rs`, `src-tauri/src/py.rs`, `ui/src/graph.tsx` | The Python engine (copied from Datum Plot): runtime pack unpacked on first start, a JSON-line worker, matplotlib graphs from a spec (`py/atlas/graph.py`), the `Graph` component with hover, export and a fallback. |
 | `crates/core/src/image.rs`, `ui/src/imaging.tsx` | Image analysis (threshold, phase fraction, particles); the Microstructure › Images page. |
 | `crates/core/src/lab.rs`, `ui/src/lab.tsx` | Hardness, fatigue and creep (`Project.lab`, `Op::Lab`) and a material from the test results; the Testing › Hardness, Fatigue and Creep pages. |
 | `crates/core/src/tensile.rs`, `ui/src/testing.tsx` | Tensile tests (`Project.tensile`, `Op::Tensile`): analysis, statistics, reading exports; the Testing › Tensile page. |
@@ -214,8 +215,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.16** | EBSD 3 | `ebsd.rs` pole figures (families per crystal, up to 4,000 orientations, 5° Gaussian axial density in mrd on a 41 × 41 grid) and inverse pole figures (sample direction reduced to the standard triangle); EBSD › Pole figures page | ✅ |
 | **0.3.17** | DIC 1 | `dic.rs` (parse x, y, u, v tables onto a grid with gaps; central differences; εxx, εyy, εxy, ε1, ε2, γmax, ω, von Mises with εzz = −(εxx + εyy); stats with 5/95 %; diverging or sequential pictures with 1–99 % range; bilinear profiles; made-up field); the field lives in the shell (`App.dic`); DIC module › Strain maps (`dic.tsx`) | ✅ |
 | **0.3.18** | DIC 2 | `dic::by_grain` (field sampled at each EBSD point, fit or offset/scale; per-grain mean and sd, Schmid factor, IPF colour, centroid, slip traces as surface angles of each plane with its best Schmid factor; Pearson r against Schmid); `example_on` (each grain strained with its Schmid factor, softened); DIC › By grain page (strain with boundaries, traces overlay, scatter, table) | ✅ |
-| 0.3.19 | Python engine and better graphs | A built-in Python engine as in the other Datum apps; graphs drawn by matplotlib with export for publication. | 🔜 |
-| 0.3.20 | Keep research work in the project | Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review. | ⬜ |
+| **0.3.19** | Python engine and better graphs | Embeddable CPython 3.13 + numpy, matplotlib as a runtime pack in the installer (release workflow step, `tauri.release.conf.json`), `src-tauri/src/runtime.rs` and `py.rs` copied from Datum Plot, `py/worker.py` + `py/atlas/graph.py` (spec → SVG with hover map; export PNG/SVG/PDF), `ui/src/graph.tsx` (`Graph` with fallback), analysis charts moved; Help › Engine, Restart Engine; CI installs Python | ✅ |
+| 0.3.20 | Keep research work in the project | Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review. | 🔜 |
 | 0.3.21 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics. | ⬜ |
 | 0.3.22 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | ⬜ |
 | 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. | ⬜ |
@@ -591,6 +592,13 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Checked Datum Plot and Datum Sim (read-only clones): both bundle an embeddable CPython 3.13 runtime pack in the installer (Plot about 115 MB, Sim about 55 MB), unpack it on first start, and talk to Python workers in JSON lines (`src-tauri/src/runtime.rs`, `py.rs`, `py/worker.py`, release workflow step). The user chose the same for Atlas.
 - Roadmap set in PLAN-0.6 §7: 0.3.19 Python engine and graphs, 0.3.20 research work saved in the project, 0.3.21 corrosion, 0.3.22 heat treatment and phase diagrams, then 0.4.0–0.4.7 research depth. Corrosion and heat treatment moved back two in features.ts and site.json.
 
+### 2026-11-15: Session 18, continued (0.3.19: Python engine)
+- Copied from Datum Plot: the release step that builds the runtime pack, `runtime.rs` (unpack on first start into local app data, `runtime/N`), `py.rs` (worker with timeouts and restart; one worker here, Plot runs two). `py/worker.py` follows Plot's protocol; `py/atlas/graph.py` is our own: a small spec (series, marks, lines, axes) drawn in the family style, SVG for the window with the plot box and limits so the window can show hover values, and export on a white page.
+- The window keeps its own charts as the fallback when Python is missing. Live, interactive charts (selection charts, maps, sliders) stay in the window.
+- Only numpy and matplotlib for now (smaller installer); scipy and a thermodynamics library come with phase diagrams (bump `py/runtime.txt`).
+- matplotlib writes a fixed size into its SVG; the size is removed so the picture scales to its panel. UI tests wait for graphs by their text (the test bridge talks to Python one request at a time). CI installs Python 3.13 and runs the Python tests; the release runs them on the embedded runtime.
+- Released 0.3.19.
+
 ---
 
 - 2026-11-15: Python engine bundled in the installer exactly as Datum Plot and Datum Sim do it (embeddable CPython 3.13 + pinned wheels as a runtime pack, unpacked on first start into local app data, JSON-line workers driven by the Rust engine). Live charts stay in the window; matplotlib draws the analysis graphs and publication figures. See PLAN-0.6 §7.
@@ -598,7 +606,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.19: the Python engine (bundled as in Datum Plot) and better graphs; after the user's review of 0.3.18 ([PLAN-0.6.md](PLAN-0.6.md) §7).
+**Next:** 0.3.20: keep research work (images, EBSD maps, DIC fields and their settings) in the project; fixes from the user's review.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

@@ -20,6 +20,8 @@ const goTo = async (p, t) => {
 /** Opens a ribbon tab, opening a page of a module that has it first. */
 const tabTo = async (p, t) => { if (!(await p.$(`.tabs button:text-is("${t}")`))) await goTo(p, t === "Data" ? "Browse" : "Charts"); await p.click(`.tabs button:text-is("${t}")`); };
 let failed = 0;
+/** The text of a page's engine graph, once it has drawn (and, if given, once it shows `want`). */
+const graphOfP = (p) => async (sel, want = "") => { await p.waitForFunction(([s, w]) => { const g = document.querySelector(`${s} .pgraph .gsvg svg`); return !!g && g.textContent.includes(w); }, [sel, want], { timeout: 60000 }).catch(() => {}); return p.textContent(`${sel} .pgraph .gsvg`).catch(() => ""); };
 const check = (name, ok, info = "") => { console.log(`${ok ? "ok  " : "FAIL"} ${name}${ok ? "" : "  " + info}`); if (!ok) failed++; };
 
 // The engine: requests go in order, answers come back in order.
@@ -33,13 +35,14 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   const url = `http://localhost:${srv.address().port}/`;
   const b = await chromium.launch(process.env.CHROMIUM ? { executablePath: process.env.CHROMIUM } : {});
   const p = await b.newPage({ viewport: { width: 1440, height: 900 } });
+  const graphOf = graphOfP(p);
   const errors = [];
   p.on("pageerror", e => errors.push(e.message));
   await p.exposeFunction("__engine", async (cmd, args) => ask(cmd, args));
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "graph", "graph_export", "engine", "restart_engine"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -186,6 +189,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("the stereographic projection draws the poles", (await p.$$(".calcpage .stereo circle")).length > 20);
   await p.selectOption(".calcpage .csrc", "rocksalt"); await p.waitForTimeout(150);
   await p.fill(".calcpage .ca", "5.64"); await p.press(".calcpage .ca", "Tab"); await p.fill(".calcpage .sp1", "Na"); await p.press(".calcpage .sp1", "Tab"); await p.fill(".calcpage .sp2", "Cl"); await p.press(".calcpage .sp2", "Tab"); await p.waitForTimeout(250);
+  await p.waitForFunction(() => (document.querySelector(".calcpage .cdens")?.textContent ?? "").includes("2,16"), null, { timeout: 15000 }).catch(() => {});
   check("a two-element structure (rock salt) works out its density", (await p.textContent(".calcpage .cdens")).includes("2,16"), await p.textContent(".calcpage .cdens"));
   await p.fill(".calcpage .lam", "0"); await p.press(".calcpage .lam", "Tab"); await p.waitForTimeout(200);
   check("a wrong wavelength says why", (await p.textContent(".calcpage .err").catch(() => "")).includes("wavelength"));
@@ -201,13 +205,18 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   const row = await p.$$eval(".tenspage .tres tbody tr:first-child td", t => t.map(x => x.textContent));
   check("the specimen's results come out of its curve (E 200 GPa, n 0.18)", row[1].startsWith("199.") || row[1].startsWith("200."), row.join(" | "));
   check("…and n is the one the curve was made with", row[7] === "0.180", row.join(" | "));
-  await p.click(".tenspage .texample"); await p.waitForTimeout(300);
+  await p.click(".tenspage .texample"); await p.waitForFunction(() => document.querySelectorAll(".tenspage .tspec tbody tr").length === 4, null, { timeout: 30000 }).catch(() => {});
   check("the made-up example adds three specimens, named so", (await p.$$(".tenspage .tspec tbody tr")).length === 4 && (await p.$$eval(".tenspage .tspec input:not([type=checkbox])", x => x.map(i => i.value).join())).includes("made-up data"), String((await p.$$(".tenspage .tspec tbody tr")).length));
   const sd0 = await p.textContent(".tenspage .tres tr.stat:nth-of-type(6)");
   await p.click(".tenspage .tspec tbody tr:first-child input[type=checkbox]"); await p.waitForTimeout(300);
   check("leaving a specimen out changes the statistics", (await p.textContent(".tenspage .tres tr.stat:nth-of-type(6)")) !== sd0 && !!(await p.$(".tenspage .tres tr.off")));
   await p.click(".tenspage .ttrue"); await p.waitForTimeout(150);
-  check("true stress and strain can be drawn", (await p.textContent(".tenspage .tcurve")).includes("True stress") && (await p.$$(".tenspage .tcurve polyline")).length === 3);
+  check("true stress and strain are drawn by the graph engine (matplotlib)", (await graphOf(".tenspage", "True stress")).includes("True stress"));
+  // Hover over the graph: the nearest point's values.
+  { const b = await p.$eval(".tenspage .pgraph .gbox", e => { const r = e.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; }); let shown = false;
+    for (let k = 0; k < 40 && !shown; k++) { await p.mouse.move(b[0] + b[2] * (0.15 + k * 0.02), b[1] + b[3] * (0.2 + (k % 8) * 0.08)); shown = !!(await p.$(".tenspage .gtip")); }
+    check("hovering a graph shows the nearest point's values", shown); }
+  check("graphs can be exported for publication (PNG, SVG, PDF)", (await p.$$(".tenspage .gbar button.lnk")).length === 3);
   await p.click(".tenspage .ttrue");
   await shot("tensile");
   // Testing › Hardness, Fatigue, Creep, and a material of the results.
@@ -218,9 +227,10 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await goTo(p, "Fatigue");
   await p.fill(".labpage .fvals", "500 512\n400 4768\n300 84668\n150 10000000 r"); await p.click(".labpage .fadd"); await p.waitForTimeout(250);
   const ft = await p.textContent(".labpage .fres");
-  check("an S–N fit gives Basquin's constants and the strength at 10^7 cycles", ft.includes("1,000") && ft.includes("-0.1000") && ft.includes("186 MPa") && (await p.$$(".labpage .lplot circle")).length >= 3, ft);
+  check("an S–N fit gives Basquin's constants and the strength at 10^7 cycles", ft.includes("1,000") && ft.includes("-0.1000") && ft.includes("186 MPa") && (await graphOf(".labpage", "Cycles to failure")).includes("Cycles to failure"), ft);
   await goTo(p, "Creep");
   await p.click(".labpage .labex"); await p.waitForTimeout(300);
+  await p.waitForFunction(() => /rupture at .* h: \d+ MPa/.test(document.querySelector(".labpage .cres2")?.textContent ?? ""), null, { timeout: 30000 }).catch(() => {});
   const ct = await p.textContent(".labpage .cres2");
   check("the made-up example gives a Larson–Miller fit and a stress to rupture", ct.includes("C = 20.0") && /rupture at 600 °C in 1\.00 × 10⁵ h: \d+ MPa/.test(ct), ct);
   await p.fill(".labpage .lmpc", "0"); await p.press(".labpage .lmpc", "Tab"); await p.waitForTimeout(250);
@@ -240,7 +250,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   check("Image analysis starts empty and says how to begin", (await p.textContent(".imgpage .tempty")).includes("Open a micrograph"));
   await p.click(".imgpage .iex"); await p.waitForSelector(".imgpage .ires"); await idle();
   const icount = +(await p.textContent(".imgpage .icount"));
-  check("the made-up image's particles are found and measured in µm", icount >= 50 && icount <= 60 && (await p.textContent(".imgpage .iecd")).includes("µm") && (await p.$$(".imgpage .isize rect")).length > 3, String(icount));
+  check("the made-up image's particles are found and measured in µm", icount >= 50 && icount <= 60 && (await p.textContent(".imgpage .iecd")).includes("µm") && (await graphOf(".imgpage", "Equivalent diameter")).includes("Equivalent diameter"), String(icount));
   const f0 = await p.textContent(".imgpage .ifrac");
   await p.click(".imgpage .iauto"); await p.fill(".imgpage .ithr", "20"); await p.dispatchEvent(".imgpage .ithr", "input"); await idle();
   check("a hand-set threshold changes the area fraction", (await p.textContent(".imgpage .ifrac")) !== f0, f0 + " → " + await p.textContent(".imgpage .ifrac"));
@@ -324,14 +334,14 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.click(".dicpage .dex"); await didle();
   const db = await p.$eval(".dicpage .dov", c => { const r = c.getBoundingClientRect(); return [r.left, r.top, r.width, r.height]; });
   await p.mouse.click(db[0] + db[2] * 0.1, db[1] + db[3] * 0.5); await p.mouse.click(db[0] + db[2] * 0.9, db[1] + db[3] * 0.5); await p.waitForTimeout(500);
-  check("two clicks draw a profile along the line", !!(await p.$(".dicpage .dprof polyline")));
+  check("two clicks draw a profile along the line", (await graphOf(".dicpage", "Distance along the line")).includes("Distance along the line"));
   await shot("dic");
   // DIC › By grain: the made-up map and field; strain follows the Schmid factor.
   const lidle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".dicpage .lbusy")) ? 0 : quiet + 1; } };
   await goTo(p, "By grain"); await p.click(".dicpage .lex"); await p.waitForSelector(".dicpage .lgtab"); await lidle();
   const lr = parseFloat(await p.textContent(".dicpage .lr"));
   check("strain by grain: grains listed, strain follows the Schmid factor (r > 0.6)", +(await p.textContent(".dicpage .lgrains")) > 50 && lr > 0.6, String(lr));
-  check("slip traces and the strain–Schmid plot are drawn", (await p.$$(".dicpage .dscat circle")).length > 50);
+  check("slip traces and the strain–Schmid plot are drawn", (await graphOf(".dicpage", "Schmid factor")).includes("Schmid factor"));
   await shot("bygrain");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));

@@ -10,6 +10,7 @@ import { feature } from "./features";
 import { soon } from "./roadmap";
 import { tool, setTool, copyChart, activeLine } from "./chart";
 import { helpCard, HELP } from "./help";
+import { restartEngine } from "./graph";
 import { editFormulas } from "./formula";
 import { exportResults } from "./stages";
 import { importMaterials, openDatabase, saveMine } from "./importer";
@@ -158,6 +159,8 @@ export const Ribbon = () => (
       <G l="Learn"><B big i="manual" l="Guide" title="The Datum Atlas Guide (PDF): every part of the app, step by step" run={() => D.guide()} /><B big i="report" l="Getting Started" run={() => D.gettingStarted()} /><B big i="list" l="Roadmap" title="Everything Datum Atlas will do, and when" run={() => setBackstage("roadmap")} /><B big i="info" l="Glossary" title="Bubble, envelope, index and other terms" run={() => D.glossary()} /><B big i="help" l="What Is This Tool?" title="Every tool explained: click a ? beside a tool, or pick one here" dd={e => openMenu(e, Object.entries(HELP).map(([k, h]) => ({ label: h.t, run: () => helpCard(k) })))} /><B big i="keys" l="Shortcuts" run={() => D.shortcuts()} /><B big i="search" l="Tell Me" run={palette} /></G>
       <G l="Assistant"><B big i="link" l="Use with an AI Assistant" title="Connect an AI assistant to Datum Atlas through the command line" run={() => D.assistant()} /></G>
       <G l="Datum Atlas on GitHub"><B big i="github" l="GitHub" title="The project and its code" run={() => call("open_url", { url: GH })} /><B big i="tag" l="Releases" title="Every version and its change log" run={() => call("open_url", { url: `${GH}/releases` })} /><B big i="bug" l="Report an Issue" run={() => call("open_url", { url: `${GH}/issues/new` })} /></G>
+      <G l="Python engine"><B big i="info" l="Engine" title="The built-in Python engine that draws the analysis graphs: its versions" run={() => call<any>("engine").then(e => e?.versions ? D.toastInfo(`Python ${e.versions.python}, numpy ${e.versions.numpy}, matplotlib ${e.versions.matplotlib}.`) : D.toastInfo(`The Python engine is not running: ${e?.error ?? "unknown"}`))} />
+        <B big i="upd" l="Restart Engine" title="Stop the Python engine and start a fresh one" run={restartEngine} /></G>
       <G l="Updates"><B big i="upd" l="Check for Updates" run={() => setBackstage("about")} /></G>
     </Show>
   </section>

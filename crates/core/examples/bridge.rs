@@ -6,7 +6,28 @@ use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{Doc, Op}, eco, proc
 use serde_json::{json, Value};
 use std::io::{BufRead, Write};
 
-struct St { ebsd: Option<datum_atlas_core::ebsd::Ebsd>, dic: Option<datum_atlas_core::dic::Dic>, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
+/// The Python worker for graphs (DATUM_PYTHON or python3, as the app in development).
+struct PyW { _child: std::process::Child, stdin: std::process::ChildStdin, out: std::io::BufReader<std::process::ChildStdout> }
+fn py(w: &mut Option<PyW>, q: Value) -> Result<Value, String> {
+    if w.is_none() {
+        let exe = std::env::var("DATUM_PYTHON").unwrap_or_else(|_| "python3".into());
+        let script = format!("{}/../../py/worker.py", env!("CARGO_MANIFEST_DIR"));
+        let mut c = std::process::Command::new(&exe).arg("-X").arg("utf8").arg(&script).stdin(std::process::Stdio::piped()).stdout(std::process::Stdio::piped()).stderr(std::process::Stdio::null()).spawn().map_err(|e| format!("The graph engine (Python) could not start: {e}"))?;
+        let (stdin, mut out) = (c.stdin.take().unwrap(), std::io::BufReader::new(c.stdout.take().unwrap()));
+        let mut l = String::new();
+        out.read_line(&mut l).map_err(|e| e.to_string())?;
+        if !l.contains("ready") { return Err("The graph engine (Python) did not start.".into()) }
+        *w = Some(PyW { _child: c, stdin, out });
+    }
+    let p = w.as_mut().unwrap();
+    writeln!(p.stdin, "{q}").map_err(|e| e.to_string())?;
+    let mut l = String::new();
+    p.out.read_line(&mut l).map_err(|e| e.to_string())?;
+    let r: Value = serde_json::from_str(&l).map_err(|e| e.to_string())?;
+    if r["ok"] == true { Ok(r) } else { Err(r["error"].as_str().unwrap_or("The graph engine failed.").to_string()) }
+}
+
+struct St { py: Option<PyW>, ebsd: Option<datum_atlas_core::ebsd::Ebsd>, dic: Option<datum_atlas_core::dic::Dic>, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
 
 /// A file of the UI tests, when the window asks without a path (the shell would open a dialog).
 fn fixture(a: &Value, name: &str) -> String { a["path"].as_str().map(String::from).unwrap_or_else(|| format!("{}/../../tests_ui/{name}", env!("CARGO_MANIFEST_DIR"))) }
@@ -56,6 +77,10 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "dic_profile" => { let d = s.dic.as_ref().ok_or("Open a displacement field first.")?; let pa: [f64; 2] = serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?; let pb: [f64; 2] = serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?; json!(d.profile(a["key"].as_str().unwrap_or("exx"), pa, pb, 200)) }
         "dic_link" => { let m = s.ebsd.as_ref().ok_or("Open an EBSD map on EBSD › Maps first.")?; let d = s.dic.as_ref().ok_or("Open a displacement field on DIC › Strain maps first.")?; json!(datum_atlas_core::dic::by_grain(d, m, &serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?) }
         "dic_link_example" => { let m = datum_atlas_core::ebsd::example()?; let d = datum_atlas_core::dic::example_on(&m); let v = json!({ "ebsd": m.summary(), "dic": d.summary() }); s.ebsd = Some(m); s.dic = Some(d); v }
+        "graph" => py(&mut s.py, json!({ "cmd": "render", "spec": a["spec"] }))?,
+        "graph_export" => { py(&mut s.py, json!({ "cmd": "export", "spec": a["spec"], "fmt": a["fmt"], "dpi": 300 }))?; json!(format!("{}.{}", a["name"].as_str().unwrap_or("graph"), a["fmt"].as_str().unwrap_or("png"))) }
+        "engine" => { let v = py(&mut s.py, json!({ "cmd": "ping" })).ok(); json!({ "versions": v, "error": null }) }
+        "restart_engine" => { s.py = None; py(&mut s.py, json!({ "cmd": "ping" }))? }
         "lab_example" => json!(datum_atlas_core::lab::example()),
         "test_material" => json!(datum_atlas_core::lab::to_material(&datum_atlas_core::tensile::run(&s.doc.p.tensile), &datum_atlas_core::lab::run(&s.doc.p.lab), a["name"].as_str().unwrap_or(""), a["src"].as_str().unwrap_or(""))),
         "tensile_example" => json!(datum_atlas_core::tensile::example()),
@@ -101,7 +126,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
 fn main() {
     let user = Database { format: FORMAT, name: "My materials".into(), ..Default::default() };
     let d = Db::new(db::builtin(), Some(&user));
-    let mut s = St { ebsd: None, dic: None, doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
+    let mut s = St { py: None, ebsd: None, dic: None, doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
     let stdout = std::io::stdout();
     for line in std::io::stdin().lock().lines().map_while(Result::ok) {
         let q: Value = serde_json::from_str(&line).unwrap_or_default();

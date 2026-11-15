@@ -6,6 +6,7 @@ import { act, call, out, P, toast } from "./store";
 import { CMP_COLORS } from "./api";
 import { Help } from "./help";
 import { makeMaterial } from "./lab";
+import { Graph, type Spec } from "./graph";
 
 export interface Specimen { name: string; x: string; y: string; shape: string; w: number; t: number; d: number; area: number; l0: number; on: boolean; data: [number, number][] }
 export interface Tensile { specimens: Specimen[]; fit: [number, number]; material: string }
@@ -24,6 +25,13 @@ const save = (f: (t: Tensile) => void) => { const t = structuredClone(T()); f(t)
 /** Tick marks at a round step. */
 const ticks = (lo: number, hi: number, n = 6) => { const raw = (hi - lo) / n, m = 10 ** Math.floor(Math.log10(raw || 1)), step = [1, 2, 2.5, 5, 10].map(k => k * m).find(s => s >= raw) ?? raw; const out: number[] = []; for (let v = Math.ceil(lo / step) * step; v <= hi + 1e-9; v += step) out.push(+v.toPrecision(10)); return out; };
 
+/** The tensile curves as a graph spec: one line per specimen that is on, Rp0.2 (open), Rm (filled) and fracture (small) marked. */
+const curveSpec = (rows: Res[], tru: boolean): Spec => {
+  const on = rows.map((r, i) => ({ r, i })).filter(x => x.r.on && (tru ? x.r.truec : x.r.curve).length);
+  return { x: { label: tru ? "True strain (%)" : "Engineering strain (%)", min: 0 }, y: { label: tru ? "True stress (MPa)" : "Engineering stress (MPa)", min: 0 },
+    series: on.map(({ r, i }) => { const c = tru ? r.truec : r.curve; return { name: r.name, x: c.map(q => q[0]), y: c.map(q => q[1]), color: CMP_COLORS[i % CMP_COLORS.length] }; }),
+    marks: tru ? [] : on.flatMap(({ r, i }) => r.marks.map(([k, q]) => ({ x: q[0], y: q[1], color: CMP_COLORS[i % CMP_COLORS.length], size: k === "Fracture" ? 4 : 7, fill: k === "Rp0.2" ? "white" : undefined }))) };
+};
 const Curves = (p: { rows: Res[]; tru: boolean }) => {
   const W = 640, H = 340, L = 54, B = 36;
   const lines = () => p.rows.map((r, i) => ({ r, i, pts: p.tru ? r.truec : r.curve })).filter(x => x.r.on && x.pts.length);
@@ -95,7 +103,7 @@ export const TensilePage = () => {
       <Show when={T().specimens.length} fallback={<p class="muted tempty">No specimens yet. Import a test machine's export (CSV, text or a spreadsheet with a column of extension or strain and one of load or stress), or try the made-up example.</p>}>
         <div class="tmain">
           <section class="panel"><div class="tchead"><h2>Curves</h2><label class="small"><input type="checkbox" class="ttrue" checked={tru()} onChange={e => setTru(e.currentTarget.checked)} /> True stress and strain (up to Rm)</label></div>
-            <Show when={res()}>{r => <Curves rows={r().rows} tru={tru()} />}</Show>
+            <Show when={res()}>{r => <Graph spec={curveSpec(r().rows, tru())} name={tru() ? "True stress-strain" : "Stress-strain"} ratio={0.58} fallback={<Curves rows={r().rows} tru={tru()} />} />}</Show>
             <p class="muted small">Open circles: Rp0.2; filled: Rm; small: fracture.</p></section>
           <section class="panel"><h2>Specimens</h2>
             <div class="hscroll"><table class="ptable tspec"><thead><tr><th>On</th><th>Name</th><th>Points</th><th>Section</th><th>Gauge length</th><th>Columns</th><th /></tr></thead><tbody>

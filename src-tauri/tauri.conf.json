@@ -31,7 +31,7 @@
       "nsis"
     ],
     "publisher": "Datum",
-    "copyright": "\u00a9 2026 Edgar Mendonca",
+    "copyright": "© 2026 Edgar Mendonca",
     "category": "Education",
     "shortDescription": "Materials selection and property charts",
     "icon": [
@@ -64,6 +64,10 @@
         "installerIcon": "icons/icon.ico",
         "displayLanguageSelector": false
       }
+    },
+    "resources": {
+      "../py/worker.py": "py/worker.py",
+      "../py/atlas/*.py": "py/atlas/"
     }
   }
 }

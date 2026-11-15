@@ -1,6 +1,6 @@
 [package]
 name = "datum-atlas"
-version = "0.3.18"
+version = "0.3.19"
 edition = "2021"
 description = "Datum Atlas: materials selection and property charts for Windows."
 license = "MIT"
@@ -12,6 +12,7 @@ tauri-build = { version = "2", features = [] }
 datum-atlas-core = { path = "../crates/core" }
 tauri = { version = "2", features = ["image-png"] }
 tauri-plugin-dialog = "2"
+zip = { version = "9", default-features = false, features = ["deflate"] }
 tauri-plugin-clipboard-manager = "2"
 chrono.workspace = true
 serde.workspace = true

@@ -946,3 +946,15 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .dicpage .dscat { width: 100%; max-width: 420px; height: auto; }
 .dicpage .sw { display: inline-block; width: 10px; height: 10px; margin-right: 6px; }
 .dicpage .lscroll { max-height: 320px; overflow-y: auto; }
+
+/* Graphs drawn by the Python engine */
+.pgraph { margin: 6px 0; width: 100%; align-self: stretch; }
+.pgraph .gbox, .pgraph .gsvg { width: 100%; }
+.pgraph .gbox { position: relative; line-height: 0; }
+.pgraph .gbox.busy { opacity: .75; }
+.pgraph .gsvg svg { width: 100%; height: auto; display: block; }
+.pgraph .gwait { display: flex; align-items: center; justify-content: center; border: 1px dashed var(--line); line-height: normal; }
+.pgraph .gdot { position: absolute; width: 9px; height: 9px; margin: -5px 0 0 -5px; border: 2px solid #F2B233; border-radius: 50%; pointer-events: none; }
+.pgraph .gtip { position: absolute; white-space: nowrap; line-height: normal; font-size: 11px; padding: 2px 6px; background: var(--panel); border: 1px solid var(--line); color: var(--text); pointer-events: none; z-index: 2; }
+.pgraph .gbar { display: flex; gap: 10px; align-items: center; justify-content: flex-end; margin-top: 2px; }
+.pgraph .gdown { margin-top: 2px; }

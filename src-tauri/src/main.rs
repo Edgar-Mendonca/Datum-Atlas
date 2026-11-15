@@ -1,12 +1,15 @@
 //! Datum Atlas desktop shell: owns the open selection project, the materials database (built in
 //! plus the user's own), files, options and recovery, and talks to the window.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod py;
+mod runtime;
 mod update;
 
 use datum_atlas_core::{chart, compare, db::{self, Db}, doc::{write_atomic, Doc, Op}, eco, export, process, goals, select, sheet, templates, Database, Material, Project, Source, FORMAT};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::{path::{Path, PathBuf}, sync::Mutex};
+use py::{Engine, Py};
+use std::{path::{Path, PathBuf}, sync::{Mutex, PoisonError}};
 use tauri::{AppHandle, Emitter, Manager, State, WindowEvent};
 use tauri_plugin_clipboard_manager::ClipboardExt;
 use tauri_plugin_dialog::DialogExt;
@@ -255,6 +258,44 @@ fn dic_draw(st: State<St>, key: String) -> R<Value> {
 fn dic_profile(st: State<St>, key: String, a: [f64; 2], b: [f64; 2]) -> R<Vec<[f64; 2]>> {
     let s = st.lock();
     Ok(s.dic.as_ref().ok_or("Open a displacement field first.")?.profile(&key, a, b, 200))
+}
+
+/// A graph drawn by the Python engine (matplotlib) from a spec: SVG and what the window needs for hover.
+#[tauri::command]
+async fn graph(app: AppHandle, spec: Value) -> R<Value> {
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).render(&app, json!({ "cmd": "render", "spec": spec })))
+        .await.map_err(|e| e.to_string())?
+}
+
+/// A graph for publication (PNG at 300 dpi, SVG or PDF), saved where the user chooses.
+#[tauri::command]
+async fn graph_export(app: AppHandle, spec: Value, fmt: String, name: String) -> R<Option<String>> {
+    let h = app.clone();
+    let f = fmt.clone();
+    let r = tauri::async_runtime::spawn_blocking(move || h.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).ask(&h, &json!({ "cmd": "export", "spec": spec, "fmt": f, "dpi": 300 })))
+        .await.map_err(|e| e.to_string())??;
+    let bytes = base64_decode(r["data"].as_str().unwrap_or(""))?;
+    let ext = if ["png", "svg", "pdf"].contains(&fmt.as_str()) { fmt } else { "png".into() };
+    let Some(path) = app.dialog().file().add_filter(ext.to_uppercase(), &[ext.as_str()]).set_file_name(format!("{name}.{ext}")).blocking_save_file().and_then(|f| f.into_path().ok()) else { return Ok(None) };
+    write_atomic(&path, &bytes)?;
+    Ok(Some(path.display().to_string()))
+}
+
+/// The Python engine's versions, or why it could not start.
+#[tauri::command]
+async fn engine(app: AppHandle) -> Value {
+    tauri::async_runtime::spawn_blocking(move || {
+        let e = app.state::<Engine>();
+        let mut p = e.0.lock().unwrap_or_else(PoisonError::into_inner);
+        if p.versions.is_none() { let _ = p.ask(&app, &json!({ "cmd": "ping" })); }
+        json!({ "versions": p.versions, "error": p.error })
+    }).await.unwrap_or_default()
+}
+
+/// Stops the Python engine and starts a fresh one.
+#[tauri::command]
+async fn restart_engine(app: AppHandle) -> R<Value> {
+    tauri::async_runtime::spawn_blocking(move || app.state::<Engine>().0.lock().unwrap_or_else(PoisonError::into_inner).restart(&app)).await.map_err(|e| e.to_string())?
 }
 
 /// Strain by grain: the open DIC field over the open EBSD map.
@@ -823,6 +864,15 @@ fn main() {
             let db = Db::new(db::builtin(), Some(&user)).with_others(&all);
             let p = fresh(&db, &opts, None).unwrap_or_default();
             app.manage(St(Mutex::new(App { ebsd: None, dic: None, doc: Doc::new(p), opts, rev: 0, db, user, db_rev: 1, user_note, user_ok, others })));
+            app.manage(Engine(Mutex::new(Py::default())));
+            // Start Python now (unpacking it on the first start) so the first graph appears quickly.
+            let h = app.handle().clone();
+            std::thread::spawn(move || {
+                let e = h.state::<Engine>();
+                let mut p = e.0.lock().unwrap_or_else(PoisonError::into_inner);
+                let _ = p.ask(&h, &json!({ "cmd": "ping" }));
+                let _ = h.emit("engine", json!({ "versions": p.versions, "error": p.error }));
+            });
             Ok(())
         })
         .on_window_event(|w, e| {
@@ -836,7 +886,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, graph, graph_export, engine, restart_engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

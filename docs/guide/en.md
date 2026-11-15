@@ -313,6 +313,15 @@ Strains are small-strain gradients by central differences on the grid; the equiv
 
 Open the EBSD map on EBSD › Maps and the field on DIC › Strain maps first, or use **Example (made-up map and field)**: the EBSD example with a field in which each grain strains with its Schmid factor.
 
+## Graphs and the Python engine
+
+Datum Atlas carries its own Python engine (Python with numpy and matplotlib), as the other Datum apps do. It draws the analysis graphs: tensile curves, S–N and Larson–Miller plots, X-ray patterns, size distributions, DIC profiles and strain against Schmid factor. The selection charts, maps and sliders stay in the window, where they respond at once.
+
+- **Hover** a graph to read the nearest point's values.
+- **Export for publication** under each graph: PNG at 300 dpi, SVG or PDF, on a white page.
+- The first start after installing prepares the engine once ("Preparing the Python engine (first start only)…"); after that graphs appear straight away.
+- **Help › Engine** shows the versions; **Help › Restart Engine** starts it again. If it cannot start, each page shows a simple chart instead and says so.
+
 ## Crystal: the elements
 
 ![Crystal › Elements: the periodic table, an element card and the composition box.](img/elements.png)

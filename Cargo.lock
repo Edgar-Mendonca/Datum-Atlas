@@ -596,7 +596,7 @@ dependencies = [
 
 [[package]]
 name = "datum-atlas"
-version = "0.3.18"
+version = "0.3.19"
 dependencies = [
  "chrono",
  "datum-atlas-core",
@@ -608,11 +608,12 @@ dependencies = [
  "tauri-plugin-clipboard-manager",
  "tauri-plugin-dialog",
  "ureq",
+ "zip",
 ]
 
 [[package]]
 name = "datum-atlas-cli"
-version = "0.3.18"
+version = "0.3.19"
 dependencies = [
  "datum-atlas-core",
  "serde_json",
@@ -620,7 +621,7 @@ dependencies = [
 
 [[package]]
 name = "datum-atlas-core"
-version = "0.3.18"
+version = "0.3.19"
 dependencies = [
  "calamine",
  "rust_xlsxwriter",

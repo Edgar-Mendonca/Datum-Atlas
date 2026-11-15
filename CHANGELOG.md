@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.19 — 2026-11-15
+
+Datum Atlas gets its own Python engine, as the other Datum apps have, and the analysis graphs are now drawn by it.
+
+**Graphs**
+- Tensile curves, S–N and Larson–Miller plots, X-ray patterns, particle size distributions, coating profiles, DIC line profiles and strain against Schmid factor are drawn by matplotlib, in the family style.
+- Hover any of these graphs to read the nearest point's values.
+- **Export for publication** under each graph: PNG at 300 dpi, SVG or PDF, on a white page.
+- If the engine cannot start, each page shows its simple chart instead and says so; Help › Restart Engine starts it again.
+
+**The Python engine**
+- The installer carries Python 3.13 with numpy and matplotlib, set up the same way as Datum Plot and Datum Sim: the first start after installing prepares it once in your own app-data folder; no administrator rights, and any Python already on the computer is left alone.
+- Help › Engine shows its versions.
+- The installer is larger because of it (it now carries Python).
+
+**Checked**
+- Python tests for the graphs, export to PNG, SVG and PDF, bad values and the worker's messages; they also run on the embedded Python while the installer is built.
+
 ## 0.3.18 — 2026-11-13
 
 DIC links to EBSD: strain by grain, its relation to the Schmid factor, and slip traces.

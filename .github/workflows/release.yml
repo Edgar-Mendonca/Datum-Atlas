@@ -1,5 +1,5 @@
 name: Release
-# Builds the Windows installer and the command-line tool and publishes a GitHub Release that the in-app updater picks up.
+# Builds the Windows installer (with the Python runtime pack inside, as Datum Plot) and the command-line tool and publishes a GitHub Release that the in-app updater picks up.
 # Bump the version in src-tauri/Cargo.toml, add a CHANGELOG.md section, then either push a tag
 # (git tag v0.1.1 && git push origin v0.1.1) or run this workflow from the Actions tab.
 on:
@@ -21,6 +21,9 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
       - run: npm ci
       - name: Read the app version
         shell: bash
@@ -30,8 +33,28 @@ jobs:
             echo "Tag $GITHUB_REF_NAME does not match version $V in src-tauri/Cargo.toml"; exit 1
           fi
           echo "V=$V" >> "$GITHUB_ENV"
+      - name: Python runtime pack (the newest embeddable CPython 3.13 + py/requirements.txt)
+        shell: bash
+        run: |
+          for n in $(seq 25 -1 5); do
+            curl -fsSL -o py.zip "https://www.python.org/ftp/python/3.13.$n/python-3.13.$n-embed-amd64.zip" && PYV=3.13.$n && break
+          done
+          test -n "$PYV" || { echo "No embeddable Python 3.13 found on python.org"; exit 1; }
+          echo "Embedded Python $PYV"
+          mkdir -p rt && unzip -q py.zip -d rt
+          echo "Lib/site-packages" >> rt/python313._pth
+          python -m pip install --target rt/Lib/site-packages --only-binary=:all: --no-compile -r py/requirements.txt
+          # Leave out what the app never runs: test suites, pip's scripts, sample data.
+          find rt/Lib/site-packages -type d \( -name tests -o -name __pycache__ \) -prune -exec rm -rf {} +
+          rm -rf rt/Lib/site-packages/bin rt/Lib/site-packages/matplotlib/mpl-data/sample_data
+          rt/python.exe -m compileall -q -j 0 rt/Lib/site-packages
+          # The Python tests on the embedded runtime itself, not just a ping.
+          rt/python.exe -X utf8 -m unittest discover -s py/tests -v
+          du -sh rt
+          python -c "import shutil; shutil.make_archive('src-tauri/runtime', 'zip', 'rt')"
+          ls -la src-tauri/runtime.zip
       - run: cargo test -p datum-atlas-core -p datum-atlas-cli
-      - run: npx tauri build --bundles nsis
+      - run: npx tauri build --bundles nsis --config src-tauri/tauri.release.conf.json
       - run: cargo build --release -p datum-atlas-cli
       - name: Installer and checksum
         shell: bash

@@ -6,6 +6,7 @@ import { call, toast } from "./store";
 import { invoke } from "./api";
 import { Help } from "./help";
 import { ebsdMap, paint, setEbsdMap } from "./ebsd";
+import { Graph } from "./graph";
 
 interface Summary { name: string; w: number; h: number; dx: number; dy: number; points: number; valid: number; notes: string[] }
 interface Stat { key: string; name: string; mean: number | null; sd: number | null; min: number | null; max: number | null; p5: number | null; p95: number | null }
@@ -62,7 +63,9 @@ export const StrainPage = () => {
           <div class="ecolor"><label>Show <select class="dkey" value={key()} onChange={e => setKey(e.currentTarget.value)}><For each={KEYS}>{k => <option value={k[0]}>{k[1]}</option>}</For></select></label>
             <span class="dscale" classList={{ signed: signed() }} /><span class="small">{sv(key(), range()[0])} to {sv(key(), range()[1])}</span></div>
           <p class="muted small">Click two points on the map for a profile along the line between them. Grey: no displacement there.</p>
-          <Show when={prof().length}><Profile /></Show>
+          <Show when={prof().filter(q => Number.isFinite(q[1])).length > 1}>
+            <Graph spec={{ x: { label: "Distance along the line" }, y: { label: (KEYS.find(k => k[0] === key())?.[1] ?? key()) + (DISP.has(key()) ? "" : " (%)") }, legend: false,
+              series: [{ x: prof().map(q => q[0]), y: prof().map(q => DISP.has(key()) ? q[1] : q[1] * 100) }] }} name={`Profile ${key()}`} ratio={0.36} fallback={<Profile />} /></Show>
         </section>
         <section class="panel">
           <h2>Statistics</h2>
@@ -130,7 +133,9 @@ export const ByGrainPage = () => {
             <Show when={res()}>{r => <>
               <p class="small">Grains: <b class="lgrains">{r().grains.length}</b>; the field covers {r().covered.toFixed(0)} % of the map; strain against Schmid factor, r = <b class="lr">{r().rSchmid == null ? "–" : r().rSchmid!.toFixed(2)}</b></p>
               <For each={r().notes}>{n => <p class="small tnote">{n}</p>}</For>
-              <Scatter />
+              <Show when={r().grains.length > 2}><Graph spec={{ x: { label: `Schmid factor (load along ${load().toUpperCase()})` }, y: { label: `${KEYS.find(k => k[0] === key())?.[1]} of the grain (%)` }, legend: false,
+                series: [{ kind: "scatter", x: r().grains.map(g => g.schmid), y: r().grains.map(g => g.mean * 100), colors: r().grains.map(g => `#${g.ipf.map(c => c.toString(16).padStart(2, "0")).join("")}`), labels: r().grains.map(g => `Grain ${g.id}`), size: 30 }] }}
+                name="Strain against Schmid factor" ratio={0.7} fallback={<Scatter />} /></Show>
               <div class="hscroll lscroll"><table class="ptable dstats lgtab"><thead><tr><th>Grain</th><th>Size (µm)</th><th>Mean</th><th>sd</th><th>Schmid</th></tr></thead>
                 <tbody><For each={r().grains.slice(0, 60)}>{g => <tr><td><i class="sw" style={{ background: `rgb(${g.ipf.join(",")})` }} />{g.id}</td><td>{g.ecd.toFixed(1)}</td><td>{sv(key(), g.mean)}</td><td>{sv(key(), g.sd)}</td><td>{g.schmid.toFixed(3)}</td></tr>}</For></tbody></table></div>
               <p class="muted small">Most strained first; the first 60 of {r().grains.length}. Swatches: IPF colour of the normal.</p></>}</Show>

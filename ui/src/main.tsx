@@ -30,6 +30,7 @@ import { ImagesPage } from "./imaging";
 import { SynthPage } from "./synth";
 import { GrainsPage, MapsPage, PoleFiguresPage } from "./ebsd";
 import { ByGrainPage, StrainPage } from "./dic";
+import { setEngineDown } from "./graph";
 import { MODULES, PLANNED, moduleOf } from "./modules";
 import { feature } from "./features";
 import { soon } from "./roadmap";
@@ -83,6 +84,8 @@ const Status = () => (
 
 const App = () => {
   onMount(async () => {
+    // The Python engine: "Preparing the Python engine (first start only)…" while it unpacks, then its versions or an error.
+    listen("engine", (e: any) => { if (e?.status) toast(e.status, true); else if (e?.error) setEngineDown(String(e.error)); });
     try {
       const o = await invoke<Options>("options"); setOpts(o); setThemeRaw(o.theme || "auto"); applyTheme();
       const d = await loadDb();
