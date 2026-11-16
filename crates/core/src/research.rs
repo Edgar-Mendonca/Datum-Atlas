@@ -84,8 +84,8 @@ fn us(v: &Value) -> usize { v.as_u64().unwrap_or(0) as usize }
 fn st(v: &Value) -> String { v.as_str().unwrap_or("").to_string() }
 fn f32s(v: &[f32]) -> Vec<u8> { v.iter().flat_map(|x| x.to_le_bytes()).collect() }
 fn f64s(v: &[f64]) -> Vec<u8> { v.iter().flat_map(|x| x.to_le_bytes()).collect() }
-fn to_f32(b: &[u8]) -> Vec<f32> { b.chunks_exact(4).map(|c| f32::from_le_bytes([c[0], c[1], c[2], c[3]])).collect() }
-fn to_f64(b: &[u8]) -> Vec<f64> { b.chunks_exact(8).map(|c| f64::from_le_bytes(c.try_into().unwrap_or([0; 8]))).collect() }
+fn to_f32(b: &[u8]) -> Vec<f32> { b.as_chunks::<4>().0.iter().map(|c| f32::from_le_bytes(*c)).collect() }
+fn to_f64(b: &[u8]) -> Vec<f64> { b.as_chunks::<8>().0.iter().map(|c| f64::from_le_bytes(*c)).collect() }
 
 /// The head as JSON, then each part, each with its length (u64, little-endian); deflated, base64.
 pub fn pack(head: &Value, parts: &[Vec<u8>]) -> String {
