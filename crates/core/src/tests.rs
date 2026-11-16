@@ -45,7 +45,7 @@ fn checks_catch_bad_values() {
 fn checked_values_cite_datasheets() {
     let d = db::builtin();
     let n: usize = d.materials.iter().map(|m| m.checked.len()).sum();
-    assert!(n >= 70, "only {n} checked values");
+    assert!(n >= 30, "only {n} checked values");
     for m in d.materials.iter().filter(|m| !m.checked.is_empty()) {
         for k in &m.checked { assert!(d.sources.iter().any(|s| s.id == m.props[k].src() && ["datasheet", "government", "handbook"].contains(&s.kind.as_str()) && s.url.starts_with("https://")), "{} {k}", m.id); }
     }
@@ -581,8 +581,14 @@ fn eco_data_passes_every_check() {
         if m.props.contains_key("hc") { assert!(m.props.contains_key("co2_comb"), "{}: heat of combustion without its CO₂", m.name); }
         if r("ee").is_none() { no_eco.push(m.id.as_str()); }
     }
-    // The gaps left on purpose: no open source gives a fair figure.
-    assert_eq!(no_eco, ["be", "zr-r60804", "leather", "bone"]);
+    // Embodied energy and CO₂ come only from open sources (the open metals paper, UK government
+    // factors) ; anything else is a gap, never a guess.
+    let open = ["nuss-2014", "desnz-2024"];
+    for m in &d.materials { for k in ["ee", "co2"] { if let Some(Val::Range(_, _, src) | Val::RangeT(_, _, src, _)) = m.props.get(k) { assert!(open.contains(&src.as_str()), "{}: {k} from {src}", m.name); } } }
+    assert!(!d.sources.iter().any(|s| s.id == "ice-v3"), "the licensed carbon database is not used");
+    // The gaps left on purpose (energy): the non-metals, until an open source for them is read (the US life-cycle database is next).
+    assert_eq!(no_eco.len(), 148, "{no_eco:?}");
+    assert!(["be", "zr-r60804", "leather", "bone", "pmma", "nr"].iter().all(|g| no_eco.contains(g)));
 }
 
 #[test]

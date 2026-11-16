@@ -177,7 +177,9 @@ pub fn search<'a>(mats: &'a [Material], q: &str) -> Vec<&'a Material> {
 /// Kinds of source the built-in data may cite: open, public or free only (the user's rule).
 pub const OPEN_KINDS: &[&str] = &["handbook", "government", "open-dataset", "datasheet", "university", "textbook-typical", "estimate"];
 /// Proprietary or licensed materials databases and aggregator sites: never cited, never used to check.
-const BARRED: &[&str] = &["matweb", "makeitfrom", "totalmateria", "total materia", "granta", "edupack", "matmatch", "materialhub", "suppliersonline", "azom", "wikipedia", "knovel", "springermaterials", "matdat"];
+const BARRED: &[&str] = &["matweb", "makeitfrom", "totalmateria", "total materia", "granta", "edupack", "matmatch", "materialhub", "suppliersonline", "azom", "wikipedia", "knovel", "springermaterials", "matdat", "ulprospector", "circularecology",
+    // Marketplaces, distributors and pages that restate a licensed standard: cite the producer or a public handbook instead.
+    "xometry", "protolabs", "weerg", "aircraftmaterials", "alloysintl", "portlandbolt", "bibusmetals", "smithmetal", "rolledalloys", "sterlingplastics", "nationalbronze", "gabrian"];
 
 /// Everything wrong with a database: unknown properties, values without a known source, low > high,
 /// non-positive values on log properties, ratings not in the scale, duplicate ids or designations,

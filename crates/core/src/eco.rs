@@ -179,15 +179,16 @@ pub fn audit(db: &Db, e: &Eco) -> Audit {
             let (ee, co2) = (range(mat, "ee"), range(mat, "co2"));
             let (rce, rcc) = (range(mat, "rc_ee"), range(mat, "rc_co2"));
             let mut mv = Val2::default();
+            // Primary and recycled content mixed; a value that is a gap stays out (energy and CO₂ apart).
+            let mix = |pri: Option<R>, rec: Option<R>| pri.map(|a| sc(add(sc(a, 1.0 - f), sc(rec.unwrap_or(a), f)), m_in));
             match (ee, co2) {
-                (Some(ee), Some(co2)) => {
-                    let (rce, rcc) = match (rce, rcc) {
-                        (Some(a), Some(b)) => (a, b),
-                        _ => { if f > 0.0 { notes.push(format!("{}: {} has no value for recycled material; counted as primary.", p.name, mat.name)); } (ee, co2) }
-                    };
-                    mv = Val2 { mj: sc(add(sc(ee, 1.0 - f), sc(rce, f)), m_in), co2: sc(add(sc(co2, 1.0 - f), sc(rcc, f)), m_in) };
+                (None, None) => notes.push(format!("{}: {} has no embodied energy or CO₂; its material phase is a gap, left out.", p.name, mat.name)),
+                _ => {
+                    if f > 0.0 && ((ee.is_some() && rce.is_none()) || (co2.is_some() && rcc.is_none())) { notes.push(format!("{}: {} has no value for recycled material; counted as primary.", p.name, mat.name)); }
+                    if ee.is_none() { notes.push(format!("{}: {} has no embodied energy (a gap); only its CO₂ is counted.", p.name, mat.name)); }
+                    if co2.is_none() { notes.push(format!("{}: {} has no CO₂ value (a gap); only its energy is counted.", p.name, mat.name)); }
+                    mv = Val2 { mj: mix(ee, rce).unwrap_or([0.0, 0.0]), co2: mix(co2, rcc).unwrap_or([0.0, 0.0]) };
                 }
-                _ => notes.push(format!("{}: {} has no embodied energy or CO₂; its material phase is a gap, left out.", p.name, mat.name)),
             }
             // Manufacture: the shaping process, and machining of the mass removed.
             let pr = find(&d.processes, &p.process).cloned().unwrap_or_default();

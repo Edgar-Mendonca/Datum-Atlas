@@ -445,7 +445,7 @@ mod tests {
         assert!(a(&["crystal", "Og"]).is_err() && a(&["crystal", "--ask", "{"]).is_err());
         assert!(a(&["element", "Xx"]).is_err() && a(&["composition", "Fe2O3)"]).is_err());
         assert!(a(&["search", "steel", "--family", "Polymers"]).is_ok_and(|t| t.trim() == "[]"));
-        let m = a(&["material", "al-6061-t6"]).unwrap_or_default();
+        let m = a(&["material", "ss-430"]).unwrap_or_default();
         assert!(m.contains("\"rho\"") && m.contains("\"checked\": true") && m.contains("\"source\""), "{m}");
         assert!(a(&["material", "steel"]).is_err_and(|e| e.contains("Give the id")), "an ambiguous name asks for the id");
         assert!(a(&["material", "unobtainium"]).is_err());

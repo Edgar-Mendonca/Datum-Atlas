@@ -158,7 +158,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(500);
   check("“Typical structure” opens the Microstructure module on that material", (await p.textContent(".side .modsw")).includes("Micro") && !!(await p.$(".structpage .focus .micro svg")) && (await p.$$(".structpage .scard")).length >= 30);
   await p.click(".side .modsw");
-  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Heat treatment (0.3.22)"));
+  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Heat treatment (0.3.23)"));
   await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
   // Crystal › Elements: the periodic table, an element card, colour by a property, composition.
   await goTo(p, "Elements");
@@ -592,7 +592,8 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.keyboard.press("Enter");
   await p.waitForTimeout(300);
   check("Tell Me finds a material by its UNS number", (await p.textContent(".sheetpage h1").catch(() => "")).includes("7075"));
-  check("checked values carry a ✓ and cite the datasheet", (await p.locator(".sheetpage .chk.ok").count()) === 3 && (await p.textContent(".sheetpage")).includes("7075 Aluminum Alloy Properties"));
+  await p.keyboard.press("Control+k"); await p.keyboard.type("N06625"); await p.waitForTimeout(200); await p.keyboard.press("Enter"); await p.waitForTimeout(300);
+  check("checked values carry a ✓ and cite the producer's datasheet", (await p.locator(".sheetpage .chk.ok").count()) === 5 && (await p.textContent(".sheetpage")).includes("Alloy 625 (UNS N06625) product data"), String(await p.locator(".sheetpage .chk.ok").count()));
   await goTo(p, "Sources");
   await p.waitForTimeout(200);
   await p.click(".sources tbody tr.link >> nth=2");

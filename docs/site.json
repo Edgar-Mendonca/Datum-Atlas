@@ -43,7 +43,8 @@
     "DIC: strain maps from displacement fields, with statistics and profiles, and strain by grain linked to an EBSD map, with Schmid factors and slip traces.",
     "A built-in Python engine, as in the other Datum apps: analysis graphs drawn by matplotlib, with hover values and export for publication.",
     "Images, EBSD maps and DIC fields saved in the project with their settings, so research work opens again as it was left.",
-    "A Corrosion module: E–pH (Pourbaix) diagrams from the NBS thermodynamic tables, galvanic couples, and kinetics with rates and allowance."
+    "A Corrosion module: E–pH (Pourbaix) diagrams from the NBS thermodynamic tables, galvanic couples, and kinetics with rates and allowance.",
+    "Every embodied energy and CO₂ value from an open source (open-access metals data, UK government factors); gaps where none has been read yet."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -55,7 +56,7 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.22",
+      "v": "0.3.23",
       "title": "Heat treatment and phase diagrams",
       "when": "Next",
       "items": [

@@ -436,7 +436,9 @@ Below the parts, **Transport** takes legs by sea, rail, road or air with their d
 
 With two or more options, **Options side by side** compares them phase by phase, and the chart draws each option's CO₂ against years of use: what it costs to make is where its line starts, and the use phase is its slope. Where the lines cross, the options **break even**.
 
-Every figure is a range from the values' own ranges and public factors (freight, vehicles, electricity in eleven countries and regions, process energy). A material without a value is listed in the notes, never counted as zero. This is a design-stage audit, not a full life-cycle assessment. The audit goes into the report, and **To a spreadsheet** saves every option, phase and part.
+Every figure is a range from the values' own ranges and public factors (freight, vehicles, electricity in eleven countries and regions, process energy). A material without a value is listed in the notes, never counted as zero; when only its CO₂ is known, the CO₂ is counted and the energy is noted as a gap.
+
+**Where the material figures come from.** Embodied energy and CO₂ of the metals come from the open-access synthesis of Nuss and Eckelman (PLOS ONE, 2014, CC BY): each element's cradle-to-gate figures with their uncertainty range, combined by the alloy's nominal composition (primary metal content only; making the alloy, refining and shaping are counted separately, as manufacture). The CO₂ of common plastics (PE, PP, PS, PVC, PET), glass, concrete, bricks, wood and paper comes from the UK government's greenhouse-gas conversion factors (Open Government Licence). Other materials have no embodied figures yet: they are gaps until an open source for them has been read. This is a design-stage audit, not a full life-cycle assessment. The audit goes into the report, and **To a spreadsheet** saves every option, phase and part.
 
 ### Greener substitutes
 

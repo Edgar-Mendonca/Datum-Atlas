@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.22 — 2026-11-16
+
+A data clean-up: every embodied energy and CO₂ value now comes from an open source, and no value cites a marketplace or distributor any more.
+
+**Embodied energy and CO₂**
+- Metals: from the open-access synthesis of Nuss and Eckelman (PLOS ONE 2014, CC BY), each element's cradle-to-gate figures with their uncertainty range, combined by the alloy's nominal composition (primary metal content; shaping is counted as manufacture in the eco audit).
+- Common plastics (PE, PP, PS, PVC, PET), glass, concrete, bricks, wood and paper: CO₂ from the UK government's greenhouse-gas conversion factors 2024 (Open Government Licence).
+- The carbon and energy database used before is licensed for use inside software, so its values are gone, together with our own estimates that were based on it.
+- Materials without an open source are gaps for now (most polymers, elastomers, foams, ceramics and composites); the eco audit lists them in its notes. When only CO₂ is known, the audit counts the CO₂ and notes the energy as a gap.
+- Recycling figures follow the new primary values with the same shares.
+
+**Datasheets**
+- Values that cited a manufacturing marketplace, a distributor or a page restating a licensed standard went back to the sources they had before; those sources are no longer listed. The datasheets that remain are the producers' own.
+- A built-in check now refuses those sites, the licensed carbon database and further aggregators as sources.
+
+**Checked**
+- Every energy and CO₂ value cites an open source (a test); every remaining check mark cites a producer's datasheet; the eco audit works with partial values.
+
 ## 0.3.21 — 2026-11-16
 
 A new Corrosion module: E–pH (Pourbaix) diagrams worked out from referenced thermodynamic data, galvanic couples and corrosion kinetics.

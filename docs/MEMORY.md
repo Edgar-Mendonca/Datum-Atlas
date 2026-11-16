@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.21** (released 2026-11-16: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.21). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.22** (released 2026-11-16: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.22). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -220,7 +220,8 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.19** | Python engine and better graphs | Embeddable CPython 3.13 + numpy, matplotlib as a runtime pack in the installer (release workflow step, `tauri.release.conf.json`), `src-tauri/src/runtime.rs` and `py.rs` copied from Datum Plot, `py/worker.py` + `py/atlas/graph.py` (spec → SVG with hover map; export PNG/SVG/PDF), `ui/src/graph.tsx` (`Graph` with fallback), analysis charts moved; Help › Engine, Restart Engine; CI installs Python | ✅ |
 | **0.3.20** | Keep research work in the project | `crates/core/src/research.rs` (Item: info, fingerprint id, packed data as `Arc<str>`, settings; pack = JSON head + little-endian arrays, deflated with miniz_oxide, base64; `Open` cache unpacks once per data), `Project.research`, ops `Research` and `ResearchSet`, `Project::lite` for the window; shell and bridge read the map and field from the project; `ui/src/kept.ts` (`kept`, `keptId`, `keepSettings`, `forget`); Images, EBSD and DIC pages moved; bridge save/open for tests | ✅ |
 | **0.3.21** | Corrosion | `crates/core/src/corrosion.rs` (E–pH by lowest Gibbs energy per metal atom on a grid, water lines, galvanic couple from typed potentials, kinetics fits, Arrhenius, rate mm/y, allowance), `data/corrosion.json` (35 species of Fe, Cu, Zn, Al, Ni, Mg from the NBS tables 1982, source `nbs-1982`), `ui/src/corrosion.tsx` (E–pH, Galvanic, Kinetics; inputs kept in `ui.corrosion`), module Corrosion | ✅ |
-| 0.3.22 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | 🔜 |
+| **0.3.22** | Data clean-up | The licensed carbon-and-energy database removed (its owner licenses use inside software): metals from Nuss & Eckelman 2014 Table S38 by nominal composition, plastics/glass/wood/paper/concrete/bricks CO₂ from DESNZ 2024 material use; atlas-typ eco values and atlas-eco-est removed (based on it); recycling values rescaled; 15 datasheet sources (marketplaces, distributors, an ASTM summary, extruder sheets that say they copy an aggregator) removed and values restored to their earlier sources; check marks pruned; blocklist extended; eco audit counts CO₂ or energy alone | ✅ |
+| 0.3.23 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | 🔜 |
 | 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. | ⬜ |
 | 0.4.1 | Research depth 2: active slip systems | A grain inspector, slip bands matched to traces, the relative displacement ratio. | ⬜ |
 | 0.4.2 | Research depth 3: slip bands and strain steps | Slip bands found automatically; several DIC strain steps in one experiment. | ⬜ |
@@ -395,7 +396,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
   - New polymer classes: filled and bio-based.
   - Also thermoplastic elastomers, carbon, wood products, and other composites.
 - **Sources (open rule):**
-  - MIL-HDBK-5 for aerospace alloys, MIL-HDBK-17 for laminates, the Wood Handbook for woods, NIST for some ceramics, NPL tables for pure metals, USGS for pure-metal prices, ICE for CO₂ and energy;
+  - MIL-HDBK-5 for aerospace alloys, MIL-HDBK-17 for laminates, the Wood Handbook for woods, NIST for some ceramics, NPL tables for pure metals, USGS for pure-metal prices, a carbon-and-energy database for CO₂ and energy (removed in 0.3.22);
   - otherwise our labelled compilation of typical ranges. All draft.
 - Fatigue strength and electrical resistivity added to the metals: the "Light part under cyclic load" and "Light electrical conductor" indices now have data (waiting list empty).
 - Durability ratings for every material: fresh water, weak acids, weak alkalis, UV, and fire resistance (renamed from flammability, so Excellent means it does not burn). Our compilation; class defaults with per-material overrides.
@@ -456,7 +457,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ### 2026-11-01: Session 14 (0.3.0: eco and process)
 - Answers to PLAN-0.3.0: "all good, go ahead"; defaults used (§7). Water use not added (no open per-material source).
-- Stage A: 8 new eco properties; generator `gen3/eco.py` (scratchpad, not committed) fills them by class with overrides; primary energy and CO₂ for 60 of 64 gaps (Nuss & Eckelman 2014 for metals, ICE v3, or our labelled estimate); beryllium, zirconium, leather and bone stay gaps. Sources: atlas-eco, atlas-eco-est, nuss-2014, ember-2024, desnz-2024, doe-bandwidth, mit-gutowski (link checked by search).
+- Stage A: 8 new eco properties; generator `gen3/eco.py` (scratchpad, not committed) fills them by class with overrides; primary energy and CO₂ for 60 of 64 gaps (Nuss & Eckelman 2014 for metals, that database, or our labelled estimate; all replaced in 0.3.22); beryllium, zirconium, leather and bone stay gaps. Sources: atlas-eco, atlas-eco-est, nuss-2014, ember-2024, desnz-2024, doe-bandwidth, mit-gutowski (link checked by search).
 - Stages B and C: `eco.rs` audit and substitutes with tests (hand-worked phases, break-even, gaps, edits refused, damaged files mended) and hardening; Eco page; greener dialog; 5 eco indices.
 - Stages D and E: `gen3/procs.py` and `gen3/ratings.py` (scratchpad) write the 55 processes and the cast/mach/weld ratings; `process.rs` with tests; Process selection and Processes pages. Drilling removed (a feature, not a way to make a part).
 - Stage F: report sections 6 Eco audit and 7 Manufacture; eco audit to a spreadsheet (`export_results` with `what: "eco"`); Home tiles; Getting Started step 5; Glossary terms; ? cards (eco, ecoParts, ecoTransport, ecoUse, ecoOptions, greener, processes, process, cost, joinfinish).
@@ -616,8 +617,17 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Corrosion page inputs are kept in the project's window settings; saves sent at once merge (a race the UI test caught).
 - Released 0.3.21.
 
+### 2026-11-16: Session 18, continued (0.3.22: data clean-up after the user's question)
+- The user asked whether all data are legit and open. Audit of the 47 sources: clean ones (US government handbooks and data, NIST/NBS, UK OGL, CC BY papers, CIAAW); problems: a carbon-and-energy database (334 values; its owner now licenses use inside software), our own unreferenced drafts (atlas-typ 3,837 values, atlas-eco, atlas-proc), 15 datasheets from marketplaces, distributors, an ASTM summary, and an extruder whose own blog says its figures come from an aggregator.
+- Done here: that database replaced as above; our eco estimates removed too (made by analogy with its values). The environment got journals.plos.org, www.gov.uk and assets.publishing.service.gov.uk (user approved).
+- The 0.1.1 datasheet pass had only confirmed existing values, so removing those sources restored the earlier attribution (6 values went back to their earlier numbers).
+- Energy gaps now: 148 of 254 materials (most non-metals). Next for them: compute cradle-to-gate figures from the US LCI database (public domain, reachable by git) with our own inventory solver.
+- Not done: the big job of re-referencing atlas-typ drafts, and the values cited to MIL-HDBK-5J and others that were never read page by page in this project.
+- Released 0.3.22.
+
 ---
 
+- 2026-11-16: No licensed database in any form: the carbon-and-energy database removed with every value derived from it. Embodied figures only from open sources (CC BY papers, government data); gaps elsewhere. Marketplaces, distributors, pages restating standards and producers' sheets that say they copy an aggregator are not sources; the blocklist enforces it.
 - 2026-11-16: Corrosion data only from primary public sources read directly (NBS tables via page images). Where none could be read (the galvanic series), the tool takes the user's own values instead of shipping unsourced numbers.
 - 2026-11-15: Research data (micrograph, EBSD map, DIC field) lives in the project file, compressed, not beside it as linked files: one file to send or archive, and it opens the same on another computer. The window never receives the packed data.
 - 2026-11-15: Python engine bundled in the installer exactly as Datum Plot and Datum Sim do it (embeddable CPython 3.13 + pinned wheels as a runtime pack, unpacked on first start into local app data, JSON-line workers driven by the Rust engine). Live charts stay in the window; matplotlib draws the analysis graphs and publication figures. See PLAN-0.6 §7.
@@ -625,7 +635,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.22: Heat treatment and phase diagrams (decision on the phase-diagram engine, PLAN-0.6 #22); fixes from the user's review when it comes.
+**Next:** 0.3.23: Heat treatment and phase diagrams (decision on the phase-diagram engine, PLAN-0.6 #22); data: open eco figures for non-metals from the US LCI database, and re-referencing the draft values.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
