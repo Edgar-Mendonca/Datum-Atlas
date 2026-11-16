@@ -317,6 +317,14 @@ Strains are small-strain gradients by central differences on the grid; the equiv
 
 Open the EBSD map on EBSD › Maps and the field on DIC › Strain maps first, or use **Example (made-up map and field)**: the EBSD example with a field in which each grain strains with its Schmid factor.
 
+## Corrosion
+
+**E–pH (Pourbaix) diagrams.** Choose a metal (iron, copper, zinc, aluminium, nickel or magnesium) and how much dissolved metal counts as corrosion (10⁻⁶ mol/L is usual). The diagram shows, at each potential and pH, the form of the metal with the lowest Gibbs energy: the metal itself (immunity, grey), a solid oxide or hydroxide (passivity, violet) or dissolved ions (corrosion, amber). Between the dashed lines water is stable. Tick SCE to read potentials against the saturated calomel electrode. The diagrams are worked out at 25 °C from the standard Gibbs energies of formation in the NBS tables (Wagman et al., 1982); chromium is not offered because the tables give no Gibbs energy for its dissolved ions. A diagram says what is stable, not how fast it forms.
+
+**Galvanic couple.** Type the corrosion potential of two metals, measured in the same electrolyte against the same reference (a range or one value each), and the area of the more noble metal divided by the other's. The page says which metal corrodes, the potential difference with its possible spread, a plain risk word, and warns when a large cathode sits on a small anode. A built-in galvanic series will follow once it can be compiled from a public source.
+
+**Kinetics.** Paste time and mass change; the linear, parabolic, logarithmic and power laws are fitted and listed best first, with a graph. Paste rate constants at several temperatures for the activation energy. From a coupon's mass loss, area, density and time comes the corrosion rate in mm per year, and with a design life and a safety factor the corrosion allowance. Everything typed on these pages is saved with the project.
+
 ## Graphs and the Python engine
 
 Datum Atlas carries its own Python engine (Python with numpy and matplotlib), as the other Datum apps do. It draws the analysis graphs: tensile curves, S–N and Larson–Miller plots, X-ray patterns, size distributions, DIC profiles and strain against Schmid factor. The selection charts, maps and sliders stay in the window, where they respond at once.

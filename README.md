@@ -37,7 +37,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
 4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Modules (0.3.20)
+## Modules (0.3.21)
 
 | Module | What it is for |
 | --- | --- |
@@ -50,10 +50,11 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 | **EBSD** | Orientation maps from .ang and .ctf exports: orientation (IPF), phase and quality maps; grains, boundaries, Σ3 twins, local misorientation (KAM), Schmid factors, pole figures and inverse pole figures |
 | **DIC** | Strain maps from displacement fields: every strain component, statistics and profiles; strain by EBSD grain with Schmid factors and slip traces |
 | **Crystal** | The elements on a periodic table, with referenced values; compositions (wt % and at %); crystal structures, plane spacings and angles, X-ray powder patterns and stereographic projections |
+| **Corrosion** | E–pH (Pourbaix) diagrams from the NBS thermodynamic tables; galvanic couples from your potentials; kinetics, rates and corrosion allowance |
 
-On the way: corrosion, heat treatment and phase diagrams.
+On the way: heat treatment and phase diagrams.
 
-## Features (0.3.20)
+## Features (0.3.21)
 
 - **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
 - **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
@@ -73,6 +74,7 @@ On the way: corrosion, heat treatment and phase diagrams.
 - **Structure generator** (Microstructure module): synthetic grain maps with a chosen size, spread, elongation, second phase, pores and texture (Cube, Goss, Brass, Copper, S, fibres, basal), coloured by orientation, measured back and sent to image analysis.
 - **EBSD** module: open .ang and .ctf orientation maps and see them by orientation (IPF colours with a key), phase, pattern quality or confidence; grains, high- and low-angle boundaries, Σ3 twins, local misorientation and Schmid factors; pole figures and inverse pole figures.
 - **DIC** module: open a displacement field (x, y, u, v) and see every strain component, with statistics and line profiles; strain by grain over an EBSD map, against the Schmid factor, with slip traces.
+- **Corrosion:** E–pH (Pourbaix) diagrams for six metals from the NBS thermodynamic tables, galvanic couples from your potentials, and kinetics (rate laws, Arrhenius, rate from mass loss, corrosion allowance).
 - **Research work kept in the project:** the micrograph, the EBSD map and the DIC field are saved in the .datlas file with each page's settings.
 - **Graphs** drawn by the built-in Python engine (matplotlib), with hover values and export for publication (PNG 300 dpi, SVG, PDF).
 - **? help** beside the tools, a Glossary, and **Tell Me** (Ctrl+K) for commands, goals and materials.
@@ -93,7 +95,7 @@ On the way: corrosion, heat treatment and phase diagrams.
 
 ## Coming next
 
-0.3.21 Corrosion. 0.3.22 Heat treatment and phase diagrams. 0.4.0 Research depth 1: DIC and EBSD together. 0.4.1 Research depth 2: active slip systems. 0.4.2 Research depth 3: slip bands and strain steps. Then the rest of the 0.4 series, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+0.3.22 Heat treatment and phase diagrams. 0.4.0 Research depth 1: DIC and EBSD together. 0.4.1 Research depth 2: active slip systems. 0.4.2 Research depth 3: slip bands and strain steps. 0.4.3 Research depth 4: dislocations and boundaries. Then the rest of the 0.4 series, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Command line
 

@@ -3,7 +3,7 @@
 // dimmed with their release (features.ts, area H).
 import type { View } from "./store";
 
-export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing" | "ebsd" | "dic";
+export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing" | "ebsd" | "dic" | "corrosion";
 export interface Module { id: ModId; name: string; short: string; icon: string; about: string; pages: [View, string, string][]; tabs: string[] }
 
 export const MODULES: Module[] = [
@@ -25,11 +25,13 @@ export const MODULES: Module[] = [
     pages: [["ebsd", "layout", "Maps"], ["ebsdgrains", "grains", "Grains"], ["polefig", "atlas", "Pole figures"]], tabs: ["home", "data"] },
   { id: "dic", name: "DIC", short: "DIC", icon: "xy", about: "Strain maps from digital image correlation: open a displacement field and see every strain component, its statistics and profiles; strain by EBSD grain follows.",
     pages: [["dic", "xy", "Strain maps"], ["bygrain", "grains", "By grain"]], tabs: ["home", "data"] },
+  { id: "corrosion", name: "Corrosion", short: "Corrosion", icon: "risk", about: "E–pH (Pourbaix) diagrams from referenced thermodynamic data, galvanic couples, and corrosion kinetics: fits, Arrhenius, rates and allowance.",
+    pages: [["pourbaix", "risk", "E–pH"], ["galvanic", "compare", "Galvanic"], ["kinetics", "curve", "Kinetics"]], tabs: ["home", "data"] },
 ];
 
 /** Planned modules: [feature id, name, icon]. Their release is in features.ts. */
 export const PLANNED: [string, string, string][] = [
-["H7", "Corrosion", "risk"], ["H8", "Heat treatment", "level"],
+["H8", "Heat treatment", "level"],
 ];
 
 export const moduleOf = (v: View): Module => MODULES.find(m => m.pages.some(p => p[0] === v)) ?? MODULES[1];

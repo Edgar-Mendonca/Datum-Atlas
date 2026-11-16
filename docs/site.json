@@ -7,7 +7,7 @@
   "tagline": "A materials workbench: referenced materials data, property charts and selection, eco audit, process selection and microstructures, in one app for Windows.",
   "for": "Design and materials engineers, and students.",
   "about": [
-    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material and measures your micrographs and generates synthetic grain structures; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; EBSD opens orientation maps; DIC turns displacement fields into strain maps and links them to EBSD grains; Testing turns your tensile, hardness, fatigue and creep data into results and into a material of your own.",
+    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material and measures your micrographs and generates synthetic grain structures; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; EBSD opens orientation maps; DIC turns displacement fields into strain maps and links them to EBSD grains; Testing turns your tensile, hardness, fatigue and creep data into results and into a material of your own; Corrosion draws E–pH (Pourbaix) diagrams from referenced thermodynamic data and works out galvanic couples, corrosion kinetics, rates and allowances.",
     "Every material is a bubble spanning its range of values. Limits, index lines, bands, boxes and shapes narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best, print a report, and add, import and share your own materials. corrosion and heat treatment modules are on the way."
   ],
   "steps": [
@@ -42,7 +42,8 @@
     "EBSD: open .ang and .ctf maps; orientation, phase and quality maps; grains, boundaries, Σ3 twins, local misorientation, Schmid factors, pole figures and inverse pole figures.",
     "DIC: strain maps from displacement fields, with statistics and profiles, and strain by grain linked to an EBSD map, with Schmid factors and slip traces.",
     "A built-in Python engine, as in the other Datum apps: analysis graphs drawn by matplotlib, with hover values and export for publication.",
-    "Images, EBSD maps and DIC fields saved in the project with their settings, so research work opens again as it was left."
+    "Images, EBSD maps and DIC fields saved in the project with their settings, so research work opens again as it was left.",
+    "A Corrosion module: E–pH (Pourbaix) diagrams from the NBS thermodynamic tables, galvanic couples, and kinetics with rates and allowance."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -54,17 +55,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.21",
-      "title": "Corrosion",
-      "when": "Next",
-      "items": [
-        "Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics."
-      ]
-    },
-    {
       "v": "0.3.22",
       "title": "Heat treatment and phase diagrams",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments."
       ]

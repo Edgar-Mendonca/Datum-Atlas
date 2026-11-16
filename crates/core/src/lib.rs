@@ -21,6 +21,7 @@ pub mod model;
 pub mod ops;
 pub mod orient;
 pub mod process;
+pub mod corrosion;
 pub mod research;
 pub mod select;
 pub mod sheet;

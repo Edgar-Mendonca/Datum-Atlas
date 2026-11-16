@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC", "By grain": "DIC" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC", "By grain": "DIC", "E–pH": "Corrosion", Galvanic: "Corrosion", Kinetics: "Corrosion" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -42,7 +42,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "corrosion_info", "pourbaix", "galvanic", "kinetics", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -158,7 +158,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(500);
   check("“Typical structure” opens the Microstructure module on that material", (await p.textContent(".side .modsw")).includes("Micro") && !!(await p.$(".structpage .focus .micro svg")) && (await p.$$(".structpage .scard")).length >= 30);
   await p.click(".side .modsw");
-  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Corrosion (0.3.21)"));
+  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Heat treatment (0.3.22)"));
   await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
   // Crystal › Elements: the periodic table, an element card, colour by a property, composition.
   await goTo(p, "Elements");
@@ -362,6 +362,27 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await goTo(p, "By grain"); await p.waitForSelector(".dicpage .lgtab"); await lidle();
   await p.waitForFunction(() => parseFloat(document.querySelector(".dicpage .lr")?.textContent ?? "0") > 0.6, null, { timeout: 30000 }).catch(() => {});
   check("…and the DIC field over the map", parseFloat(await p.textContent(".dicpage .lr")) > 0.6);
+  // 0.3.21 Corrosion: an E–pH diagram from the NBS data, a galvanic couple, kinetics.
+  await goTo(p, "E–pH"); await p.waitForFunction(() => document.querySelectorAll(".corrpage .pbreg tbody tr").length > 3, null, { timeout: 20000 });
+  const fereg = await p.textContent(".corrpage .pbreg");
+  check("the iron E–pH diagram has Fe, Fe²⁺ and the oxides", fereg.includes("Fe²⁺") && fereg.includes("immunity") && fereg.includes("passivity") && fereg.includes("corrosion") && fereg.includes("Fe₂O₃"), fereg);
+  await p.selectOption(".corrpage .pbmetal", "zn"); await p.waitForFunction(() => document.querySelector(".corrpage .pbreg")?.textContent.includes("Zn²⁺"), null, { timeout: 20000 }).catch(() => {});
+  check("zinc is amphoteric: Zn²⁺ in acid, a zincate in alkali", (await p.textContent(".corrpage .pbreg")).includes("ZnO₂²⁻") || (await p.textContent(".corrpage .pbreg")).includes("HZnO₂⁻"));
+  await shot("pourbaix");
+  await goTo(p, "Galvanic");
+  const gset = async (row, name, lo, hi) => { await p.fill(`.corrpage .${row} .gname`, name); await p.press(`.corrpage .${row} .gname`, "Tab"); await p.fill(`.corrpage .${row} .gmin`, lo); await p.press(`.corrpage .${row} .gmin`, "Tab"); await p.fill(`.corrpage .${row} .gmax`, hi); await p.press(`.corrpage .${row} .gmax`, "Tab"); };
+  await gset("ga", "Zinc", "-1.03", "-0.98"); await gset("gb", "Copper", "-0.36", "-0.28");
+  await p.fill(".corrpage .garea", "10"); await p.press(".corrpage .garea", "Tab"); await p.waitForSelector(".corrpage .gres");
+  check("a galvanic couple: zinc corrodes, 0.685 V, severe, the area warning", (await p.textContent(".corrpage .ganode")) === "Zinc" && (await p.textContent(".corrpage .gde")) === "0.685 V" && (await p.textContent(".corrpage .grisk")).startsWith("Severe") && (await p.textContent(".corrpage section.panel")).includes("concentrates the attack on the small anode"), await p.textContent(".corrpage section.panel"));
+  await goTo(p, "Kinetics"); await p.click(".corrpage .kex"); await p.waitForSelector(".corrpage .kbest");
+  check("made-up oxidation data fit the parabolic law best", (await p.textContent(".corrpage .kbest")).includes("Parabolic"), await p.textContent(".corrpage .kfits"));
+  for (const [c, v] of [["kw", "0.1"], ["ka", "10"], ["kr", "7.87"], ["kh", "8760"]]) { await p.fill(`.corrpage .${c}`, v); await p.press(`.corrpage .${c}`, "Tab"); }
+  await p.waitForFunction(() => document.querySelector(".corrpage .kallow")?.textContent.includes("mm"), null, { timeout: 10000 }).catch(() => {});
+  check("rate from mass loss (0.0127 mm/year) and the allowance over 20 years", (await p.textContent(".corrpage .krate")).startsWith("0.0127") && (await p.textContent(".corrpage .kallow")) === "0.25 mm", (await p.textContent(".corrpage .krate")) + " / " + (await p.textContent(".corrpage .kallow")));
+  check("the kinetics graph is drawn", (await graphOf(".corrpage", "Mass change")).includes("Mass change"));
+  await p.waitForTimeout(800);
+  check("the corrosion inputs are kept in the project", await p.evaluate(async () => (await window.__TAURI__.core.invoke("state")).project.ui.corrosion?.galv?.a?.name === "Zinc"));
+  await shot("kinetics");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");
@@ -586,7 +607,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
   const at = t => tiles.indexOf(t);
-  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Testing", "EBSD", "DIC", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
+  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Testing", "EBSD", "DIC", "Corrosion", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
   await p.click(".bs aside .back");
   await p.waitForTimeout(200);
 

@@ -68,6 +68,10 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "synth_ebsd" => json!(datum_atlas_core::synth::ebsd_text(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "ipf_key" => json!(datum_atlas_core::orient::ipf_key(a["crystal"].as_str().unwrap_or("cubic"), 40)),
         "synth_csv" => json!(datum_atlas_core::synth::csv(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
+        "corrosion_info" => datum_atlas_core::corrosion::info(),
+        "pourbaix" => json!(datum_atlas_core::corrosion::pourbaix(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
+        "galvanic" => json!(datum_atlas_core::corrosion::couple(&serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?, &serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?, a["area"].as_f64().unwrap_or(0.0))?),
+        "kinetics" => datum_atlas_core::corrosion::kinetics_page(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?),
         "image_keep" => { let it = Item::image(a["name"].as_str().unwrap_or(""), a["w"].as_u64().unwrap_or(0) as usize, a["h"].as_u64().unwrap_or(0) as usize, &datum_atlas_core::image::b64_decode(a["px"].as_str().unwrap_or(""))?, a["made"].as_bool().unwrap_or(false))?; keep(s, "image", it)? }
         "image_kept" => match &s.doc.p.research.image { None => Value::Null, Some(i) => { let (w, h, px) = i.image_px()?; json!({ "name": i.info["name"], "made": i.info["made"], "w": w, "h": h, "px": datum_atlas_core::image::b64_encode(&px) }) } },
         "ebsd_open" => { let p = fixture(a, "map.ang"); let m = datum_atlas_core::ebsd::parse(&std::fs::read_to_string(&p).map_err(|e| e.to_string())?, "map.ang")?; keep(s, "ebsd", Item::ebsd(&m))? }

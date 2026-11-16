@@ -335,6 +335,22 @@ fn dic_link_example(st: State<St>) -> R<Value> {
     Ok(out(&a))
 }
 
+/// Corrosion: the metals with E–pH data and the notes on the data.
+#[tauri::command]
+fn corrosion_info() -> Value { datum_atlas_core::corrosion::info() }
+
+/// An E–pH (Pourbaix) diagram of a metal.
+#[tauri::command]
+async fn pourbaix(ask: datum_atlas_core::corrosion::PbAsk) -> R<datum_atlas_core::corrosion::Diagram> { datum_atlas_core::corrosion::pourbaix(&ask) }
+
+/// Two metals in contact, each with its corrosion potential.
+#[tauri::command]
+fn galvanic(a: datum_atlas_core::corrosion::Galvanic, b: datum_atlas_core::corrosion::Galvanic, area: f64) -> R<datum_atlas_core::corrosion::Couple> { datum_atlas_core::corrosion::couple(&a, &b, area) }
+
+/// Corrosion kinetics: fits, Arrhenius, rate from mass loss, allowance.
+#[tauri::command]
+fn kinetics(ask: datum_atlas_core::corrosion::KinAsk) -> Value { datum_atlas_core::corrosion::kinetics_page(&ask) }
+
 /// A synthetic grain map as an orientation map in text.
 #[tauri::command]
 async fn synth_ebsd(ask: datum_atlas_core::synth::Ask) -> R<String> { datum_atlas_core::synth::ebsd_text(&ask) }
@@ -902,7 +918,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, graph, graph_export, engine, restart_engine,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, corrosion_info, pourbaix, galvanic, kinetics, graph, graph_export, engine, restart_engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

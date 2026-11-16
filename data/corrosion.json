@@ -1,0 +1,422 @@
+{
+ "notes": [
+  "Standard Gibbs energies of formation at 298.15 K from the NBS tables (Wagman et al., 1982). H₂O(l): −237.129 kJ/mol (Table 2, hydrogen).",
+  "Gaps: the tables give no Gibbs energy for Cr²⁺ or Cr³⁺ (aq), so chromium has no diagram; nickel has no dissolved species listed for strong alkali.",
+  "The galvanic series in seawater is not built in yet: no public primary source has been read for it. Type your own corrosion potentials."
+ ],
+ "water": -237.129,
+ "metals": [
+  {
+   "id": "fe",
+   "name": "Iron"
+  },
+  {
+   "id": "cu",
+   "name": "Copper"
+  },
+  {
+   "id": "zn",
+   "name": "Zinc"
+  },
+  {
+   "id": "al",
+   "name": "Aluminium"
+  },
+  {
+   "id": "ni",
+   "name": "Nickel"
+  },
+  {
+   "id": "mg",
+   "name": "Magnesium"
+  }
+ ],
+ "species": [
+  {
+   "metal": "fe",
+   "name": "Fe²⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 2,
+   "dg": -78.9,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "Fe³⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 3,
+   "dg": -4.7,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "FeOH⁺",
+   "n": 1,
+   "o": 1,
+   "h": 1,
+   "z": 1,
+   "dg": -277.4,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "FeOH²⁺",
+   "n": 1,
+   "o": 1,
+   "h": 1,
+   "z": 2,
+   "dg": -229.41,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "HFeO₂⁻",
+   "n": 1,
+   "o": 2,
+   "h": 1,
+   "z": -1,
+   "dg": -377.7,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "FeO₂²⁻",
+   "n": 1,
+   "o": 2,
+   "h": 0,
+   "z": -2,
+   "dg": -295.3,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "Fe₂O₃ (hematite)",
+   "n": 2,
+   "o": 3,
+   "h": 0,
+   "z": 0,
+   "dg": -742.2,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "Fe₃O₄ (magnetite)",
+   "n": 3,
+   "o": 4,
+   "h": 0,
+   "z": 0,
+   "dg": -1015.4,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "fe",
+   "name": "Fe(OH)₂",
+   "n": 1,
+   "o": 2,
+   "h": 2,
+   "z": 0,
+   "dg": -486.5,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "cu",
+   "name": "Cu⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 1,
+   "dg": 49.98,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "cu",
+   "name": "Cu²⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 2,
+   "dg": 65.49,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "cu",
+   "name": "HCuO₂⁻",
+   "n": 1,
+   "o": 2,
+   "h": 1,
+   "z": -1,
+   "dg": -258.5,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "cu",
+   "name": "CuO₂²⁻",
+   "n": 1,
+   "o": 2,
+   "h": 0,
+   "z": -2,
+   "dg": -183.6,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "cu",
+   "name": "Cu₂O",
+   "n": 2,
+   "o": 1,
+   "h": 0,
+   "z": 0,
+   "dg": -146.0,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "cu",
+   "name": "CuO",
+   "n": 1,
+   "o": 1,
+   "h": 0,
+   "z": 0,
+   "dg": -129.7,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "zn",
+   "name": "Zn²⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 2,
+   "dg": -147.06,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "zn",
+   "name": "ZnOH⁺",
+   "n": 1,
+   "o": 1,
+   "h": 1,
+   "z": 1,
+   "dg": -330.1,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "zn",
+   "name": "HZnO₂⁻",
+   "n": 1,
+   "o": 2,
+   "h": 1,
+   "z": -1,
+   "dg": -457.08,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "zn",
+   "name": "ZnO₂²⁻",
+   "n": 1,
+   "o": 2,
+   "h": 0,
+   "z": -2,
+   "dg": -384.24,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "zn",
+   "name": "ZnO",
+   "n": 1,
+   "o": 1,
+   "h": 0,
+   "z": 0,
+   "dg": -318.3,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "zn",
+   "name": "Zn(OH)₂ (ε)",
+   "n": 1,
+   "o": 2,
+   "h": 2,
+   "z": 0,
+   "dg": -555.07,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "al",
+   "name": "Al³⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 3,
+   "dg": -485.0,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "al",
+   "name": "AlOH²⁺",
+   "n": 1,
+   "o": 1,
+   "h": 1,
+   "z": 2,
+   "dg": -694.1,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "al",
+   "name": "AlO₂⁻",
+   "n": 1,
+   "o": 2,
+   "h": 0,
+   "z": -1,
+   "dg": -830.9,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "al",
+   "name": "Al₂O₃ (corundum)",
+   "n": 2,
+   "o": 3,
+   "h": 0,
+   "z": 0,
+   "dg": -1582.3,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "al",
+   "name": "Al₂O₃·3H₂O (gibbsite)",
+   "n": 2,
+   "o": 6,
+   "h": 6,
+   "z": 0,
+   "dg": -2310.21,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "al",
+   "name": "Al₂O₃·H₂O (boehmite)",
+   "n": 2,
+   "o": 4,
+   "h": 2,
+   "z": 0,
+   "dg": -1831.7,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "ni",
+   "name": "Ni²⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 2,
+   "dg": -45.6,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "ni",
+   "name": "NiOH⁺",
+   "n": 1,
+   "o": 1,
+   "h": 1,
+   "z": 1,
+   "dg": -227.6,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "ni",
+   "name": "NiO",
+   "n": 1,
+   "o": 1,
+   "h": 0,
+   "z": 0,
+   "dg": -211.7,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "ni",
+   "name": "Ni(OH)₂",
+   "n": 1,
+   "o": 2,
+   "h": 2,
+   "z": 0,
+   "dg": -447.2,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "mg",
+   "name": "Mg²⁺",
+   "n": 1,
+   "o": 0,
+   "h": 0,
+   "z": 2,
+   "dg": -454.8,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "mg",
+   "name": "MgOH⁺",
+   "n": 1,
+   "o": 1,
+   "h": 1,
+   "z": 1,
+   "dg": -626.7,
+   "solid": false,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "mg",
+   "name": "MgO",
+   "n": 1,
+   "o": 1,
+   "h": 0,
+   "z": 0,
+   "dg": -569.43,
+   "solid": true,
+   "src": "nbs-1982"
+  },
+  {
+   "metal": "mg",
+   "name": "Mg(OH)₂",
+   "n": 1,
+   "o": 2,
+   "h": 2,
+   "z": 0,
+   "dg": -833.51,
+   "solid": true,
+   "src": "nbs-1982"
+  }
+ ],
+ "galvanic": []
+}

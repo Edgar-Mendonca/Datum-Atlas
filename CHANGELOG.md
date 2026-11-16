@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.3.21 — 2026-11-16
+
+A new Corrosion module: E–pH (Pourbaix) diagrams worked out from referenced thermodynamic data, galvanic couples and corrosion kinetics.
+
+**E–pH (Pourbaix) diagrams**
+- Iron, copper, zinc, aluminium, nickel and magnesium at 25 °C, for a dissolved-metal level you choose: immunity, passivity and corrosion regions, the water lines, and potentials on the hydrogen or the calomel scale.
+- Worked out by the engine from the standard Gibbs energies of formation in the NBS tables (1982), each value with its table and page. Save the diagram as a picture.
+
+**Galvanic couple**
+- Type two metals' corrosion potentials: the page says which corrodes, the potential difference and its spread, a plain risk word, and warns about a large cathode on a small anode.
+- No galvanic series is built in yet: it waits for a public source.
+
+**Kinetics**
+- Mass change against time fitted to the linear, parabolic, logarithmic and power laws, best first, with a graph; the activation energy from rate constants at several temperatures; the corrosion rate from a coupon's mass loss; the corrosion allowance for a design life.
+- Everything typed on the corrosion pages is saved with the project.
+
+**Checked**
+- Engine tests: the iron diagram's Fe/Fe²⁺ line where theory puts it; copper noble, zinc and aluminium amphoteric, magnesium passive only in strong alkali; the fits, Arrhenius and the rate formula.
+- UI tests for the three pages.
+
 ## 0.3.20 — 2026-11-15
 
 Research work is now saved with the project: open it again and the pages come back as you left them.
