@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC", "By grain": "DIC", "E–pH": "Corrosion", Galvanic: "Corrosion", Kinetics: "Corrosion" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC", "By grain": "DIC", "E–pH": "Corrosion", Galvanic: "Corrosion", Kinetics: "Corrosion", Patterns: "Diffraction", Peaks: "Diffraction" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -42,7 +42,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "corrosion_info", "pourbaix", "galvanic", "kinetics", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "corrosion_info", "pourbaix", "galvanic", "kinetics", "xrd_open", "xrd_example", "xrd_remove", "xrd_analyse", "xrd_plot", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -158,7 +158,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(500);
   check("“Typical structure” opens the Microstructure module on that material", (await p.textContent(".side .modsw")).includes("Micro") && !!(await p.$(".structpage .focus .micro svg")) && (await p.$$(".structpage .scard")).length >= 30);
   await p.click(".side .modsw");
-  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Heat treatment (0.3.23)"));
+  check("the module switcher lists the modules and the planned ones with their release", (await p.textContent(".menu")).includes("Library") && (await p.textContent(".menu")).includes("Heat treatment (0.3.26)"));
   await p.keyboard.press("Escape"); await p.mouse.click(700, 500); await p.waitForTimeout(150);
   // Crystal › Elements: the periodic table, an element card, colour by a property, composition.
   await goTo(p, "Elements");
@@ -383,6 +383,32 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(800);
   check("the corrosion inputs are kept in the project", await p.evaluate(async () => (await window.__TAURI__.core.invoke("state")).project.ui.corrosion?.galv?.a?.name === "Zinc"));
   await shot("kinetics");
+  // 0.3.23 Diffraction: open a pattern and the made-up example, peaks, size and strain.
+  const xidle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".xrdpage .xbusy")) ? 0 : quiet + 1; } };
+  await goTo(p, "Patterns");
+  check("Diffraction starts empty and says what it opens", (await p.textContent(".xrdpage .tempty")).includes(".xrdml"));
+  await p.click(".xrdpage .xopen"); await p.waitForSelector(".xrdpage .xlist"); await p.click(".xrdpage .xex"); await p.waitForFunction(() => document.querySelectorAll(".xrdpage .xlist tbody tr").length === 2, null, { timeout: 20000 }).catch(() => {});
+  check("two patterns kept in the project, listed with their range", (await p.$$(".xrdpage .xlist tbody tr")).length === 2 && (await p.textContent(".xrdpage .xlist")).includes("pattern.xy") && (await p.textContent(".xrdpage .xlist")).includes("20.00–60.00°"));
+  check("the patterns are overlaid in one graph", (await graphOf(".xrdpage", "2θ")).includes("2θ"));
+  await shot("xrd-patterns");
+  await goTo(p, "Peaks"); await xidle();
+  await p.click(".xrdpage .xstrip"); await xidle();
+  await p.waitForFunction(() => /^3 found/.test(document.querySelector(".xrdpage .xcount")?.textContent ?? ""), null, { timeout: 20000 }).catch(() => {});
+  const xp = await p.$$eval(".xrdpage .xpeaks tbody tr td:nth-child(2)", e => e.map(x => parseFloat(x.textContent)));
+  check("the three silicon lines are found where they are (28.44°, 47.30°, 56.12°)", xp.length === 3 && Math.abs(xp[0] - 28.443) < 0.02 && Math.abs(xp[1] - 47.303) < 0.02 && Math.abs(xp[2] - 56.123) < 0.02, JSON.stringify(xp));
+  await p.selectOption(".xrdpage .xsel", "1"); await p.click(".xrdpage .xstrip"); await xidle();
+  await p.waitForFunction(() => parseFloat(document.querySelector(".xrdpage .xwhd")?.textContent ?? "0") > 0, null, { timeout: 20000 }).catch(() => {});
+  await p.waitForFunction(() => (document.querySelector(".xrdpage .pgraph .gsvg svg")?.textContent ?? "").includes("120"), null, { timeout: 60000 }).catch(() => {});
+  check("the graph follows the chosen pattern (the example runs to 140°), and the list shows its name", (await p.textContent(".xrdpage .pgraph .gsvg")).includes("120") && (await p.$eval(".xrdpage .xsel", e => e.options[e.selectedIndex].text)).includes("Example"));
+  const whd = parseFloat(await p.textContent(".xrdpage .xwhd")), whe = parseFloat(await p.textContent(".xrdpage .xwhe"));
+  check("Williamson–Hall finds the example's 40 nm and 0.1 % strain (roughly)", whd > 25 && whd < 60 && whe > 0.05 && whe < 0.2, whd + " nm, " + whe + " %");
+  await p.waitForFunction(() => [...document.querySelectorAll(".xrdpage .pgraph .gsvg svg")].some(g => g.textContent.includes("sin")), null, { timeout: 60000 }).catch(() => {});
+  check("the Williamson–Hall plot is drawn", await p.$$eval(".xrdpage .pgraph .gsvg", e => e.some(g => g.textContent.includes("sin"))));
+  await p.click(".xrdpage .xcsv"); await p.waitForTimeout(200);
+  check("the peaks go to a CSV file", await p.evaluate(() => window.__calls.some(c => c[0] === "save_file" && String(c[1].data).startsWith("2θ (°),d (Å)"))));
+  await p.waitForTimeout(700);
+  check("the peak settings are kept with the patterns", await p.evaluate(async () => (await window.__TAURI__.core.invoke("state")).project.research.xrd?.settings?.peaks?.sel === 1));
+  await shot("xrd-peaks");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");
@@ -608,7 +634,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(300);
   const tiles = await p.$$eval(".home .tile b", b => b.map(x => x.textContent));
   const at = t => tiles.indexOf(t);
-  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Testing", "EBSD", "DIC", "Corrosion", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
+  check("Home: a tile per module, then the design problems", ["Library", "Select", "Eco", "Make", "Microstructure", "Crystal", "Diffraction", "Testing", "EBSD", "DIC", "Corrosion", "More modules"].every((t, i) => tiles[i] === t) && at("Blank selection") > at("More modules"), JSON.stringify(tiles));
   await p.click(".bs aside .back");
   await p.waitForTimeout(200);
 

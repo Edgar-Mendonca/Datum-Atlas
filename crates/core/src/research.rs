@@ -8,11 +8,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-pub const KINDS: [&str; 3] = ["image", "ebsd", "dic"];
+pub const KINDS: [&str; 4] = ["image", "ebsd", "dic", "xrd"];
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
-pub struct Research { pub image: Option<Item>, pub ebsd: Option<Item>, pub dic: Option<Item> }
+pub struct Research { pub image: Option<Item>, pub ebsd: Option<Item>, pub dic: Option<Item>, /// X-ray patterns (all of them in one item).
+    pub xrd: Option<Item> }
 
 /// One piece of kept work: what the pages show about it (`info`), a fingerprint of the data (`id`,
 /// so a page knows when it changed), the packed data and the page settings.
@@ -22,12 +23,12 @@ pub struct Item { pub info: Value, pub id: String, pub data: Arc<str>, pub setti
 
 impl Research {
     pub fn slot(&mut self, which: &str) -> Result<&mut Option<Item>, String> {
-        match which { "image" => Ok(&mut self.image), "ebsd" => Ok(&mut self.ebsd), "dic" => Ok(&mut self.dic), _ => Err(format!("No research slot “{which}”.")) }
+        match which { "image" => Ok(&mut self.image), "ebsd" => Ok(&mut self.ebsd), "dic" => Ok(&mut self.dic), "xrd" => Ok(&mut self.xrd), _ => Err(format!("No research slot “{which}”.")) }
     }
     /// The same, without the packed data (for the window).
     pub fn lite(&self) -> Self {
         let f = |i: &Option<Item>| i.as_ref().map(|i| Item { data: Arc::from(""), ..i.clone() });
-        Self { image: f(&self.image), ebsd: f(&self.ebsd), dic: f(&self.dic) }
+        Self { image: f(&self.image), ebsd: f(&self.ebsd), dic: f(&self.dic), xrd: f(&self.xrd) }
     }
 }
 
@@ -76,6 +77,26 @@ impl Item {
         if w * ht == 0 || u.len() != w * ht || v.len() != w * ht { return Err(DAMAGED.into()); }
         let g = |k: &str| h[k].as_f64().unwrap_or(f64::NAN);
         Ok(Dic { name: st(&h["name"]), w, h: ht, x0: g("x0"), y0: g("y0"), dx: g("dx"), dy: g("dy"), u, v, notes: serde_json::from_value(h["notes"].clone()).unwrap_or_default() })
+    }
+}
+
+impl Item {
+    /// X-ray patterns, all in one item; `info` lists each pattern's name, points, range and anode.
+    pub fn xrd(ps: &[crate::xrd::Pattern], settings: serde_json::Value) -> Self {
+        let head = json!(ps.iter().map(|p| json!({ "name": p.name, "anode": p.anode, "notes": p.notes })).collect::<Vec<_>>());
+        let parts: Vec<Vec<u8>> = ps.iter().flat_map(|p| [f64s(&p.x), f64s(&p.y)]).collect();
+        let info = json!(ps.iter().map(|p| json!({ "name": p.name, "points": p.x.len(), "from": p.x.first(), "to": p.x.last(), "anode": p.anode, "notes": p.notes })).collect::<Vec<_>>());
+        Self { settings, ..Self::new(info, head, &parts) }
+    }
+    pub fn to_xrd(&self) -> Result<Vec<crate::xrd::Pattern>, String> {
+        let (h, p) = unpack(&self.data)?;
+        let heads = h.as_array().ok_or(DAMAGED)?;
+        if p.len() != 2 * heads.len() { return Err(DAMAGED.into()) }
+        heads.iter().enumerate().map(|(k, m)| {
+            let (x, y) = (to_f64(&p[2 * k]), to_f64(&p[2 * k + 1]));
+            if x.len() != y.len() || x.is_empty() { return Err(DAMAGED.to_string()) }
+            Ok(crate::xrd::Pattern { name: st(&m["name"]), anode: st(&m["anode"]), notes: serde_json::from_value(m["notes"].clone()).unwrap_or_default(), x, y })
+        }).collect()
     }
 }
 
@@ -170,6 +191,16 @@ mod t {
         assert_eq!(Item::image("b", 30, 20, &px, true).unwrap().id, im.id);
         for bad in ["", "AAAA", &im.data[..im.data.len() / 2]] { assert!(Item { data: bad.into(), ..im.clone() }.image_px().is_err()); }
         assert!(Item { data: im.data.clone(), ..Item::default() }.to_ebsd().is_err());
+    }
+    #[test]
+    fn xrd_patterns_round_trip() {
+        let a = crate::xrd::example().unwrap();
+        let mut b = a.clone(); b.name = "second".into(); b.anode = "".into();
+        let it = Item::xrd(&[a.clone(), b.clone()], json!({ "k": 1 }));
+        assert_eq!(it.to_xrd().unwrap(), vec![a, b]);
+        assert_eq!(it.info[1]["name"], json!("second"));
+        assert_eq!(it.settings["k"], json!(1));
+        assert_eq!(Item::xrd(&[], json!({})).to_xrd().unwrap(), vec![]);
     }
     #[test]
     fn project_keeps_it() {

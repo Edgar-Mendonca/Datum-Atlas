@@ -113,7 +113,8 @@ A proposal. Every step is one small release as before, each checked and publishe
 | 0.3.20 | Keep research work in the project | Images, EBSD maps and DIC fields saved with the project, with their settings; fixes from the review. |
 | 0.3.21 | Corrosion | Galvanic compatibility, resistance by environment, corrosion allowance, E–pH (Pourbaix) diagrams and corrosion kinetics. |
 | 0.3.22 | Data clean-up | The licensed carbon database and distributor datasheets replaced by open sources (added after the user's data check). |
-| 0.3.23 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. |
+| 0.3.23–0.3.25 | Diffraction 1–3 | See PLAN-0.7 (measured patterns, crystal structures, phase identification). |
+| 0.3.26 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. |
 | 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. |
 | 0.4.1 | Research depth 2: active slip systems | A grain inspector, slip bands matched to traces, the relative displacement ratio. |
 | 0.4.2 | Research depth 3: slip bands and strain steps | Slip bands found automatically; several DIC strain steps in one experiment. |

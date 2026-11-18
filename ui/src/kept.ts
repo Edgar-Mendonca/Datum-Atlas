@@ -4,7 +4,7 @@
 import { createEffect, on } from "solid-js";
 import { act, out } from "./store";
 
-export type Which = "image" | "ebsd" | "dic";
+export type Which = "image" | "ebsd" | "dic" | "xrd";
 export interface Kept { info: any; id: string; settings: Record<string, any> }
 export const kept = (w: Which): Kept | null => (out()?.project as any)?.research?.[w] ?? null;
 /** Changes only when other work is opened (a new file, another project, undo), not on every edit. */

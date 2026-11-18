@@ -1,6 +1,6 @@
 # PLAN-0.7: X-ray diffraction analysis (brainstorm, stages, questions)
 
-Status: **brainstorm, waiting for the user's answers.** Nothing here is built yet.
+Status: **approved 2026-11-18: Order 1 (diffraction first).** 0.3.23 Diffraction 1 is being built.
 
 ## 1. Why
 
@@ -111,7 +111,12 @@ The X-ray stages replace "0.4.4 X-ray" and "later: CIF". Two possible orders:
 - **File formats.** Only text formats and openly documented ones; closed binary formats from instrument makers only when a public description exists.
 - **Validation needs real data.** Measured patterns with known phases, from users or public certificates.
 
-## 7. Questions for the user
+## 7. Decisions of 2026-11-18
+
+- **Order 1**: diffraction first (0.3.23–0.3.25), heat treatment at 0.3.26, refinement as a 0.5 series.
+- The other questions take the recommendations until the user says otherwise: a Diffraction module inside Atlas; text, .xrdml and .fxye files first; Rietveld last. The COD reference pack (download on first use, or in the installer; inorganic or all) is asked again before 0.3.25. Test patterns from the researcher, and the eco and re-referencing work between releases, also wait for the user.
+
+## 8. Questions for the user (asked 2026-11-18)
 
 1. **Order:** diffraction first (Order 1) or heat treatment first (Order 2)?
 2. **Where:** start as a Diffraction module inside Atlas (recommended), or plan a separate Datum app from the start?

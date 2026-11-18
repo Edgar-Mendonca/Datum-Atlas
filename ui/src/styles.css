@@ -968,3 +968,10 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .corrpage .kfits tr.best td { font-weight: 600; }
 .corrpage .ekey span { margin-right: 12px; } .corrpage .ekey i { display: inline-block; width: 12px; height: 12px; margin-right: 5px; vertical-align: -1px; }
 @media (max-width: 900px) { .corrpage .imgrid { grid-template-columns: 1fr; } }
+.xrdpage .ttools { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-bottom: 12px; }
+.xrdpage .xgrid { display: grid; grid-template-columns: minmax(280px, 0.8fr) minmax(420px, 1.6fr); gap: 14px; margin-bottom: 14px; }
+.xrdpage .xgrid + .xgrid { grid-template-columns: minmax(420px, 1.4fr) minmax(320px, 1fr); }
+.xrdpage .xset label { display: flex; align-items: center; gap: 8px; margin: 4px 0; flex-wrap: wrap; }
+.xrdpage .xset input[type=number] { width: 78px; }
+.xrdpage .xpeaks tr.off td { color: var(--text2); }
+@media (max-width: 900px) { .xrdpage .xgrid, .xrdpage .xgrid + .xgrid { grid-template-columns: 1fr; } }

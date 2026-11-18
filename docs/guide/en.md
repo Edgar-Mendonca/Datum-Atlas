@@ -363,6 +363,24 @@ The command line does the same: `datum-atlas-cli element Fe` and `datum-atlas-cl
 
 The positions are exact for the cell; the intensities are approximate (each atom scatters in proportion to its atomic number, without the fall-off with angle), so they show which lines are there and roughly how strong. On the command line: `datum-atlas-cli crystal Fe`, or `--ask` with any structure.
 
+## Diffraction: measured patterns
+
+The Diffraction module reads measured X-ray diffraction patterns and keeps them in the project.
+
+**Patterns.** **Open a pattern**: two columns of 2θ (degrees) and counts as text (.xy, .csv, .dat, .txt; headings and comments are skipped, a decimal comma is read), an .xrdml file (the anode is read from it) or a GSAS .fxye file. Up to twelve patterns stay in the project; **Stack** offsets them and **Scale each to 100** compares their shapes, for instance before and after a heat treatment. **Example (made-up pattern)** adds an invented FCC metal pattern with 40 nm crystallites and 0.1 % microstrain, to try the pages.
+
+**Peaks.** Choose the pattern and the anode of your tube (Cu, Co, Mo, Cr, Fe or Ag; the Kα1 and Kα2 wavelengths are NIST's) or type another wavelength. Then, step by step:
+
+1. **Zero shift** and the **2θ range** to keep.
+2. **Smooth** a noisy pattern (Savitzky–Golay).
+3. **Background**: taken off with the SNIP method; its width should be a few times the peak width. The dashed blue line shows it.
+4. **Strip Kα2**: removes the Kα2 half of each peak (Rachinger's method); d-spacings then use Kα1.
+5. **Peaks**: found where they stand out of the noise and of the dips beside them, then each fitted with a pseudo-Voigt profile: 2θ, d, height, area, FWHM and the Lorentzian share η. **Peaks to CSV** saves the list.
+6. **Crystallite size**: the Scherrer equation for each peak, D = Kλ / (β cos θ), with the instrument's FWHM taken off (measure a well-crystallised standard on the same instrument and type its FWHM; without it the sizes are lower bounds).
+7. **Size and microstrain** together: the Williamson–Hall plot of β cos θ against 4 sin θ; the intercept gives the size and the slope the microstrain.
+
+Sizes from peak broadening are those of coherently diffracting domains, often smaller than the grains seen in a microscope; above about 100 nm the broadening is too small to measure well. Crystal structures (CIF files) and phase identification against the Crystallography Open Database come next.
+
 ## Testing: tensile tests
 
 ![Testing › Tensile: three specimens of the made-up example, their curves and results.](img/tensile.png)

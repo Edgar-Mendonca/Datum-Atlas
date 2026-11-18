@@ -68,6 +68,11 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "synth_ebsd" => json!(datum_atlas_core::synth::ebsd_text(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "ipf_key" => json!(datum_atlas_core::orient::ipf_key(a["crystal"].as_str().unwrap_or("cubic"), 40)),
         "synth_csv" => json!(datum_atlas_core::synth::csv(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
+        "xrd_open" => { let p = fixture(a, "pattern.xy"); let pat = datum_atlas_core::xrd::parse(&std::fs::read_to_string(&p).map_err(|e| e.to_string())?, "pattern.xy")?; let it = datum_atlas_core::xrd::add(&s.doc.p.research, pat)?; keep(s, "xrd", it)? }
+        "xrd_example" => { let it = datum_atlas_core::xrd::add(&s.doc.p.research, datum_atlas_core::xrd::example()?)?; keep(s, "xrd", it)? }
+        "xrd_remove" => { let it = datum_atlas_core::xrd::remove(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize)?; s.doc.apply(Op::Research { which: "xrd".into(), item: it.map(Box::new) })?; out(s) }
+        "xrd_analyse" => { let ps = datum_atlas_core::xrd::kept(&s.doc.p.research)?; let q: datum_atlas_core::xrd::Ask = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; json!(datum_atlas_core::xrd::analyse(ps.get(a["index"].as_u64().unwrap_or(0) as usize).ok_or("That pattern is no longer open.")?, &q)?) }
+        "xrd_plot" => json!(datum_atlas_core::xrd::for_plot(&s.doc.p.research)?),
         "corrosion_info" => datum_atlas_core::corrosion::info(),
         "pourbaix" => json!(datum_atlas_core::corrosion::pourbaix(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "galvanic" => json!(datum_atlas_core::corrosion::couple(&serde_json::from_value(a["a"].clone()).map_err(|e| e.to_string())?, &serde_json::from_value(a["b"].clone()).map_err(|e| e.to_string())?, a["area"].as_f64().unwrap_or(0.0))?),

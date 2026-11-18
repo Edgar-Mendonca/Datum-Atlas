@@ -3,7 +3,7 @@
 // dimmed with their release (features.ts, area H).
 import type { View } from "./store";
 
-export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing" | "ebsd" | "dic" | "corrosion";
+export type ModId = "library" | "select" | "eco" | "make" | "micro" | "crystal" | "testing" | "ebsd" | "dic" | "corrosion" | "xrd";
 export interface Module { id: ModId; name: string; short: string; icon: string; about: string; pages: [View, string, string][]; tabs: string[] }
 
 export const MODULES: Module[] = [
@@ -19,6 +19,8 @@ export const MODULES: Module[] = [
     pages: [["micro", "grains", "Structures"], ["images", "image", "Images"], ["synth", "grid", "Generator"]], tabs: ["home", "data"] },
   { id: "crystal", name: "Crystal", short: "Crystal", icon: "crystal", about: "The elements on a periodic table; compositions; crystal structures with spacings, angles, X-ray peaks and stereographic projections.",
     pages: [["elements", "crystal", "Elements"], ["calc", "builder", "Lattice"]], tabs: ["home", "data"] },
+  { id: "xrd", name: "Diffraction", short: "XRD", icon: "xy", about: "Measured X-ray diffraction patterns: open and compare them, take off the background and Kα2, find and fit the peaks, and work out crystallite size and strain; phase identification follows.",
+    pages: [["xrdpatterns", "xy", "Patterns"], ["xrdpeaks", "curve", "Peaks"]], tabs: ["home", "data"] },
   { id: "testing", name: "Testing", short: "Testing", icon: "curve", about: "Your test data: tensile curves and results, hardness statistics, S–N curves and creep rupture on a Larson–Miller plot; the results become a material of your own.",
     pages: [["tensile", "curve", "Tensile"], ["hardness", "level", "Hardness"], ["fatigue", "xy", "Fatigue"], ["creep", "risk", "Creep"]], tabs: ["home", "data"] },
   { id: "ebsd", name: "EBSD", short: "EBSD", icon: "layout", about: "Orientation maps from EBSD: open .ang and .ctf exports and see orientations, phases and pattern quality; grains, boundaries, Schmid factors and pole figures follow.",

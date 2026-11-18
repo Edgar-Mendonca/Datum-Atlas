@@ -31,6 +31,7 @@ import { SynthPage } from "./synth";
 import { GrainsPage, MapsPage, PoleFiguresPage } from "./ebsd";
 import { ByGrainPage, StrainPage } from "./dic";
 import { GalvanicPage, KineticsPage, PourbaixPage } from "./corrosion";
+import { PatternsPage, PeaksPage } from "./xrd";
 import { setEngineDown } from "./graph";
 import { MODULES, PLANNED, moduleOf } from "./modules";
 import { feature } from "./features";
@@ -146,6 +147,8 @@ const App = () => {
               <Match when={view() === "pourbaix"}><PourbaixPage /></Match>
               <Match when={view() === "galvanic"}><GalvanicPage /></Match>
               <Match when={view() === "kinetics"}><KineticsPage /></Match>
+              <Match when={view() === "xrdpatterns"}><PatternsPage /></Match>
+              <Match when={view() === "xrdpeaks"}><PeaksPage /></Match>
               <Match when={view() === "elements"}><ElementsPage /></Match>
               <Match when={view() === "calc"}><CalcPage /></Match>
               <Match when={view() === "tensile"}><TensilePage /></Match>

@@ -273,4 +273,5 @@ pub fn answer(q: &Ask) -> Result<Answer, String> {
 }
 
 /// X-ray tube lines: [name, wavelength Å] (Kα, weighted mean of Kα1 and Kα2).
-pub const TUBES: &[(&str, f64)] = &[("Cu Kα", 1.5418), ("Co Kα", 1.7903), ("Mo Kα", 0.7107), ("Cr Kα", 2.2909), ("Fe Kα", 1.9373), ("Ag Kα", 0.5609)];
+/// X-ray tubes: the Kα doublet as one wavelength, (2·Kα1 + Kα2)/3, from NIST's X-ray transition energies (see `xrd::TUBES`).
+pub const TUBES: &[(&str, f64)] = &[("Cu Kα", 1.54187), ("Co Kα", 1.79028), ("Mo Kα", 0.71075), ("Cr Kα", 2.29103), ("Fe Kα", 1.93735), ("Ag Kα", 0.56089)];

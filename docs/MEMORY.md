@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.22** (released 2026-11-16: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.22). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.23** (released 2026-11-18: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.23). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -100,6 +100,7 @@ flowchart LR
 | `crates/core/src/ebsd.rs`, `ui/src/ebsd.tsx` | EBSD maps: reading exports, drawing maps (the open map lives in the shell); the EBSD module. |
 | `crates/core/src/orient.rs` | Orientations: Euler angles, symmetry, misorientation, textures, IPF colours (used by the generator and EBSD). |
 | `crates/core/src/synth.rs`, `ui/src/synth.tsx` | Synthetic grain maps; the Microstructure › Generator page. |
+| `crates/core/src/xrd.rs`, `ui/src/xrd.tsx` | Diffraction: pattern readers, processing, peak fits, Scherrer and Williamson–Hall; patterns kept in the project. |
 | `crates/core/src/corrosion.rs`, `data/corrosion.json`, `ui/src/corrosion.tsx` | Corrosion: E–pH diagrams from NBS ΔfG°, galvanic couples from typed potentials, kinetics, rate and allowance. |
 | `crates/core/src/research.rs`, `ui/src/kept.ts` | Research work kept in the project: packed, compressed data with info, fingerprint and page settings; the `Open` cache; page settings saved and put back. |
 | `py/`, `src-tauri/src/runtime.rs`, `src-tauri/src/py.rs`, `ui/src/graph.tsx` | The Python engine (copied from Datum Plot): runtime pack unpacked on first start, a JSON-line worker, matplotlib graphs from a spec (`py/atlas/graph.py`), the `Graph` component with hover, export and a fallback. |
@@ -221,12 +222,15 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.20** | Keep research work in the project | `crates/core/src/research.rs` (Item: info, fingerprint id, packed data as `Arc<str>`, settings; pack = JSON head + little-endian arrays, deflated with miniz_oxide, base64; `Open` cache unpacks once per data), `Project.research`, ops `Research` and `ResearchSet`, `Project::lite` for the window; shell and bridge read the map and field from the project; `ui/src/kept.ts` (`kept`, `keptId`, `keepSettings`, `forget`); Images, EBSD and DIC pages moved; bridge save/open for tests | ✅ |
 | **0.3.21** | Corrosion | `crates/core/src/corrosion.rs` (E–pH by lowest Gibbs energy per metal atom on a grid, water lines, galvanic couple from typed potentials, kinetics fits, Arrhenius, rate mm/y, allowance), `data/corrosion.json` (35 species of Fe, Cu, Zn, Al, Ni, Mg from the NBS tables 1982, source `nbs-1982`), `ui/src/corrosion.tsx` (E–pH, Galvanic, Kinetics; inputs kept in `ui.corrosion`), module Corrosion | ✅ |
 | **0.3.22** | Data clean-up | The licensed carbon-and-energy database removed (its owner licenses use inside software): metals from Nuss & Eckelman 2014 Table S38 by nominal composition, plastics/glass/wood/paper/concrete/bricks CO₂ from DESNZ 2024 material use; atlas-typ eco values and atlas-eco-est removed (based on it); recycling values rescaled; 15 datasheet sources (marketplaces, distributors, an ASTM summary, extruder sheets that say they copy an aggregator) removed and values restored to their earlier sources; check marks pruned; blocklist extended; eco audit counts CO₂ or energy alone | ✅ |
-| 0.3.23 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | 🔜 |
+| **0.3.23** | Diffraction 1: measured patterns | `crates/core/src/xrd.rs` (readers for text, .xrdml, .fxye; Savitzky–Golay, SNIP with mirrored ends, Rachinger Kα2, peak search by prominence, pseudo-Voigt Levenberg–Marquardt fit, Scherrer, Williamson–Hall; NIST Kα1/Kα2 of six anodes; a made-up FCC example), patterns kept in the project (`research.xrd`, one item holding all), `ui/src/xrd.tsx` (Patterns, Peaks), module Diffraction; crystal tube wavelengths from NIST | ✅ |
+| 0.3.24 | Diffraction 2: crystal structures | CIF files with space groups; accurate calculated patterns (PLAN-0.7 B). | 🔜 |
+| 0.3.25 | Diffraction 3: phase identification | Search–match against the COD; RIR fractions (PLAN-0.7 C, D1). | ⬜ |
+| 0.3.26 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | 🔜 |
 | 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. | ⬜ |
 | 0.4.1 | Research depth 2: active slip systems | A grain inspector, slip bands matched to traces, the relative displacement ratio. | ⬜ |
 | 0.4.2 | Research depth 3: slip bands and strain steps | Slip bands found automatically; several DIC strain steps in one experiment. | ⬜ |
 | 0.4.3 | Research depth 4: dislocations and boundaries | GND density, misorientation to the grain mean, distance to boundaries, Σ boundary labels, more slip systems. | ⬜ |
-| 0.4.4 | X-ray | Real X-ray peak heights and measured patterns over calculated ones. | ⬜ |
+| 0.4.4 | (X-ray: moved to the Diffraction series 0.3.23–0.3.25 and 0.5.x) | | — |
 | 0.4.5 | Elastic constants | Single-crystal elastic constants: moduli by direction, also per EBSD grain. | ⬜ |
 | 0.4.6 | Fit and statistics | Fit any table with uncertainties, statistics and t-tests, supply risk. | ⬜ |
 | 0.4.7 | Simulation export | Grain maps written as crystal-plasticity simulation input. | ⬜ |
@@ -629,8 +633,16 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - A materials researcher asked whether an open XRD analysis tool (measured patterns, phase identification against the COD, later Rietveld) is feasible in Datum. The COD is public domain (CC0, credit the authors), so it meets the data rule.
 - Wrote [PLAN-0.7.md](PLAN-0.7.md): ideas in six groups (measured patterns, calculated patterns from CIF, phase ID, quantitative, Rietveld, later extras), data and licences, where it lives (a Diffraction module in Atlas first), two roadmap orders, risks and eight questions. Waiting for the user's answers; nothing built.
 
+### 2026-11-18: Session 18, continued (0.3.23: Diffraction 1)
+- The user chose Order 1 of PLAN-0.7 (diffraction first); the other answers take the recommendations for now (module inside Atlas, text/.xrdml/.fxye first, Rietveld as 0.5.x); the COD pack question waits for 0.3.25.
+- Environment: physics.nist.gov added (user approved) for the X-ray transition energies (source `nist-xraytrans`).
+- Peak search first listed bumps on the tails of broad high-angle peaks; a prominence rule (standing out of the dips on both sides) fixed it. SNIP climbed under a peak at the end of the range; the pattern is now mirrored beyond its ends.
+- A screenshot showed the Peaks graph drawing one pattern's curves with another's peak marks (curves computed once inside a Show); fixed and covered by a UI check.
+- Released 0.3.23.
+
 ---
 
+- 2026-11-18: X-ray diffraction becomes a Datum Atlas module (PLAN-0.7), diffraction first (0.3.23–0.3.25), refinement as 0.5.x. Reference structures only from the COD (public domain); the licensed powder-diffraction database is never used.
 - 2026-11-16: No licensed database in any form: the carbon-and-energy database removed with every value derived from it. Embodied figures only from open sources (CC BY papers, government data); gaps elsewhere. Marketplaces, distributors, pages restating standards and producers' sheets that say they copy an aggregator are not sources; the blocklist enforces it.
 - 2026-11-16: Corrosion data only from primary public sources read directly (NBS tables via page images). Where none could be read (the galvanic series), the tool takes the user's own values instead of shipping unsourced numbers.
 - 2026-11-15: Research data (micrograph, EBSD map, DIC field) lives in the project file, compressed, not beside it as linked files: one file to send or archive, and it opens the same on another computer. The window never receives the packed data.
@@ -639,7 +651,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ## 5. Known limits and next steps
 
-**Next:** the user's answers to PLAN-0.7 (X-ray diffraction: order, scope of the first release, the COD reference pack); then 0.3.23 (diffraction or heat treatment, as the user decides).
+**Next:** 0.3.24: Diffraction 2: CIF files with space groups and accurate calculated patterns (open scattering-factor coefficients, NIST f′/f″); ask the COD pack question before 0.3.25.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

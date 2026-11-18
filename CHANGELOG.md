@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.23 — 2026-11-18
+
+A new Diffraction module, the first of a series: measured X-ray diffraction patterns, their peaks, and crystallite size and strain.
+
+**Patterns**
+- Open measured patterns: two columns of 2θ and counts (.xy, .csv, .dat, .txt), .xrdml files (the anode is read) and GSAS .fxye files. Up to twelve stay in the project.
+- Overlay or stack them, and scale each to 100 to compare shapes.
+
+**Peaks, size and strain**
+- Background taken off (SNIP), smoothing (Savitzky–Golay), Kα2 stripping (Rachinger), zero shift and range.
+- Peaks found and fitted with a pseudo-Voigt profile: 2θ, d, height, area, FWHM and shape; Peaks to CSV.
+- Crystallite size by the Scherrer equation with the instrument's broadening taken off, and size with microstrain from a Williamson–Hall plot.
+- Kα1 and Kα2 wavelengths of Cu, Co, Mo, Cr, Fe and Ag anodes from NIST's X-ray transition energies; the crystal calculators use the same values.
+- Example (made-up pattern): an invented FCC metal with known crystallite size and strain, to try the pages.
+
+**Checked**
+- Engine tests: each file format, smoothing that keeps a parabola, background removal (also at the ends of the range), Kα2 stripping, the example's peaks where they belong and its size and strain recovered.
+- UI tests: open, overlay, three silicon lines found at their angles, Williamson–Hall, CSV, the settings kept in the project.
+
 ## 0.3.22 — 2026-11-16
 
 A data clean-up: every embodied energy and CO₂ value now comes from an open source, and no value cites a marketplace or distributor any more.
