@@ -625,6 +625,10 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` â†’ CHANGELOG `## x.y.z â
 - Not done: the big job of re-referencing atlas-typ drafts, and the values cited to MIL-HDBK-5J and others that were never read page by page in this project.
 - Released 0.3.22.
 
+### 2026-11-18: Session 18, continued (PLAN-0.7: X-ray diffraction brainstorm)
+- A materials researcher asked whether an open XRD analysis tool (measured patterns, phase identification against the COD, later Rietveld) is feasible in Datum. The COD is public domain (CC0, credit the authors), so it meets the data rule.
+- Wrote [PLAN-0.7.md](PLAN-0.7.md): ideas in six groups (measured patterns, calculated patterns from CIF, phase ID, quantitative, Rietveld, later extras), data and licences, where it lives (a Diffraction module in Atlas first), two roadmap orders, risks and eight questions. Waiting for the user's answers; nothing built.
+
 ---
 
 - 2026-11-16: No licensed database in any form: the carbon-and-energy database removed with every value derived from it. Embodied figures only from open sources (CC BY papers, government data); gaps elsewhere. Marketplaces, distributors, pages restating standards and producers' sheets that say they copy an aggregator are not sources; the blocklist enforces it.
@@ -635,7 +639,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` â†’ CHANGELOG `## x.y.z â
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.23: Heat treatment and phase diagrams (decision on the phase-diagram engine, PLAN-0.6 #22); data: open eco figures for non-metals from the US LCI database, and re-referencing the draft values.
+**Next:** the user's answers to PLAN-0.7 (X-ray diffraction: order, scope of the first release, the COD reference pack); then 0.3.23 (diffraction or heat treatment, as the user decides).
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 
