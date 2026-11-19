@@ -52,12 +52,14 @@ pub fn build_dir(dir: &std::path::Path, date: &str) -> Result<(Pack, [usize; 4])
             if p.is_dir() { stack.push(p) } else if p.extension().is_some_and(|x| x == "cif") { files.push(p) }
         }
     }
+    // Each thread takes the next file as it finishes one, so a few large cells do not hold up one thread.
     let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
-    let chunk = files.len().div_ceil(threads).max(1);
+    let next = std::sync::atomic::AtomicUsize::new(0);
+    let (files, next) = (&files, &next);
     let parts: Vec<(Vec<Entry>, [usize; 4])> = std::thread::scope(|sc| {
-        files.chunks(chunk).map(|c| sc.spawn(move || {
+        (0..threads).map(|_| sc.spawn(move || {
             let (mut v, mut st) = (vec![], [0usize; 4]);
-            for p in c {
+            while let Some(p) = files.get(next.fetch_add(1, std::sync::atomic::Ordering::Relaxed)) {
                 let Some(cod) = p.file_stem().and_then(|s| s.to_str()).and_then(|s| s.parse::<u32>().ok()) else { st[3] += 1; continue };
                 let Ok(text) = std::fs::read(p).map(|b| String::from_utf8_lossy(&b).into_owned()) else { st[3] += 1; continue };
                 match entry(cod, &text) { Ok(e) if !e.lines.is_empty() => { v.push(e); st[0] += 1 } Err(e) if e == "organic" => st[1] += 1, Err(e) if e == "cell too large" => st[2] += 1, _ => st[3] += 1 }

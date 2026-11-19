@@ -365,17 +365,25 @@ pub fn pattern(p: &Phase, lambda: f64, anode: &str, max: f64, mono: f64) -> Resu
     let n = |x: f64| (x / dmin).ceil().min(200.0) as i32 + 1;
     let (nh, nk, nl) = (n(cell.a), n(cell.b), n(cell.c));
     if (2 * nh as i64 + 1) * (2 * nk as i64 + 1) * (2 * nl as i64 + 1) > 3_000_000 { return Err("Too many reflections: shorten the range of 2θ.".into()) }
-    let atoms: Vec<(u32, [f64; 3], f64, f64)> = unit_cell(p).into_iter().filter_map(|(e, x, o, b)| crate::elements::find(&e).map(|el| (el.z, x, o, b))).collect();
+    // Each element's scattering factor is worked out once per reflection, not once per atom.
+    let mut zs: Vec<u32> = vec![];
+    let atoms: Vec<(usize, [f64; 3], f64, f64)> = unit_cell(p).into_iter().filter_map(|(e, x, o, b)| crate::elements::find(&e).map(|el| {
+        let j = zs.iter().position(|&z| z == el.z).unwrap_or_else(|| { zs.push(el.z); zs.len() - 1 });
+        (j, x, o, b) })).collect();
+    let mut fz: Vec<Option<(f64, f64)>> = vec![None; zs.len()];
+    // Without anomalous scattering, hkl and its opposite have the same |F|² (Friedel's law): work out half.
+    let friedel = zs.iter().all(|z| scattering(*z, 0.1, anode).is_none_or(|f| f.1 == 0.0));
     let cm = (mono.to_radians()).cos().powi(2);
     let mut all: Vec<([i32; 3], f64, f64)> = vec![];
     for h in -nh..=nh { for k in -nk..=nk { for l in -nl..=nl {
-        if h == 0 && k == 0 && l == 0 { continue }
+        if h == 0 && k == 0 && l == 0 || friedel && [h, k, l] < [0, 0, 0] { continue }
         let d = cell.d([h, k, l]);
         if d < dmin { continue }
         let s = 0.5 / d;
         let (mut re, mut im) = (0.0, 0.0);
-        for (z, x, o, b) in &atoms {
-            let Some((fr, fi)) = scattering(*z, s, anode) else { continue };
+        for (f, z) in fz.iter_mut().zip(&zs) { *f = scattering(*z, s, anode) }
+        for (j, x, o, b) in &atoms {
+            let Some((fr, fi)) = fz[*j] else { continue };
             let w = o * (-b * s * s).exp();
             let ph = std::f64::consts::TAU * (h as f64 * x[0] + k as f64 * x[1] + l as f64 * x[2]);
             let (c, sn) = (ph.cos(), ph.sin());
@@ -383,7 +391,7 @@ pub fn pattern(p: &Phase, lambda: f64, anode: &str, max: f64, mono: f64) -> Resu
             im += w * (fr * sn + fi * c);
         }
         let f2 = re * re + im * im;
-        if f2 > 1e-6 { all.push(([h, k, l], d, f2)) }
+        if f2 > 1e-6 { all.push(([h, k, l], d, f2)); if friedel { all.push(([-h, -k, -l], d, f2)) } }
     }}}
     // Every reflection at the same spacing falls in one powder line: symmetry equivalents, and
     // forms that are not equivalent but share d (trigonal {101} and {011}, cubic {333} and {511}).
