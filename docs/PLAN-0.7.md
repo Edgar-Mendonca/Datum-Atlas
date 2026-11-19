@@ -114,7 +114,9 @@ The X-ray stages replace "0.4.4 X-ray" and "later: CIF". Two possible orders:
 ## 7. Decisions of 2026-11-18
 
 - **Order 1**: diffraction first (0.3.23–0.3.25), heat treatment at 0.3.26, refinement as a 0.5 series.
-- The other questions take the recommendations until the user says otherwise: a Diffraction module inside Atlas; text, .xrdml and .fxye files first; Rietveld last. The COD reference pack (download on first use, or in the installer; inorganic or all) is asked again before 0.3.25. Test patterns from the researcher, and the eco and re-referencing work between releases, also wait for the user.
+- The other questions take the recommendations until the user says otherwise: a Diffraction module inside Atlas; text, .xrdml and .fxye files first; Rietveld last. Test patterns from the researcher, and the eco and re-referencing work between releases, wait for the user.
+
+**2026-11-19:** the COD reference pack is **downloaded on first use** of Phase identification (a separate file on Atlas's own release page, checked against its checksum and kept on the computer; "Import pack file…" for computers without internet), and it holds the **inorganic entries only** to start; an organic pack can follow if users ask. The researcher has not shared test patterns: validation uses public data (NIST silicon and LaB₆ certificates, published examples) until real patterns come.
 
 ## 8. Questions for the user (asked 2026-11-18)
 

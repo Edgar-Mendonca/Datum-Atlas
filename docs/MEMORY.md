@@ -642,6 +642,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ---
 
+- 2026-11-19: COD reference pack downloaded on first use (own release asset, checksum, cached; import from a file offline), inorganic entries only to start. No test patterns from the researcher yet: public reference data for validation.
 - 2026-11-18: X-ray diffraction becomes a Datum Atlas module (PLAN-0.7), diffraction first (0.3.23–0.3.25), refinement as 0.5.x. Reference structures only from the COD (public domain); the licensed powder-diffraction database is never used.
 - 2026-11-16: No licensed database in any form: the carbon-and-energy database removed with every value derived from it. Embodied figures only from open sources (CC BY papers, government data); gaps elsewhere. Marketplaces, distributors, pages restating standards and producers' sheets that say they copy an aggregator are not sources; the blocklist enforces it.
 - 2026-11-16: Corrosion data only from primary public sources read directly (NBS tables via page images). Where none could be read (the galvanic series), the tool takes the user's own values instead of shipping unsourced numbers.
