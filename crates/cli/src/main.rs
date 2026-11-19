@@ -116,12 +116,25 @@ fn run(args: &[String]) -> Result<String, String> {
         }
         Some("microstructure") => { let d = database(args)?; Ok(datum_atlas_core::micro::draw(find(&d, arg(0, "a material id or name")?)?).svg) }
         Some("cod-pack") => {
-            // Build the phase-identification reference pack from a folder of COD .cif files.
+            // Build the phase-identification reference pack from a folder of COD .cif files;
+            // an optional part "i/n" builds only that share (joined later with cod-merge).
             let (dir, out, date) = (arg(0, "the folder of .cif files")?, arg(1, "the pack file to write")?, arg(2, "the COD release date, like 2025.02")?);
-            let (pack, st) = datum_atlas_core::phaseid::build_dir(std::path::Path::new(dir), date)?;
+            let shard = match pl.get(3) { None => None, Some(s) => Some(s.split_once('/').and_then(|(i, n)| Some((i.parse::<u32>().ok()?, n.parse::<u32>().ok()?)))
+                .filter(|(i, n)| i < n).ok_or(format!("The part must look like 2/8, not {s}."))?) };
+            let (pack, st) = datum_atlas_core::phaseid::build_dir(std::path::Path::new(dir), date, shard)?;
             let bytes = datum_atlas_core::phaseid::write(&pack);
             datum_atlas_core::doc::write_atomic(std::path::Path::new(out), &bytes)?;
             Ok(format!("{} entries kept, {} organic, {} cells too large, {} unreadable; {} written ({:.1} MB)", st[0], st[1], st[2], st[3], out, bytes.len() as f64 / 1e6))
+        }
+        Some("cod-merge") => {
+            // Join pack parts built with `cod-pack … i/n` into one pack.
+            let (out, date) = (arg(0, "the pack file to write")?, arg(1, "the COD release date, like 2025.02")?);
+            let parts = pl.get(2..).unwrap_or_default().iter().map(|f| std::fs::read(f).map_err(|e| format!("{f}: {e}")).and_then(|b| datum_atlas_core::phaseid::read(&b))).collect::<Result<Vec<_>, _>>()?;
+            if parts.is_empty() { return Err("Name the pack parts to join.".into()) }
+            let pack = datum_atlas_core::phaseid::merge(parts, date);
+            let bytes = datum_atlas_core::phaseid::write(&pack);
+            datum_atlas_core::doc::write_atomic(std::path::Path::new(out), &bytes)?;
+            Ok(format!("{} entries; {} written ({:.1} MB)", pack.entries.len(), out, bytes.len() as f64 / 1e6))
         }
         Some("props") => Ok(PROPS.iter().map(|p| format!("{:<12} {:<38} {}", p.key, p.name, if p.unit.is_empty() { p.kind } else { p.unit })).collect::<Vec<_>>().join("\n")),
         Some("goals") => Ok(goals::GOALS.iter().map(|g| format!("{:<22} {:<46} {}{}", g.id, g.name, g.index, if g.library { "  (library)" } else { "" })).collect::<Vec<_>>().join("\n")),

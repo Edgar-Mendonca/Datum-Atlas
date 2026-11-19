@@ -1,12 +1,14 @@
 # The phase-identification reference pack: the inorganic structures of the Crystallography Open
 # Database (public domain), reduced by datum-atlas-cli to their strongest powder lines, published as
 # a separate release (not an app version) that Datum Atlas downloads on first use of Phase ID.
+# Three stages, each with its own time limit: fetch and filter the archive once; build the pack in
+# eight parts side by side; join the parts and publish.
 name: COD reference pack
 
 on:
-  # Runs when tools/cod-pack.txt (the COD archive date) or the pack tools change, or by hand.
+  # Runs when tools/cod-pack.txt (the COD archive date) changes: edit it to rebuild the pack.
   push:
-    paths: [tools/cod-pack.txt, tools/cod_inorganic.py, tools/fetch_ranges.py, .github/workflows/cod-pack.yml]
+    paths: [tools/cod-pack.txt]
   workflow_dispatch:
     inputs:
       date:
@@ -18,25 +20,76 @@ permissions:
   contents: write
 
 jobs:
-  pack:
+  fetch:
     runs-on: ubuntu-latest
     timeout-minutes: 300
+    outputs:
+      date: ${{ steps.date.outputs.d }}
     steps:
       - uses: actions/checkout@v4
       - name: The COD date
-        run: echo "D=${{ inputs.date || '' }}" >> $GITHUB_ENV && if [ -z "${{ inputs.date }}" ]; then echo "D=$(tr -d '[:space:]' < tools/cod-pack.txt)" >> $GITHUB_ENV; fi
-      - uses: dtolnay/rust-toolchain@stable
-      - name: Build the command-line tool
-        run: cargo build --release -p datum-atlas-cli
+        id: date
+        run: |
+          D="${{ inputs.date }}"; [ -n "$D" ] || D=$(tr -d '[:space:]' < tools/cod-pack.txt)
+          echo "d=$D" >> $GITHUB_OUTPUT
+          curl -sSL https://www.crystallography.net/archives/LAST_RELEASE.txt || true
       - name: Stream the COD archive and keep the inorganic structures
         run: |
-          curl -sSL https://www.crystallography.net/archives/LAST_RELEASE.txt || true
           set -o pipefail
           python3 tools/fetch_ranges.py https://www.crystallography.net/archives/cod-cifs-mysql.tgz | gzip -dc | python3 tools/cod_inorganic.py cifs
           du -sh cifs
-      - name: Build the pack
+          tar -cf - cifs | zstd -T0 -10 -o cifs.tar.zst
+          ls -la cifs.tar.zst
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cifs
+          path: cifs.tar.zst
+          compression-level: 0
+          retention-days: 3
+
+  build:
+    needs: fetch
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      matrix:
+        part: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build the command-line tool
+        run: cargo build --release -p datum-atlas-cli
+      - uses: actions/download-artifact@v4
+        with:
+          name: cifs
+      - name: Build part ${{ matrix.part }} of 8
         run: |
-          ./target/release/datum-atlas-cli cod-pack cifs "cod-inorganic-$D.pack" "$D"
+          zstd -dc cifs.tar.zst | tar -xf -
+          ./target/release/datum-atlas-cli cod-pack cifs part-${{ matrix.part }}.pack "${{ needs.fetch.outputs.date }}" ${{ matrix.part }}/8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: part-${{ matrix.part }}
+          path: part-${{ matrix.part }}.pack
+          retention-days: 3
+
+  publish:
+    needs: [fetch, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      D: ${{ needs.fetch.outputs.date }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build the command-line tool
+        run: cargo build --release -p datum-atlas-cli
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: part-*
+          merge-multiple: true
+      - name: Join the parts
+        run: |
+          ./target/release/datum-atlas-cli cod-merge "cod-inorganic-$D.pack" "$D" part-*.pack
           sha256sum "cod-inorganic-$D.pack" > "cod-inorganic-$D.pack.sha256"
           cat "cod-inorganic-$D.pack.sha256"
           ls -la cod-inorganic-*

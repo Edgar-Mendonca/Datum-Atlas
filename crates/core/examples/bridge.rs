@@ -74,7 +74,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "cif_pattern" => { let q: datum_atlas_core::cif::PatAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let with: Vec<usize> = serde_json::from_value(a["with"].clone()).unwrap_or_default(); datum_atlas_core::cif::calculate(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize, a["over"].as_u64().map(|v| v as usize), &with, &q)? }
         // The reference pack of the tests: built from the COD files in tests_ui/cod ("download" builds it).
         "cod_status" => match &s.cod { Some(p) => json!({ "present": true, "entries": p.entries.len(), "date": p.date, "want": "test", "size": 0 }), None => json!({ "present": false, "want": "test" }) },
-        "cod_download" | "cod_import" => { let (p, _) = datum_atlas_core::phaseid::build_dir(std::path::Path::new(&format!("{}/../../tests_ui/cod", env!("CARGO_MANIFEST_DIR"))), "test")?; let n = p.entries.len(); s.cod = Some(p); json!({ "present": true, "entries": n, "date": "test", "want": "test", "size": 0 }) }
+        "cod_download" | "cod_import" => { let (p, _) = datum_atlas_core::phaseid::build_dir(std::path::Path::new(&format!("{}/../../tests_ui/cod", env!("CARGO_MANIFEST_DIR"))), "test", None)?; let n = p.entries.len(); s.cod = Some(p); json!({ "present": true, "entries": n, "date": "test", "want": "test", "size": 0 }) }
         "phase_search" => {
             let ps = datum_atlas_core::xrd::kept(&s.doc.p.research)?;
             let p = ps.get(a["index"].as_u64().unwrap_or(0) as usize).ok_or("That pattern is no longer open.")?;

@@ -41,15 +41,19 @@ pub fn entry(cod: u32, text: &str) -> Result<Entry, String> {
         volume: inf.volume as f32, density: (inf.density / 1000.0) as f32, elements: el, lines: ls.iter().map(|q| (q.d as f32, (q.f2 * q.mult as f64) as f32)).collect() })
 }
 
-/// Build a pack from every .cif file under `dir` (named by its COD number), on all cores.
+/// Build a pack from every .cif file under `dir` (named by its COD number), on all cores; with
+/// `shard` (i, n), only the files whose COD number leaves remainder i when divided by n, so the
+/// work can be split over several machines and joined with `merge`.
 /// Returns the pack and how many files were kept, organic, too large or unreadable.
-pub fn build_dir(dir: &std::path::Path, date: &str) -> Result<(Pack, [usize; 4]), String> {
+pub fn build_dir(dir: &std::path::Path, date: &str, shard: Option<(u32, u32)>) -> Result<(Pack, [usize; 4]), String> {
+    let cod_of = |p: &std::path::Path| p.file_stem().and_then(|s| s.to_str()).and_then(|s| s.parse::<u32>().ok());
     let mut files = vec![];
     let mut stack = vec![dir.to_path_buf()];
     while let Some(d) = stack.pop() {
         for f in std::fs::read_dir(&d).map_err(|e| format!("{}: {e}", d.display()))?.flatten() {
             let p = f.path();
-            if p.is_dir() { stack.push(p) } else if p.extension().is_some_and(|x| x == "cif") { files.push(p) }
+            let mine = shard.is_none_or(|(i, n)| cod_of(&p).is_none_or(|c| c % n.max(1) == i));
+            if p.is_dir() { stack.push(p) } else if p.extension().is_some_and(|x| x == "cif") && mine { files.push(p) }
         }
     }
     // Each thread takes the next file as it finishes one, so a few large cells do not hold up one thread.
@@ -60,7 +64,7 @@ pub fn build_dir(dir: &std::path::Path, date: &str) -> Result<(Pack, [usize; 4])
         (0..threads).map(|_| sc.spawn(move || {
             let (mut v, mut st) = (vec![], [0usize; 4]);
             while let Some(p) = files.get(next.fetch_add(1, std::sync::atomic::Ordering::Relaxed)) {
-                let Some(cod) = p.file_stem().and_then(|s| s.to_str()).and_then(|s| s.parse::<u32>().ok()) else { st[3] += 1; continue };
+                let Some(cod) = cod_of(p) else { st[3] += 1; continue };
                 let Ok(text) = std::fs::read(p).map(|b| String::from_utf8_lossy(&b).into_owned()) else { st[3] += 1; continue };
                 match entry(cod, &text) { Ok(e) if !e.lines.is_empty() => { v.push(e); st[0] += 1 } Err(e) if e == "organic" => st[1] += 1, Err(e) if e == "cell too large" => st[2] += 1, _ => st[3] += 1 }
             }
@@ -72,6 +76,14 @@ pub fn build_dir(dir: &std::path::Path, date: &str) -> Result<(Pack, [usize; 4])
     for (v, s) in parts { entries.extend(v); for k in 0..4 { stats[k] += s[k] } }
     entries.sort_by_key(|e| e.cod);
     Ok((Pack { date: date.into(), entries }, stats))
+}
+
+/// Join packs built from parts of one archive (see `build_dir`'s shard) into one pack.
+pub fn merge(parts: Vec<Pack>, date: &str) -> Pack {
+    let mut entries: Vec<Entry> = parts.into_iter().flat_map(|p| p.entries).collect();
+    entries.sort_by_key(|e| e.cod);
+    entries.dedup_by_key(|e| e.cod);
+    Pack { date: date.into(), entries }
 }
 
 // ---------- the pack file ----------
@@ -305,9 +317,13 @@ pub mod t {
     }
     #[test]
     fn builds_from_a_folder() {
-        let (p, st) = build_dir(std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests_ui/cod/")), "test").unwrap();
+        let (p, st) = build_dir(std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests_ui/cod/")), "test", None).unwrap();
         assert_eq!((p.entries.len(), st), (12, [12, 0, 0, 0]));
         assert_eq!(p, test_pack());
+        // Built in three parts and joined, it is the same pack.
+        let parts: Vec<Pack> = (0..3).map(|i| build_dir(std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests_ui/cod/")), "test", Some((i, 3))).unwrap().0).collect();
+        assert!(parts.iter().all(|q| q.entries.len() < 12));
+        assert_eq!(merge(parts, "test"), p);
     }
     #[test]
     fn finds_a_mixture() {
