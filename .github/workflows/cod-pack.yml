@@ -4,9 +4,9 @@
 name: COD reference pack
 
 on:
-  # Runs when tools/cod-pack.txt (the COD archive date) changes, or by hand.
+  # Runs when tools/cod-pack.txt (the COD archive date) or the pack tools change, or by hand.
   push:
-    paths: [tools/cod-pack.txt]
+    paths: [tools/cod-pack.txt, tools/cod_inorganic.py, tools/fetch_ranges.py, .github/workflows/cod-pack.yml]
   workflow_dispatch:
     inputs:
       date:
@@ -31,7 +31,8 @@ jobs:
       - name: Stream the COD archive and keep the inorganic structures
         run: |
           curl -sSL https://www.crystallography.net/archives/LAST_RELEASE.txt || true
-          curl -sSL --retry 3 https://www.crystallography.net/archives/cod-cifs-mysql.tgz | gzip -dc | python3 tools/cod_inorganic.py cifs
+          set -o pipefail
+          python3 tools/fetch_ranges.py https://www.crystallography.net/archives/cod-cifs-mysql.tgz | gzip -dc | python3 tools/cod_inorganic.py cifs
           du -sh cifs
       - name: Build the pack
         run: |
