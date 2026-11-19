@@ -37,7 +37,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 3. **Select**: limits (max service temperature ≥ 150 °C, price ≤ 5 USD/kg, recyclable), a **selection line** for a performance index (E^½/ρ for a light, stiff beam is a line of slope 2), a band, a box, a drawn shape, or whole families left out.
 4. **Rank, compare and report**: the materials that pass, ranked, and the reason every other one fails; the best side by side; a report that documents the choice.
 
-## Modules (0.3.24)
+## Modules (0.3.25)
 
 | Module | What it is for |
 | --- | --- |
@@ -55,7 +55,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 
 On the way: heat treatment and phase diagrams.
 
-## Features (0.3.24)
+## Features (0.3.25)
 
 - **About 250 materials** from every family: metals, polymers, elastomers, ceramics and glasses, composites, foams and natural materials. **Every value has a reference**, compiled from open and public sources only (government handbooks, NIST, USGS, the Wood Handbook, open datasets, university notes, producers' datasheets and typical textbook ranges). No proprietary database is used. Gaps stay gaps, never zero. 73 values are checked against published datasheets so far (marked ✓).
 - **Durability ratings** for every material (water, acids, alkalis, sunlight, fire), and fatigue strength and resistivity for the metals.
@@ -96,7 +96,7 @@ On the way: heat treatment and phase diagrams.
 
 ## Coming next
 
-0.3.25 Diffraction 3: phase identification. 0.3.26 Heat treatment and phase diagrams. 0.4.0 Research depth 1: DIC and EBSD together. 0.4.1 Research depth 2: active slip systems. 0.4.2 Research depth 3: slip bands and strain steps. Then the rest of the 0.4 series, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
+0.3.26 Heat treatment and phase diagrams. 0.4.0 Research depth 1: DIC and EBSD together. 0.4.1 Research depth 2: active slip systems. 0.4.2 Research depth 3: slip bands and strain steps. 0.4.3 Research depth 4: dislocations and boundaries. Then the rest of the 0.4 series, step by step. See Help › Roadmap in the app, or [docs/MEMORY.md](docs/MEMORY.md).
 
 ## Command line
 

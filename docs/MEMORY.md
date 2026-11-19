@@ -7,7 +7,7 @@
 | --- | --- |
 | **Product** | Datum Atlas: a Windows desktop app for materials selection and property charts (the property-chart method): find the right material, understand why (performance indices, trade-offs), compare candidates, document the decision |
 | **Family** | Third Datum app after Datum Plan (`Edgar-Mendonca/Datum-Plan`) and Datum Plot (`Edgar-Mendonca/Datum-Plot`). Design and workflow: [Datum-Plan/docs/FAMILY.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/FAMILY.md). Brief: [Datum-Plan/docs/briefs/DATUM-ATLAS.md](https://github.com/Edgar-Mendonca/Datum-Plan/blob/HEAD/docs/briefs/DATUM-ATLAS.md). Plan's code is the reference implementation: copy, don't reinvent. |
-| **Current version** | **0.3.24** (released 2026-11-19: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.24). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
+| **Current version** | **0.3.25** (released 2026-11-19: https://github.com/Edgar-Mendonca/Datum-Atlas/releases/tag/v0.3.25). Plans: [PLAN-0.6.md](PLAN-0.6.md) (research brainstorm), [PLAN-0.1.md](PLAN-0.1.md), [PLAN-0.1.1.md](PLAN-0.1.1.md), [PLAN-0.2.0.md](PLAN-0.2.0.md), [PLAN-0.3.0.md](PLAN-0.3.0.md), [PLAN-0.4.0.md](PLAN-0.4.0.md) (0.3.1–0.3.10) |
 | **Installer** | NSIS `.exe`, per-user: **2.9 MB** (0.3.0 and 0.2.0; 2.2 MB in 0.1.0); UI bundle 182 kB JS |
 | **Repo** | `Edgar-Mendonca/Datum-Atlas` · working branch `claude/bold-volta-90lu2c` |
 | **Identity** | Accent **Violet** (`--blue #6C4AB6`, `--blue2 #5A3C9C`, `--sky #C9B8EE`, `--pale #F0EBFA`, `--sel #E5DCF6`, `--sel2 #CDBDEE`; dark `--blue #A58BEA`, File sidebar dark `#3A2766`) · files `.datlas` (projects), `.datdb` (user databases) · identifier `com.edgarmendonca.datumatlas` · installer `DatumAtlas-x.y.z-setup.exe` · logo `docs/brand/datum-atlas-icon.svg` (since 0.3.5: a violet globe whose surface is a grain map, meridian and equator, one amber `#F2B233` grain; icons made with `npx tauri icon` from a 1024 px render) |
@@ -100,6 +100,7 @@ flowchart LR
 | `crates/core/src/ebsd.rs`, `ui/src/ebsd.tsx` | EBSD maps: reading exports, drawing maps (the open map lives in the shell); the EBSD module. |
 | `crates/core/src/orient.rs` | Orientations: Euler angles, symmetry, misorientation, textures, IPF colours (used by the generator and EBSD). |
 | `crates/core/src/synth.rs`, `ui/src/synth.tsx` | Synthetic grain maps; the Microstructure › Generator page. |
+| `crates/core/src/phaseid.rs`, `src-tauri/src/codpack.rs`, `tools/cod_inorganic.py`, `.github/workflows/cod-pack.yml`, `ui/src/phaseid.tsx` | Phase identification: the COD reference pack (build, download, import) and search–match with fractions. |
 | `crates/core/src/cif.rs`, `data/xray.json`, `tools/xray_data.py`, `ui/src/phases.tsx` | Crystal structures from CIF and calculated patterns; scattering data from the Livermore photon library. |
 | `crates/core/src/xrd.rs`, `ui/src/xrd.tsx` | Diffraction: pattern readers, processing, peak fits, Scherrer and Williamson–Hall; patterns kept in the project. |
 | `crates/core/src/corrosion.rs`, `data/corrosion.json`, `ui/src/corrosion.tsx` | Corrosion: E–pH diagrams from NBS ΔfG°, galvanic couples from typed potentials, kinetics, rate and allowance. |
@@ -225,7 +226,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 | **0.3.22** | Data clean-up | The licensed carbon-and-energy database removed (its owner licenses use inside software): metals from Nuss & Eckelman 2014 Table S38 by nominal composition, plastics/glass/wood/paper/concrete/bricks CO₂ from DESNZ 2024 material use; atlas-typ eco values and atlas-eco-est removed (based on it); recycling values rescaled; 15 datasheet sources (marketplaces, distributors, an ASTM summary, extruder sheets that say they copy an aggregator) removed and values restored to their earlier sources; check marks pruned; blocklist extended; eco audit counts CO₂ or energy alone | ✅ |
 | **0.3.23** | Diffraction 1: measured patterns | `crates/core/src/xrd.rs` (readers for text, .xrdml, .fxye; Savitzky–Golay, SNIP with mirrored ends, Rachinger Kα2, peak search by prominence, pseudo-Voigt Levenberg–Marquardt fit, Scherrer, Williamson–Hall; NIST Kα1/Kα2 of six anodes; a made-up FCC example), patterns kept in the project (`research.xrd`, one item holding all), `ui/src/xrd.tsx` (Patterns, Peaks), module Diffraction; crystal tube wavelengths from NIST | ✅ |
 | **0.3.24** | Diffraction 2: crystal structures | `crates/core/src/cif.rs` (CIF tokenizer and reader: cell, symmetry operations, sites, occupancy, B/U/aniso, credit fields; unit cell expansion; patterns with form factors + f′/f″, Debye–Waller, multiplicity, LP with monochromator; profile with Kα2; structures kept in `research.cif`; overlay on a measured pattern), `data/xray.json` (f0 every 0.02 Å⁻¹ to 2, f′ f″ at six anodes, 98 elements) from ENDF/B-VIII.0 photo-atomic by `tools/xray_data.py`, `ui/src/phases.tsx` (Diffraction › Phases) | ✅ |
-| 0.3.25 | Diffraction 3: phase identification | Search–match against the COD; RIR fractions (PLAN-0.7 C, D1). | 🔜 |
+| **0.3.25** | Diffraction 3: phase identification | `crates/core/src/phaseid.rs` (pack format: magic, version, zlib body with its checksum; entries with 30 strongest lines as d and |F|²m; `build_dir` on all cores; search–match score from strong lines found × √(share explained) × closeness; accepted phases explain peaks; RIR fractions from |F|²mLP/(V²ρ); `run`), `tools/cod_inorganic.py` + `.github/workflows/cod-pack.yml` (fetch: stream the COD archive, keep inorganic; build: eight parts with `cod-pack … i/8`; publish: `cod-merge`, release `cod-pack-DATE`, not latest), `src-tauri/src/codpack.rs` (download with SHA-256, import, load once), updater counts only vX.Y.Z tags, `ui/src/phaseid.tsx` (Diffraction › Phase ID), `xrd::example_mix`, 12 COD test files in tests_ui/cod; powder lines merge every reflection at the same d | ✅ |
 | 0.3.26 | Heat treatment and phase diagrams | Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments. | 🔜 |
 | 0.4.0 | Research depth 1: DIC and EBSD together | Point-pair alignment of DIC onto EBSD, DIC masks and finite strain, a tensor toolkit. | ⬜ |
 | 0.4.1 | Research depth 2: active slip systems | A grain inspector, slip bands matched to traces, the relative displacement ratio. | ⬜ |
@@ -648,6 +649,14 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 - Slip: the new page was first written over ui/src/structures.tsx (the Microstructure page); restored from git at once, the new page is ui/src/phases.tsx, labelled Phases. The structure list was hidden: the page is a flex column and a scrolling box shrank to nothing; the Diffraction pages' sections no longer shrink.
 - Released 0.3.24.
 
+### 2026-11-19: Session 18, continued (0.3.25: Diffraction 3)
+- COD access: host www.crystallography.net added (user approved). The full archive is 17–25 GB; the pack is built on GitHub by streaming the .tgz through a filter that keeps inorganic .cif files (no C–H compounds), so the archive is never stored. The first build ran past an hour on large cells; calculated patterns are now 5× faster (one scattering-factor lookup per element, Friedel pairs once) and the workflow has three stages, each with its own time limit: fetch and filter once (kept as an artifact), eight parts built side by side (`cod-pack … i/8`), joined by `cod-merge` and published. It runs when tools/cod-pack.txt changes (a manual start needs the workflow on the default branch).
+- Test files: twelve common phases fetched by formula and space group; three first picks were wrong (an old anatase with a = 3.73 Å, a compressed zincite, a silicon with a = 5.381 Å) and were replaced by standard entries.
+- Found while testing: calculated patterns merged only reflections of equal d *and* equal |F|², so quartz's (101) and (011) showed as two lines; every reflection at one d now forms one powder line. Fluorite's (111) and (220) are nearly equal in theory (checked by hand).
+- The pack is its own release (tag cod-pack-DATE, not latest); the updater now ignores tags that are not vX.Y.Z.
+- The pack (2025.02): 76,661 inorganic structures, 19.5 MB; about 1.4 % of the inorganic files are skipped as unreadable by the CIF reader and 0.4 % as cells over 20,000 Å³ (gaps to look at later). The release can be created only by a run started by hand (a push-started run's token is refused), so the pack workflow is started from the Actions tab or the API.
+- Released 0.3.25.
+
 ---
 
 - 2026-11-19: COD reference pack downloaded on first use (own release asset, checksum, cached; import from a file offline), inorganic entries only to start. No test patterns from the researcher yet: public reference data for validation.
@@ -660,7 +669,7 @@ Bump `src-tauri/Cargo.toml` + `crates/core/Cargo.toml` → CHANGELOG `## x.y.z �
 
 ## 5. Known limits and next steps
 
-**Next:** 0.3.25: Diffraction 3: phase identification: build the inorganic COD reference pack (download on first use, checksum, import from a file), search–match with an element filter, RIR phase fractions.
+**Next:** 0.3.26: Heat treatment and phase diagrams (decision on the phase-diagram engine, PLAN-0.6 #22); the pack can be rebuilt from a newer COD archive by changing tools/cod-pack.txt.
 
 **Not yet checked on a real Windows PC:** printing/Save as PDF in WebView2, PNG export fonts (SVG drawn as an image may fall back from IBM Plex), the user database path, the updater install.
 

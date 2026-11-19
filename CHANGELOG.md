@@ -1,5 +1,30 @@
 # Changelog
 
+## 0.3.25 — 2026-11-19
+
+Diffraction can now say which phases are in your sample: phase identification against the Crystallography Open Database, with rough phase fractions.
+
+**Phase ID**
+- Your pattern's peaks (found with the Peaks page's settings) are compared with the strongest lines of every inorganic structure in the Crystallography Open Database (public domain); candidates are ranked by how many of their strong lines are found, how much of the pattern they explain and how close the lines sit.
+- An element filter: must contain, may also contain, must not contain; and the position tolerance.
+- Click a candidate to see its lines under your pattern; accept it, and the search looks for what explains the rest. Accepted phases are kept with the project.
+- Rough weight fractions of the accepted phases by the reference intensity ratio, worked out from their structures.
+- Example: a made-up pattern of corundum and quartz (60:40 by mass), from two COD structures.
+
+**The reference pack**
+- 76,661 inorganic structures in 19.5 MB, built from the COD archive by a workflow kept in the repository and published as its own release.
+- Downloaded the first time Phase ID is opened, checked against its checksum and kept on the computer; works offline afterwards. On a computer without internet, import the file.
+- It is not an app update: the updater now only counts app versions.
+
+**Also**
+- Calculated patterns are about five times faster on large cells.
+- Calculated patterns: reflections that share a spacing but are not symmetry-equivalent (such as quartz's {101} and {011}) now fall in one powder line, as they do in a measurement.
+
+**Checked**
+- Engine tests: twelve real COD structures give the strongest lines where textbooks put them; a mixture is found as its two phases and its 60:40 fractions come back within a few per cent, also the whole way from the made-up pattern's fitted peaks; a damaged pack is refused; the element filter.
+- The real pack searched with the example: corundum comes first among all 76,661 structures, quartz first once corundum is accepted, and the fractions come back as 61:39 (a search takes about 0.2 s).
+- UI tests: download (test pack), the example, search, accept, fractions, the element filter, kept in the project.
+
 ## 0.3.24 — 2026-11-19
 
 Diffraction gets crystal structures: open CIF files and see their accurate powder patterns, alone or over your measured patterns.

@@ -7,7 +7,7 @@
   "tagline": "A materials workbench: referenced materials data, property charts and selection, eco audit, process selection and microstructures, in one app for Windows.",
   "for": "Design and materials engineers, and students.",
   "about": [
-    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material and measures your micrographs and generates synthetic grain structures; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; EBSD opens orientation maps; DIC turns displacement fields into strain maps and links them to EBSD grains; Testing turns your tensile, hardness, fatigue and creep data into results and into a material of your own; Diffraction reads measured X-ray patterns, fits their peaks and works out crystallite size and strain, and calculates the patterns of crystal structures from CIF files; Corrosion draws E–pH (Pourbaix) diagrams from referenced thermodynamic data and works out galvanic couples, corrosion kinetics, rates and allowances.",
+    "Datum Atlas is a materials workbench: modules that share one library of referenced materials. Library holds every material with its sources; Select puts them on property charts, where a design goal such as a light, stiff beam sets the chart, the selection line and the limits; Eco adds up energy and CO₂ through a product's life; Make finds the processes that can make the part and what it costs; Microstructure shows the typical structure of every class of material and measures your micrographs and generates synthetic grain structures; Crystal has the elements on a periodic table, compositions, and crystal calculators from spacings to X-ray patterns; EBSD opens orientation maps; DIC turns displacement fields into strain maps and links them to EBSD grains; Testing turns your tensile, hardness, fatigue and creep data into results and into a material of your own; Diffraction reads measured X-ray patterns, fits their peaks and works out crystallite size and strain, and calculates the patterns of crystal structures from CIF files, and identifies the phases of a sample against the Crystallography Open Database; Corrosion draws E–pH (Pourbaix) diagrams from referenced thermodynamic data and works out galvanic couples, corrosion kinetics, rates and allowances.",
     "Every material is a bubble spanning its range of values. Limits, index lines, bands, boxes and shapes narrow the field; the materials that pass are ranked, and every one that fails says why. Compare the best, print a report, and add, import and share your own materials. corrosion and heat treatment modules are on the way."
   ],
   "steps": [
@@ -46,7 +46,8 @@
     "A Corrosion module: E–pH (Pourbaix) diagrams from the NBS thermodynamic tables, galvanic couples, and kinetics with rates and allowance.",
     "Every embodied energy and CO₂ value from an open source (open-access metals data, UK government factors); gaps where none has been read yet.",
     "A Diffraction module: measured X-ray patterns with background, Kα2 stripping, fitted peaks, crystallite size and strain; phase identification against the open crystallography database follows.",
-    "Crystal structures from CIF files with accurate calculated X-ray patterns (open photon data for the scattering factors), laid over your measured patterns."
+    "Crystal structures from CIF files with accurate calculated X-ray patterns (open photon data for the scattering factors), laid over your measured patterns.",
+    "Phase identification against the Crystallography Open Database: search–match with an element filter and rough phase fractions; the reference pack downloads once and works offline."
   ],
   "screenshots": [
     "docs/images/chart.png",
@@ -58,17 +59,9 @@
   ],
   "roadmap": [
     {
-      "v": "0.3.25",
-      "title": "Diffraction 3: phase identification",
-      "when": "Next",
-      "items": [
-        "Search–match against the Crystallography Open Database (public domain), with an element filter; rough phase fractions."
-      ]
-    },
-    {
       "v": "0.3.26",
       "title": "Heat treatment and phase diagrams",
-      "when": "Soon",
+      "when": "Next",
       "items": [
         "Hardenability, tempering, welding preheat; binary phase diagrams with the lever rule from published thermodynamic assessments."
       ]
