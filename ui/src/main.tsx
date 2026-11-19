@@ -33,6 +33,7 @@ import { ByGrainPage, StrainPage } from "./dic";
 import { GalvanicPage, KineticsPage, PourbaixPage } from "./corrosion";
 import { PatternsPage, PeaksPage } from "./xrd";
 import { PhasesPage } from "./phases";
+import { PhaseIdPage } from "./phaseid";
 import { setEngineDown } from "./graph";
 import { MODULES, PLANNED, moduleOf } from "./modules";
 import { feature } from "./features";
@@ -151,6 +152,7 @@ const App = () => {
               <Match when={view() === "xrdpatterns"}><PatternsPage /></Match>
               <Match when={view() === "xrdpeaks"}><PeaksPage /></Match>
               <Match when={view() === "xrdphases"}><PhasesPage /></Match>
+              <Match when={view() === "xrdid"}><PhaseIdPage /></Match>
               <Match when={view() === "elements"}><ElementsPage /></Match>
               <Match when={view() === "calc"}><CalcPage /></Match>
               <Match when={view() === "tensile"}><TensilePage /></Match>

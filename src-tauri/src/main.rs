@@ -1,6 +1,7 @@
 //! Datum Atlas desktop shell: owns the open selection project, the materials database (built in
 //! plus the user's own), files, options and recovery, and talks to the window.
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
+mod codpack;
 mod py;
 mod runtime;
 mod update;
@@ -390,6 +391,33 @@ async fn cif_pattern(st: State<'_, St>, index: usize, over: Option<usize>, with:
     let r = st.lock().doc.p.research.clone();
     datum_atlas_core::cif::calculate(&r, index, over, &with, &ask)
 }
+
+/// The phase-identification reference pack: on this computer or not.
+#[tauri::command]
+async fn cod_status(app: AppHandle) -> Value { tauri::async_runtime::spawn_blocking(move || codpack::status(&app)).await.unwrap_or_default() }
+
+/// Download the reference pack (checked against its SHA-256).
+#[tauri::command]
+async fn cod_download(app: AppHandle) -> R<Value> { tauri::async_runtime::spawn_blocking(move || codpack::download(&app)).await.map_err(|e| e.to_string())? }
+
+/// Import the reference pack from a file.
+#[tauri::command]
+async fn cod_import(app: AppHandle, path: Option<String>) -> R<Option<Value>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Reference pack", &["pack"])) else { return Ok(None) };
+    tauri::async_runtime::spawn_blocking(move || codpack::import(&app, &path)).await.map_err(|e| e.to_string())?.map(Some)
+}
+
+/// Phase identification of pattern `index`: peaks with the Peaks settings, candidates, fractions.
+#[tauri::command]
+async fn phase_search(app: AppHandle, st: State<'_, St>, index: usize, ask: datum_atlas_core::xrd::Ask, query: datum_atlas_core::phaseid::Query) -> R<Value> {
+    let ps = datum_atlas_core::xrd::kept(&st.lock().doc.p.research)?;
+    let p = ps.get(index).cloned().ok_or("That pattern is no longer open.")?;
+    tauri::async_runtime::spawn_blocking(move || { let pack = codpack::pack(&app)?; datum_atlas_core::phaseid::run(&pack, &p, &ask, &query) }).await.map_err(|e| e.to_string())?
+}
+
+/// A made-up pattern of corundum and quartz, to try phase identification.
+#[tauri::command]
+fn xrd_example_mix(st: State<St>) -> R<Value> { let mut a = st.lock(); let it = datum_atlas_core::xrd::add(&a.doc.p.research, datum_atlas_core::xrd::example_mix()?)?; keep(&mut a, "xrd", Some(it)) }
 
 /// Corrosion: the metals with E–pH data and the notes on the data.
 #[tauri::command]
@@ -974,7 +1002,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, corrosion_info, pourbaix, galvanic, kinetics, xrd_open, xrd_example, xrd_remove, xrd_analyse, xrd_plot, cif_open, cif_example, cif_remove, cif_pattern, graph, graph_export, engine, restart_engine,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, corrosion_info, pourbaix, galvanic, kinetics, xrd_open, xrd_example, xrd_remove, xrd_analyse, xrd_plot, cif_open, cif_example, cif_remove, cif_pattern, cod_status, cod_download, cod_import, phase_search, xrd_example_mix, graph, graph_export, engine, restart_engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

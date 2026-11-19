@@ -23,6 +23,7 @@ pub mod orient;
 pub mod process;
 pub mod xrd;
 pub mod cif;
+pub mod phaseid;
 pub mod corrosion;
 pub mod research;
 pub mod select;

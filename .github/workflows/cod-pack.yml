@@ -1,0 +1,53 @@
+# The phase-identification reference pack: the inorganic structures of the Crystallography Open
+# Database (public domain), reduced by datum-atlas-cli to their strongest powder lines, published as
+# a separate release (not an app version) that Datum Atlas downloads on first use of Phase ID.
+name: COD reference pack
+
+on:
+  # Runs when tools/cod-pack.txt (the COD archive date) changes, or by hand.
+  push:
+    paths: [tools/cod-pack.txt]
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "The COD archive's release date (see LAST_RELEASE.txt), like 2025.02"
+        required: true
+        default: "2025.02"
+
+permissions:
+  contents: write
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+      - name: The COD date
+        run: echo "D=${{ inputs.date || '' }}" >> $GITHUB_ENV && if [ -z "${{ inputs.date }}" ]; then echo "D=$(tr -d '[:space:]' < tools/cod-pack.txt)" >> $GITHUB_ENV; fi
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build the command-line tool
+        run: cargo build --release -p datum-atlas-cli
+      - name: Stream the COD archive and keep the inorganic structures
+        run: |
+          curl -sSL https://www.crystallography.net/archives/LAST_RELEASE.txt || true
+          curl -sSL --retry 3 https://www.crystallography.net/archives/cod-cifs-mysql.tgz | gzip -dc | python3 tools/cod_inorganic.py cifs
+          du -sh cifs
+      - name: Build the pack
+        run: |
+          ./target/release/datum-atlas-cli cod-pack cifs "cod-inorganic-$D.pack" "$D"
+          sha256sum "cod-inorganic-$D.pack" > "cod-inorganic-$D.pack.sha256"
+          cat "cod-inorganic-$D.pack.sha256"
+          ls -la cod-inorganic-*
+      - uses: softprops/action-gh-release@v2
+        with:
+          tag_name: cod-pack-${{ env.D }}
+          target_commitish: ${{ github.sha }}
+          name: COD reference pack ${{ env.D }}
+          body: |
+            The phase-identification reference pack of Datum Atlas: the inorganic structures of the Crystallography Open Database (archive of ${{ env.D }}), each reduced to its strongest powder lines. The COD and its data are in the public domain (CC0); please credit the original authors of the structures you use (shown with every match in Datum Atlas).
+            Datum Atlas downloads this file itself the first time Phase ID is opened; it is not an app update.
+          make_latest: false
+          files: |
+            cod-inorganic-${{ env.D }}.pack
+            cod-inorganic-${{ env.D }}.pack.sha256

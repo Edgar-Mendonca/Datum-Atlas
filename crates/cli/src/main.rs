@@ -115,6 +115,14 @@ fn run(args: &[String]) -> Result<String, String> {
             Ok(if args.iter().any(|a| a == "--csv") { export::csv(&datum_atlas_core::tensile::table(&o)) } else { pretty(&tensile_out(&o)) })
         }
         Some("microstructure") => { let d = database(args)?; Ok(datum_atlas_core::micro::draw(find(&d, arg(0, "a material id or name")?)?).svg) }
+        Some("cod-pack") => {
+            // Build the phase-identification reference pack from a folder of COD .cif files.
+            let (dir, out, date) = (arg(0, "the folder of .cif files")?, arg(1, "the pack file to write")?, arg(2, "the COD release date, like 2025.02")?);
+            let (pack, st) = datum_atlas_core::phaseid::build_dir(std::path::Path::new(dir), date)?;
+            let bytes = datum_atlas_core::phaseid::write(&pack);
+            datum_atlas_core::doc::write_atomic(std::path::Path::new(out), &bytes)?;
+            Ok(format!("{} entries kept, {} organic, {} cells too large, {} unreadable; {} written ({:.1} MB)", st[0], st[1], st[2], st[3], out, bytes.len() as f64 / 1e6))
+        }
         Some("props") => Ok(PROPS.iter().map(|p| format!("{:<12} {:<38} {}", p.key, p.name, if p.unit.is_empty() { p.kind } else { p.unit })).collect::<Vec<_>>().join("\n")),
         Some("goals") => Ok(goals::GOALS.iter().map(|g| format!("{:<22} {:<46} {}{}", g.id, g.name, g.index, if g.library { "  (library)" } else { "" })).collect::<Vec<_>>().join("\n")),
         Some("processes") => Ok(process::processes().iter().map(|p| format!("{:<18} {:<44} {}", p.id, p.name, p.group)).collect::<Vec<_>>().join("\n")),

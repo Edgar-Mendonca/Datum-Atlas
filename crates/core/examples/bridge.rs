@@ -27,7 +27,7 @@ fn py(w: &mut Option<PyW>, q: Value) -> Result<Value, String> {
     if r["ok"] == true { Ok(r) } else { Err(r["error"].as_str().unwrap_or("The graph engine failed.").to_string()) }
 }
 
-struct St { py: Option<PyW>, open: Open, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
+struct St { cod: Option<datum_atlas_core::phaseid::Pack>, py: Option<PyW>, open: Open, doc: Doc, user: Database, others: Vec<Database>, db: Db, rev: u64, db_rev: u64 }
 
 /// A file of the UI tests, when the window asks without a path (the shell would open a dialog).
 fn fixture(a: &Value, name: &str) -> String { a["path"].as_str().map(String::from).unwrap_or_else(|| format!("{}/../../tests_ui/{name}", env!("CARGO_MANIFEST_DIR"))) }
@@ -72,6 +72,17 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "cif_example" => { let it = datum_atlas_core::cif::add(&s.doc.p.research, "rock salt (example).cif", &datum_atlas_core::cif::example())?; keep(s, "cif", it)? }
         "cif_remove" => { let it = datum_atlas_core::cif::remove(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize)?; s.doc.apply(Op::Research { which: "cif".into(), item: it.map(Box::new) })?; out(s) }
         "cif_pattern" => { let q: datum_atlas_core::cif::PatAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let with: Vec<usize> = serde_json::from_value(a["with"].clone()).unwrap_or_default(); datum_atlas_core::cif::calculate(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize, a["over"].as_u64().map(|v| v as usize), &with, &q)? }
+        // The reference pack of the tests: built from the COD files in tests_ui/cod ("download" builds it).
+        "cod_status" => match &s.cod { Some(p) => json!({ "present": true, "entries": p.entries.len(), "date": p.date, "want": "test", "size": 0 }), None => json!({ "present": false, "want": "test" }) },
+        "cod_download" | "cod_import" => { let (p, _) = datum_atlas_core::phaseid::build_dir(std::path::Path::new(&format!("{}/../../tests_ui/cod", env!("CARGO_MANIFEST_DIR"))), "test")?; let n = p.entries.len(); s.cod = Some(p); json!({ "present": true, "entries": n, "date": "test", "want": "test", "size": 0 }) }
+        "phase_search" => {
+            let ps = datum_atlas_core::xrd::kept(&s.doc.p.research)?;
+            let p = ps.get(a["index"].as_u64().unwrap_or(0) as usize).ok_or("That pattern is no longer open.")?;
+            let ask: datum_atlas_core::xrd::Ask = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?;
+            let q: datum_atlas_core::phaseid::Query = serde_json::from_value(a["query"].clone()).map_err(|e| e.to_string())?;
+            datum_atlas_core::phaseid::run(s.cod.as_ref().ok_or("The reference pack is not on this computer yet.")?, p, &ask, &q)?
+        }
+        "xrd_example_mix" => { let it = datum_atlas_core::xrd::add(&s.doc.p.research, datum_atlas_core::xrd::example_mix()?)?; keep(s, "xrd", it)? }
         "xrd_open" => { let p = fixture(a, "pattern.xy"); let pat = datum_atlas_core::xrd::parse(&std::fs::read_to_string(&p).map_err(|e| e.to_string())?, "pattern.xy")?; let it = datum_atlas_core::xrd::add(&s.doc.p.research, pat)?; keep(s, "xrd", it)? }
         "xrd_example" => { let it = datum_atlas_core::xrd::add(&s.doc.p.research, datum_atlas_core::xrd::example()?)?; keep(s, "xrd", it)? }
         "xrd_remove" => { let it = datum_atlas_core::xrd::remove(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize)?; s.doc.apply(Op::Research { which: "xrd".into(), item: it.map(Box::new) })?; out(s) }
@@ -146,7 +157,7 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
 fn main() {
     let user = Database { format: FORMAT, name: "My materials".into(), ..Default::default() };
     let d = Db::new(db::builtin(), Some(&user));
-    let mut s = St { py: None, open: Open::default(), doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
+    let mut s = St { cod: None, py: None, open: Open::default(), doc: Doc::new(templates::build(&d, Some("blank")).unwrap()), db: d, user, others: vec![], rev: 0, db_rev: 1 };
     let stdout = std::io::stdout();
     for line in std::io::stdin().lock().lines().map_while(Result::ok) {
         let q: Value = serde_json::from_str(&line).unwrap_or_default();

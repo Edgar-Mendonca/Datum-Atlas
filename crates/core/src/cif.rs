@@ -385,13 +385,21 @@ pub fn pattern(p: &Phase, lambda: f64, anode: &str, max: f64, mono: f64) -> Resu
         let f2 = re * re + im * im;
         if f2 > 1e-6 { all.push(([h, k, l], d, f2)) }
     }}}
-    // Reflections of equal spacing and |F|² form one line (symmetry equivalents, or overlaps).
+    // Every reflection at the same spacing falls in one powder line: symmetry equivalents, and
+    // forms that are not equivalent but share d (trigonal {101} and {011}, cubic {333} and {511}).
+    // The line is labelled by its strongest family; `f2` is the mean |F|² of its reflections.
     all.sort_by(|a, b| b.1.total_cmp(&a.1).then(b.2.total_cmp(&a.2)));
     let mut out: Vec<Line> = vec![];
+    let mut best: Vec<f64> = vec![];
     for (h, d, f2) in all {
-        match out.iter_mut().rev().take(8).find(|q| (q.d - d).abs() < 1e-6 * d && (q.f2 - f2).abs() < 1e-5 * f2.max(1.0)) {
-            Some(q) => { q.mult += 1; if better(h, q.hkl) { q.hkl = h } }
-            None => { let th = (lambda / 2.0 / d).asin(); out.push(Line { hkl: h, mult: 1, d, two_theta: 2.0 * th.to_degrees(), f2, intensity: 0.0 }) }
+        match out.last_mut().filter(|q| (q.d - d).abs() < 1e-6 * d) {
+            Some(q) => {
+                let n = best.len() - 1;
+                q.f2 = (q.f2 * q.mult as f64 + f2) / (q.mult + 1) as f64;
+                q.mult += 1;
+                if f2 > best[n] * (1.0 + 1e-5) || ((f2 - best[n]).abs() <= 1e-5 * best[n] && better(h, q.hkl)) { q.hkl = h; best[n] = f2.max(best[n]) }
+            }
+            None => { let th = (lambda / 2.0 / d).asin(); out.push(Line { hkl: h, mult: 1, d, two_theta: 2.0 * th.to_degrees(), f2, intensity: 0.0 }); best.push(f2) }
         }
     }
     for q in &mut out {
@@ -499,5 +507,27 @@ mod t {
         let y = profile(&lines, &x, 0.1, 1.5405929, 1.5444274);
         let i0 = ((27.44 - 25.0) / 0.02) as usize;
         assert!(y[i0] > 90.0 && y[i0 + 4] > 30.0);
+    }
+}
+
+#[cfg(test)]
+mod cod_files {
+    use super::*;
+    /// Real structures from the Crystallography Open Database (public domain), in tests_ui/cod:
+    /// each strongest line with Cu Kα1 where the textbooks put it.
+    #[test]
+    fn strongest_lines_of_known_phases() {
+        let dir = concat!(env!("CARGO_MANIFEST_DIR"), "/../../tests_ui/cod/");
+        let cases = [("1000017", "Al2 O3", 35.15, [1, 0, 4]), ("2300370", "O2 Si", 26.64, [1, 0, 1]), ("1530150", "O2 Ti", 27.45, [1, 1, 0]), ("1530151", "O2 Ti", 25.3, [1, 0, 1]),
+            ("1011240", "Fe2 O3", 33.15, [1, 0, 4]), ("1010369", "Fe3 O4", 35.45, [3, 1, 1]), ("1547350", "C Ca O3", 29.4, [1, 0, 4]), ("7132177", "Cl Na", 31.7, [2, 0, 0]),
+            ("1000053", "Mg O", 42.9, [2, 0, 0]), ("1000043", "Ca F2", 28.27, [1, 1, 1]), ("2300112", "O Zn", 36.25, [1, 0, 1]), ("9011998", "Si", 28.44, [1, 1, 1])];
+        for (id, formula, tt, _) in cases {
+            let p = parse(&std::fs::read_to_string(format!("{dir}{id}.cif")).unwrap(), id).unwrap_or_else(|e| panic!("{id}: {e}"));
+            assert_eq!(p.formula, formula, "{id}");
+            let ls = pattern(&p, 1.5405929, "Cu", 90.0, 0.0).unwrap();
+            // The expected line is the strongest, or within 15 % of it (fluorite's (111) and (220) are nearly equal in theory).
+            let near = ls.iter().find(|q| (q.two_theta - tt).abs() < 0.15).unwrap_or_else(|| panic!("{id} {formula}: no line at {tt}°"));
+            assert!(near.intensity > 85.0, "{id} {formula}: the line at {tt}° has {:.1} % of the strongest", near.intensity);
+        }
     }
 }

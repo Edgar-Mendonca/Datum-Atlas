@@ -341,6 +341,40 @@ pub fn for_plot(r: &Research) -> Result<Vec<serde_json::Value>, String> {
     }).collect())
 }
 
+/// A made-up pattern to try phase identification: corundum and quartz, 60 and 40 % by mass,
+/// from their structures in the Crystallography Open Database (entries 1000017 and 2300370, in
+/// data/examples), with Cu Kα1 and Kα2, peak widths of a 50 nm powder, a background and noise.
+pub fn example_mix() -> Result<Pattern, String> {
+    let (l1, l2) = tube("Cu").unwrap_or((1.5406, 1.5444));
+    let x: Vec<f64> = (0..4001).map(|i| 15.0 + i as f64 * 0.02).collect();
+    let mut pk = vec![0.0; x.len()];
+    for (text, w) in [(include_str!("../../../data/examples/cod-1000017-corundum.cif"), 0.6), (include_str!("../../../data/examples/cod-2300370-quartz.cif"), 0.4)] {
+        let p = crate::cif::parse(text, "")?;
+        let inf = crate::cif::info(&p);
+        let k = w * 2.0e9 / (inf.volume * inf.volume * inf.density / 1000.0);
+        for q in crate::cif::pattern(&p, l1, "Cu", 100.0, 0.0)? {
+            // Absolute heights: |F|²·m·LP scaled by weight fraction / (V²ρ), as in a real mixture.
+            let th = (q.two_theta / 2.0).to_radians();
+            let lp = (1.0 + (2.0 * th).cos().powi(2)) / (th.sin().powi(2) * th.cos());
+            let h = k * q.f2 * q.mult as f64 * lp / 1.0e4;
+            for (lam, r) in [(l1, 1.0), (l2, 0.5)] {
+                let s = lam / 2.0 / q.d;
+                if s >= 1.0 { continue }
+                let c = 2.0 * s.asin().to_degrees();
+                let wd = (0.9 * lam / (500.0 * s.asin().cos())).to_degrees().max(0.06);
+                for (i, &t) in x.iter().enumerate() { if (t - c).abs() < 3.0 { pk[i] += pv(t, c, h * r, wd, 0.4) } }
+            }
+        }
+    }
+    // Counts like a real scan: the strongest peak about 8000 above a falling background.
+    let top = pk.iter().cloned().fold(0.0, f64::max).max(1e-9);
+    let y: Vec<f64> = x.iter().zip(&pk).map(|(&t, &v)| 40.0 + 500.0 * (-(t - 15.0) / 10.0).exp() + v / top * 8000.0).collect();
+    let mut seed = 777u64;
+    let mut rnd = || { seed ^= seed << 13; seed ^= seed >> 7; seed ^= seed << 17; (seed >> 11) as f64 / (1u64 << 53) as f64 };
+    let y = y.into_iter().map(|v| { let z = (0..12).map(|_| rnd()).sum::<f64>() - 6.0; (v + z * v.sqrt()).max(0.0).round() }).collect();
+    Ok(Pattern { name: "Example: corundum + quartz (made-up pattern)".into(), x, y, anode: "Cu".into(), notes: vec!["A made-up pattern of a 60:40 mixture by mass, calculated from two structures of the Crystallography Open Database (1000017, 2300370).".into()] })
+}
+
 /// A made-up pattern to try the pages: a cubic phase's peaks (from the crystal engine) broadened by
 /// 40 nm crystallites and 0.1 % microstrain, Cu Kα1 and Kα2, a curved background and counting noise.
 pub fn example() -> Result<Pattern, String> {

@@ -5,7 +5,7 @@ use sha2::{Digest, Sha256};
 use std::io::{Read, Write};
 use tauri::{AppHandle, Emitter};
 
-const REPO: &str = "Edgar-Mendonca/Datum-Atlas";
+pub const REPO: &str = "Edgar-Mendonca/Datum-Atlas";
 
 #[derive(Serialize)]
 pub struct Info {
@@ -21,7 +21,7 @@ pub struct Info {
     page: String,
 }
 
-fn agent() -> ureq::Agent {
+pub fn agent() -> ureq::Agent {
     ureq::AgentBuilder::new()
         .timeout_connect(std::time::Duration::from_secs(10))
         .timeout_read(std::time::Duration::from_secs(30))
@@ -31,6 +31,9 @@ fn agent() -> ureq::Agent {
 }
 
 /// 0.3.0-beta.2 → [0, 3, 0, 0, 2]; 0.3.0 → [0, 3, 0, 1, 0], so a release beats its betas.
+/// An app version's tag: v and three numbers.
+pub fn is_app(tag: &str) -> bool { tag.strip_prefix('v').is_some_and(|v| v.split('.').count() == 3 && v.split('.').all(|n| !n.is_empty() && n.bytes().all(|b| b.is_ascii_digit()))) }
+
 fn parts(v: &str) -> Vec<u64> {
     let v = v.trim_start_matches('v');
     let (main, pre) = v.split_once('-').unwrap_or((v, ""));
@@ -51,7 +54,8 @@ pub fn check(beta: bool) -> Result<Info, String> {
         Ok(r) => {
             let v: serde_json::Value = r.into_json().map_err(|e| e.to_string())?;
             match v.as_array() {
-                Some(list) => match list.iter().filter(|r| !r["draft"].as_bool().unwrap_or(false)).max_by(|a, b| parts(a["tag_name"].as_str().unwrap_or("")).cmp(&parts(b["tag_name"].as_str().unwrap_or("")))) {
+                // Only app versions (tags vX.Y.Z): the phase-identification data pack has releases of its own.
+                Some(list) => match list.iter().filter(|r| !r["draft"].as_bool().unwrap_or(false) && r["tag_name"].as_str().is_some_and(is_app)).max_by(|a, b| parts(a["tag_name"].as_str().unwrap_or("")).cmp(&parts(b["tag_name"].as_str().unwrap_or("")))) {
                     Some(r) => r.clone(),
                     None => return Ok(none(page)),
                 },
@@ -62,6 +66,7 @@ pub fn check(beta: bool) -> Result<Info, String> {
         Err(ureq::Error::Status(c, _)) => return Err(format!("GitHub answered {c}. Try again later.")),
         Err(_) => return Err("Could not reach GitHub. Check your internet connection.".into()),
     };
+    if !rel["tag_name"].as_str().is_some_and(is_app) { return Ok(none(page)) }
     let latest = rel["tag_name"].as_str().unwrap_or("").trim_start_matches('v').to_string();
     let assets = rel["assets"].as_array().cloned().unwrap_or_default();
     let find = |suffix: &str| assets.iter().find(|a| a["name"].as_str().is_some_and(|n| n.to_lowercase().ends_with(suffix)));
@@ -192,4 +197,13 @@ pub fn guide(app: &AppHandle) -> Result<std::path::PathBuf, String> {
     #[cfg(not(windows))]
     let _ = std::process::Command::new("xdg-open").arg(&path).spawn();
     Ok(path)
+}
+
+#[cfg(test)]
+mod t {
+    #[test]
+    fn only_app_versions_count() {
+        assert!(super::is_app("v0.3.25") && super::is_app("v1.0.0"));
+        assert!(!super::is_app("cod-pack-2025.02") && !super::is_app("v1.0") && !super::is_app("v1.0.x") && !super::is_app("0.3.25"));
+    }
 }
