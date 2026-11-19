@@ -68,6 +68,10 @@ fn handle(s: &mut St, cmd: &str, a: &Value) -> Result<Value, String> {
         "synth_ebsd" => json!(datum_atlas_core::synth::ebsd_text(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
         "ipf_key" => json!(datum_atlas_core::orient::ipf_key(a["crystal"].as_str().unwrap_or("cubic"), 40)),
         "synth_csv" => json!(datum_atlas_core::synth::csv(&serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?)?),
+        "cif_open" => { let p = fixture(a, "rutile.cif"); let it = datum_atlas_core::cif::add(&s.doc.p.research, "rutile.cif", &std::fs::read_to_string(&p).map_err(|e| e.to_string())?)?; keep(s, "cif", it)? }
+        "cif_example" => { let it = datum_atlas_core::cif::add(&s.doc.p.research, "rock salt (example).cif", &datum_atlas_core::cif::example())?; keep(s, "cif", it)? }
+        "cif_remove" => { let it = datum_atlas_core::cif::remove(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize)?; s.doc.apply(Op::Research { which: "cif".into(), item: it.map(Box::new) })?; out(s) }
+        "cif_pattern" => { let q: datum_atlas_core::cif::PatAsk = serde_json::from_value(a["ask"].clone()).map_err(|e| e.to_string())?; let with: Vec<usize> = serde_json::from_value(a["with"].clone()).unwrap_or_default(); datum_atlas_core::cif::calculate(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize, a["over"].as_u64().map(|v| v as usize), &with, &q)? }
         "xrd_open" => { let p = fixture(a, "pattern.xy"); let pat = datum_atlas_core::xrd::parse(&std::fs::read_to_string(&p).map_err(|e| e.to_string())?, "pattern.xy")?; let it = datum_atlas_core::xrd::add(&s.doc.p.research, pat)?; keep(s, "xrd", it)? }
         "xrd_example" => { let it = datum_atlas_core::xrd::add(&s.doc.p.research, datum_atlas_core::xrd::example()?)?; keep(s, "xrd", it)? }
         "xrd_remove" => { let it = datum_atlas_core::xrd::remove(&s.doc.p.research, a["index"].as_u64().unwrap_or(0) as usize)?; s.doc.apply(Op::Research { which: "xrd".into(), item: it.map(Box::new) })?; out(s) }

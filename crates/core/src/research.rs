@@ -8,12 +8,14 @@ use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::sync::Arc;
 
-pub const KINDS: [&str; 4] = ["image", "ebsd", "dic", "xrd"];
+pub const KINDS: [&str; 5] = ["image", "ebsd", "dic", "xrd", "cif"];
 
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Research { pub image: Option<Item>, pub ebsd: Option<Item>, pub dic: Option<Item>, /// X-ray patterns (all of them in one item).
-    pub xrd: Option<Item> }
+    pub xrd: Option<Item>,
+    /// Crystal structures (CIF texts, all in one item).
+    pub cif: Option<Item> }
 
 /// One piece of kept work: what the pages show about it (`info`), a fingerprint of the data (`id`,
 /// so a page knows when it changed), the packed data and the page settings.
@@ -23,12 +25,12 @@ pub struct Item { pub info: Value, pub id: String, pub data: Arc<str>, pub setti
 
 impl Research {
     pub fn slot(&mut self, which: &str) -> Result<&mut Option<Item>, String> {
-        match which { "image" => Ok(&mut self.image), "ebsd" => Ok(&mut self.ebsd), "dic" => Ok(&mut self.dic), "xrd" => Ok(&mut self.xrd), _ => Err(format!("No research slot “{which}”.")) }
+        match which { "image" => Ok(&mut self.image), "ebsd" => Ok(&mut self.ebsd), "dic" => Ok(&mut self.dic), "xrd" => Ok(&mut self.xrd), "cif" => Ok(&mut self.cif), _ => Err(format!("No research slot “{which}”.")) }
     }
     /// The same, without the packed data (for the window).
     pub fn lite(&self) -> Self {
         let f = |i: &Option<Item>| i.as_ref().map(|i| Item { data: Arc::from(""), ..i.clone() });
-        Self { image: f(&self.image), ebsd: f(&self.ebsd), dic: f(&self.dic), xrd: f(&self.xrd) }
+        Self { image: f(&self.image), ebsd: f(&self.ebsd), dic: f(&self.dic), xrd: f(&self.xrd), cif: f(&self.cif) }
     }
 }
 
@@ -97,6 +99,21 @@ impl Item {
             if x.len() != y.len() || x.is_empty() { return Err(DAMAGED.to_string()) }
             Ok(crate::xrd::Pattern { name: st(&m["name"]), anode: st(&m["anode"]), notes: serde_json::from_value(m["notes"].clone()).unwrap_or_default(), x, y })
         }).collect()
+    }
+}
+
+impl Item {
+    /// Crystal structures: each CIF's text, with what the window shows about it in `info`.
+    pub fn cifs(texts: &[(String, String)], settings: serde_json::Value) -> Self {
+        let info = json!(texts.iter().map(|(name, t)| crate::cif::summary(t, name)).collect::<Vec<_>>());
+        let head = json!(texts.iter().map(|(n, _)| n).collect::<Vec<_>>());
+        Self { settings, ..Self::new(info, head, &texts.iter().map(|(_, t)| t.as_bytes().to_vec()).collect::<Vec<_>>()) }
+    }
+    pub fn to_cifs(&self) -> Result<Vec<(String, String)>, String> {
+        let (h, p) = unpack(&self.data)?;
+        let names = h.as_array().ok_or(DAMAGED)?;
+        if names.len() != p.len() { return Err(DAMAGED.into()) }
+        names.iter().zip(p).map(|(n, b)| Ok((st(n), String::from_utf8(b).map_err(|_| DAMAGED)?))).collect()
     }
 }
 

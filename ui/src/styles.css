@@ -975,3 +975,6 @@ h1 .help, h2 .help, h3 .help, h4 .help { margin-left: 4px; }
 .xrdpage .xset input[type=number] { width: 78px; }
 .xrdpage .xpeaks tr.off td { color: var(--text2); }
 @media (max-width: 900px) { .xrdpage .xgrid, .xrdpage .xgrid + .xgrid { grid-template-columns: 1fr; } }
+.xrdpage .clist tr { cursor: pointer; } .xrdpage .clist tr.on td { background: var(--sel, rgba(108,74,182,.08)); }
+.xrdpage .cwith { display: flex; flex-direction: column; gap: 2px; }
+.xrdpage > * { flex-shrink: 0; }

@@ -3,7 +3,7 @@
 // feature ships, set its release to the shipping version and replace its planned command.
 import site from "../../docs/site.json";
 
-export const VERSION_NOW = "0.3.23";
+export const VERSION_NOW = "0.3.24";
 /** Releases out so far; the coming ones are read from docs/site.json (the family site reads it too). */
 const PAST: Record<string, string> = {
   "0.1.0": "Database, datasheets, property charts and selection", "0.1.1": "Design goals, units, search, bar charts, sources and ? help",
@@ -33,6 +33,7 @@ const PAST: Record<string, string> = {
   "0.3.21": "A Corrosion module: E–pH diagrams, galvanic couples, kinetics",
   "0.3.22": "Data clean-up: open sources for embodied energy and CO₂, producers' datasheets only",
   "0.3.23": "A Diffraction module: measured X-ray patterns, peaks, crystallite size and strain",
+  "0.3.24": "Crystal structures from CIF files with accurate calculated X-ray patterns",
 };
 export const RELEASES: Record<string, string> = { ...PAST, ...Object.fromEntries(site.roadmap.map(r => [r.v, r.title])) };
 /** For each coming release: when (Next, Soon, Later, Goal) and what it brings. */
@@ -106,7 +107,7 @@ export const FEATURES: Feature[] = [
   ["H4", "Synthetic structures", "0.3.12", "Generate 2D grain structures with size spreads, phases, pores, orientations and texture."],
   ["H5", "EBSD", "0.3.14", "Orientation maps, grains, boundaries and twins, local misorientation, pole figures, Schmid factors."],
   ["H6", "DIC", "0.3.17", "Strain maps from displacement fields, statistics, and strain by grain linked to EBSD, with slip traces."],
-  ["H9", "Diffraction", "0.3.23", "Measured X-ray patterns: background, Kα2, peaks, crystallite size and strain; CIF and phase identification follow."],
+  ["H9", "Diffraction", "0.3.23", "Measured X-ray patterns: background, Kα2, peaks, crystallite size and strain; crystal structures from CIF files with calculated patterns; phase identification follows."],
   ["H7", "Corrosion", "0.3.21", "E–pH diagrams from referenced thermodynamic data, galvanic couples, kinetics, rates and allowance."],
   ["H8", "Heat treatment", "0.3.26", "Hardenability, tempering, welding preheat, and phase diagrams with the lever rule."],
 ];

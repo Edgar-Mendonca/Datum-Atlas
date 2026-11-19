@@ -10,7 +10,7 @@ const srv = http.createServer((q, r) => {
   const f = path.join(root, q.url === "/" ? "index.html" : decodeURIComponent(q.url.split("?")[0]));
   fs.readFile(f, (e, b) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { "content-type": types[path.extname(f)] ?? "application/octet-stream" }); r.end(b); });
 });
-const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC", "By grain": "DIC", "E–pH": "Corrosion", Galvanic: "Corrosion", Kinetics: "Corrosion", Patterns: "Diffraction", Peaks: "Diffraction" };
+const PAGE_MOD = { Setup: "Select", Charts: "Select", Stages: "Select", Results: "Select", Compare: "Select", Index: "Select", Report: "Select", Browse: "Library", Datasheet: "Library", Data: "Library", Sources: "Library", "Eco audit": "Eco", Eco: "Eco", Process: "Make", Processes: "Make", Structures: "Microstructure", Elements: "Crystal", Lattice: "Crystal", Tensile: "Testing", Hardness: "Testing", Fatigue: "Testing", Creep: "Testing", Images: "Microstructure", Generator: "Microstructure", Maps: "EBSD", Grains: "EBSD", "Pole figures": "EBSD", "Strain maps": "DIC", "By grain": "DIC", "E–pH": "Corrosion", Galvanic: "Corrosion", Kinetics: "Corrosion", Patterns: "Diffraction", Peaks: "Diffraction", Phases: "Diffraction" };
 /** Opens a page: switches module first when the page is in another module. */
 const goTo = async (p, t) => {
   if (t === "Eco") t = "Eco audit";
@@ -42,7 +42,7 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.addInitScript(() => {
     const opts = { theme: "light", autosave: 0, beta: false, openLast: false, labels: false, guides: true, dpi: 300, paper: "A4", landscape: true, company: "", logo: "" };
     const fixed = { options: opts, startup_file: null, recovery: null, check_update: null, recent: [], version: "test", copy_text: null, save_file: null, set_options: undefined, export_results: "C:/Selection results.xlsx", export_database: "C:/My materials.datdb", guide: "C:/Users/me/Downloads/Datum Atlas Guide.pdf" };
-    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "corrosion_info", "pourbaix", "galvanic", "kinetics", "xrd_open", "xrd_example", "xrd_remove", "xrd_analyse", "xrd_plot", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
+    const engine = ["state", "apply", "history", "new_project", "templates", "database", "save_material", "delete_material", "goal_list", "databases", "open_database", "close_database", "import_preview", "import_materials", "eco_data", "substitutes", "processes", "microstructure", "elements", "composition", "crystal", "crystal_info", "tensile_read", "tensile_example", "lab_example", "test_material", "image_analyse", "image_example", "image_keep", "image_kept", "synth_generate", "synth_csv", "synth_ebsd", "ipf_key", "ebsd_open", "ebsd_example", "ebsd_draw", "ebsd_grains", "ebsd_figure", "dic_open", "dic_example", "dic_draw", "dic_profile", "dic_link", "dic_link_example", "corrosion_info", "pourbaix", "galvanic", "kinetics", "xrd_open", "xrd_example", "xrd_remove", "xrd_analyse", "xrd_plot", "cif_open", "cif_example", "cif_remove", "cif_pattern", "graph", "graph_export", "engine", "restart_engine", "save", "open"];
     window.__calls = [];
     window.__TAURI__ = { core: { invoke: async (c, a) => {
       window.__calls.push([c, a]);
@@ -409,6 +409,28 @@ const ask = (cmd, args) => new Promise(ok => { waiting.push(ok); eng.stdin.write
   await p.waitForTimeout(700);
   check("the peak settings are kept with the patterns", await p.evaluate(async () => (await window.__TAURI__.core.invoke("state")).project.research.xrd?.settings?.peaks?.sel === 1));
   await shot("xrd-peaks");
+  // 0.3.24 Structures: a CIF (rutile) and the example (rock salt), calculated patterns, over a measured pattern.
+  const cidle = async () => { let quiet = 0; for (let k = 0; k < 300 && quiet < 4; k++) { await p.waitForTimeout(150); quiet = (await p.$(".xrdpage .cbusy")) ? 0 : quiet + 1; } };
+  await goTo(p, "Phases");
+  check("Phases starts empty and points to the open database", (await p.textContent(".xrdpage .tempty")).includes("Crystallography Open Database"));
+  await p.click(".xrdpage .copen"); await p.waitForSelector(".xrdpage .clist"); await cidle();
+  const clist = await p.textContent(".xrdpage .clist");
+  check("a CIF is read: rutile, its space group, cell, 6 atoms in the cell, density 4.25", clist.includes("Rutile") && clist.includes("P 42/m n m") && clist.includes("4.5937") && clist.includes("Z = 2") && clist.includes("4.248"), clist.slice(0, 300));
+  await p.waitForFunction(() => document.querySelectorAll(".xrdpage .cpeaks tbody tr").length > 5, null, { timeout: 20000 }).catch(() => {});
+  const first = await p.$$eval(".xrdpage .cpeaks tbody tr", rows => rows.map(r => [...r.querySelectorAll("td")].map(t => t.textContent)));
+  const strongest = first.reduce((a, b) => parseFloat(b[4]) > parseFloat(a[4]) ? b : a);
+  check("rutile's strongest line is (110) at 27.44° with Cu Kα", strongest[0] === "1 1 0" && Math.abs(parseFloat(strongest[3]) - 27.44) < 0.05, JSON.stringify(strongest));
+  check("the calculated pattern is drawn", (await graphOf(".xrdpage", "Intensity")).includes("Intensity"));
+  await p.click(".xrdpage .cex"); await cidle();
+  await p.waitForFunction(() => (document.querySelector(".xrdpage .cpeaks tbody tr td")?.textContent ?? "") === "1 1 1", null, { timeout: 20000 }).catch(() => {});
+  const salt = await p.$$eval(".xrdpage .cpeaks tbody tr", rows => rows.map(r => [...r.querySelectorAll("td")].map(t => t.textContent)));
+  check("rock salt: (200) strongest with multiplicity 6, (111) weak, no (100)", salt.find(r => r[0] === "2 0 0")?.[1] === "6" && parseFloat(salt.find(r => r[0] === "2 0 0")[4]) === 100 && parseFloat(salt.find(r => r[0] === "1 1 1")[4]) < 30 && !salt.some(r => r[0] === "1 0 0"), JSON.stringify(salt.slice(0, 4)));
+  await p.selectOption(".xrdpage .cover", "1"); await cidle();
+  await p.waitForFunction(() => (document.querySelector(".xrdpage .pgraph .gsvg svg")?.textContent ?? "").includes("calculated"), null, { timeout: 60000 }).catch(() => {});
+  check("calculated patterns laid over a measured one", (await p.textContent(".xrdpage .pgraph .gsvg")).includes("(calculated)"));
+  await p.click(".xrdpage .ccsv"); await p.waitForTimeout(200);
+  check("the lines go to a CSV file", await p.evaluate(() => window.__calls.some(c => c[0] === "save_file" && String(c[1].data).startsWith("h,k,l,Multiplicity"))));
+  await shot("xrd-structures");
   await goTo(p, "Browse");
   check("each module shows only its pages, and its ribbon tabs", !(await p.$('.side button[title="Charts"]')) && !(await p.$('.tabs button:text-is("Chart")')) && !!(await p.$('.tabs button:text-is("Data")')));
   await goTo(p, "Charts");

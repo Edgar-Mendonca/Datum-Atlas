@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.3.24 — 2026-11-19
+
+Diffraction gets crystal structures: open CIF files and see their accurate powder patterns, alone or over your measured patterns.
+
+**Phases**
+- Open crystal structures as CIF files, for instance from the Crystallography Open Database (public domain): cell, symmetry operations, atom sites with occupancy and thermal motion. Up to 24 stay in the project.
+- The list shows each structure's space group, cell, atoms in the cell and Z, density, and its source (authors, journal, database number) to credit.
+- The calculated pattern: positions from Bragg's law; heights from the structure factor with angle-dependent atomic scattering factors and the anomalous part for your anode, occupancy and Debye–Waller factors, multiplicity and Lorentz–polarisation (with a monochromator angle if you have one). Kα2 included; lines to CSV.
+- Lay one or more calculated patterns over a measured one.
+- Example (rock salt), written out from the crystal module's textbook cell.
+
+**Data**
+- Atomic form factors and anomalous scattering for 98 elements from the Livermore Evaluated Photon Data Library (the photo-atomic part of ENDF/B-VIII.0, U.S. public data), sampled by a script kept in the repository.
+
+**Checked**
+- Engine tests: the form factor of iron equals the published table; CIF reading (quotes, text fields, symmetry operations, displacements); rutile's strongest line (110) at 27.44° with its forbidden reflections absent; rock salt's (200) strongest with multiplicity 6 and (111) weak.
+- UI tests: open a CIF and the example, the line list, the overlay on a measured pattern, the CSV.
+
 ## 0.3.23 — 2026-11-18
 
 A new Diffraction module, the first of a series: measured X-ray diffraction patterns, their peaks, and crystallite size and strain.

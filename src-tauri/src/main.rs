@@ -365,6 +365,32 @@ async fn xrd_analyse(st: State<'_, St>, index: usize, ask: datum_atlas_core::xrd
 #[tauri::command]
 fn xrd_plot(st: State<St>) -> R<Vec<Value>> { datum_atlas_core::xrd::for_plot(&st.lock().doc.p.research) }
 
+/// Open a crystal structure (.cif) and keep it in the project.
+#[tauri::command]
+async fn cif_open(app: AppHandle, st: State<'_, St>, path: Option<String>) -> R<Option<Value>> {
+    let Some(path) = path.map(PathBuf::from).or_else(|| pick(&app, "Crystal structure", &["cif"])) else { return Ok(None) };
+    let text = String::from_utf8_lossy(&std::fs::read(&path).map_err(|e| e.to_string())?).to_string();
+    let name = path.file_name().map(|n| n.to_string_lossy().to_string()).unwrap_or_default();
+    let mut a = st.lock();
+    let it = datum_atlas_core::cif::add(&a.doc.p.research, &name, &text)?;
+    keep(&mut a, "cif", Some(it)).map(Some)
+}
+
+/// The example structure (rock salt).
+#[tauri::command]
+fn cif_example(st: State<St>) -> R<Value> { let mut a = st.lock(); let it = datum_atlas_core::cif::add(&a.doc.p.research, "rock salt (example).cif", &datum_atlas_core::cif::example())?; keep(&mut a, "cif", Some(it)) }
+
+/// Take structure `index` out of the project.
+#[tauri::command]
+fn cif_remove(st: State<St>, index: usize) -> R<Value> { let mut a = st.lock(); let it = datum_atlas_core::cif::remove(&a.doc.p.research, index)?; keep(&mut a, "cif", it) }
+
+/// The calculated pattern of structure `index`, alone or over measured pattern `over` with the structures `with`.
+#[tauri::command]
+async fn cif_pattern(st: State<'_, St>, index: usize, over: Option<usize>, with: Vec<usize>, ask: datum_atlas_core::cif::PatAsk) -> R<Value> {
+    let r = st.lock().doc.p.research.clone();
+    datum_atlas_core::cif::calculate(&r, index, over, &with, &ask)
+}
+
 /// Corrosion: the metals with E–pH data and the notes on the data.
 #[tauri::command]
 fn corrosion_info() -> Value { datum_atlas_core::corrosion::info() }
@@ -948,7 +974,7 @@ fn main() {
             }
         })
         .invoke_handler(tauri::generate_handler![
-            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, corrosion_info, pourbaix, galvanic, kinetics, xrd_open, xrd_example, xrd_remove, xrd_analyse, xrd_plot, graph, graph_export, engine, restart_engine,
+            state, apply, history, new_project, templates, database, save_material, delete_material, open, save, save_file, export_results, databases, open_database, close_database, export_database, import_preview, import_materials, pick_logo, copy_text, copy_png, goal_list, eco_data, substitutes, processes, microstructure, elements, composition, crystal, crystal_info, tensile_read, tensile_example, lab_example, test_material, image_analyse, image_example, image_keep, image_kept, synth_generate, synth_csv, synth_ebsd, ipf_key, ebsd_open, ebsd_example, ebsd_draw, ebsd_grains, ebsd_figure, dic_open, dic_example, dic_draw, dic_profile, dic_link, dic_link_example, corrosion_info, pourbaix, galvanic, kinetics, xrd_open, xrd_example, xrd_remove, xrd_analyse, xrd_plot, cif_open, cif_example, cif_remove, cif_pattern, graph, graph_export, engine, restart_engine,
             options, set_options, autosave, recovery, recover, recent, startup_file, version, open_url, quit, check_update, install_update, guide
         ])
         .run(tauri::generate_context!())

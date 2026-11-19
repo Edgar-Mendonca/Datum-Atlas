@@ -379,7 +379,13 @@ The Diffraction module reads measured X-ray diffraction patterns and keeps them 
 6. **Crystallite size**: the Scherrer equation for each peak, D = Kλ / (β cos θ), with the instrument's FWHM taken off (measure a well-crystallised standard on the same instrument and type its FWHM; without it the sizes are lower bounds).
 7. **Size and microstrain** together: the Williamson–Hall plot of β cos θ against 4 sin θ; the intercept gives the size and the slope the microstrain.
 
-Sizes from peak broadening are those of coherently diffracting domains, often smaller than the grains seen in a microscope; above about 100 nm the broadening is too small to measure well. Crystal structures (CIF files) and phase identification against the Crystallography Open Database come next.
+Sizes from peak broadening are those of coherently diffracting domains, often smaller than the grains seen in a microscope; above about 100 nm the broadening is too small to measure well.
+
+**Phases.** **Open a structure (CIF)**: a crystal structure file, for instance from the Crystallography Open Database (crystallography.net, free and in the public domain) or from a paper's supporting files. Up to 24 stay in the project. The list shows each structure's name and formula, space group, cell, the atoms in the cell and Z, the density, and where it comes from (authors, journal and the database number): credit them when you use it. **Example (rock salt)** writes out sodium chloride from the crystal module's textbook cell.
+
+From a structure, Atlas works out its powder pattern: every reflection's position from Bragg's law, and its height from the structure factor, with each atom's scattering factor falling off with angle (from the Livermore photon data library, U.S. public data), the anomalous part for your tube's anode, occupancy and thermal motion (Debye–Waller), times the multiplicity and the Lorentz–polarisation factor (with a monochromator angle if your instrument has one). The lines (h k l, multiplicity, d, 2θ, intensity) go to a CSV file.
+
+**Over a measured pattern**: choose one of your patterns and tick the structures to lay over it. Each calculated pattern is scaled to the measured pattern's strongest point. Compare positions first: heights also depend on the sample (preferred orientation, absorption). Phase identification against the Crystallography Open Database comes next.
 
 ## Testing: tensile tests
 
