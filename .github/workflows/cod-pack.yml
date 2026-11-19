@@ -93,6 +93,12 @@ jobs:
           sha256sum "cod-inorganic-$D.pack" > "cod-inorganic-$D.pack.sha256"
           cat "cod-inorganic-$D.pack.sha256"
           ls -la cod-inorganic-*
+      # Kept with the run as well, so a refused release never loses a finished pack.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pack
+          path: cod-inorganic-*
+          retention-days: 14
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: cod-pack-${{ env.D }}
