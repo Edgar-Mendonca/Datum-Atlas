@@ -17,4 +17,12 @@ The built-in materials data (data/*.json) is our own compilation of public value
 names its source in data/sources.json; those sources keep their own terms. No proprietary
 materials database was used.
 
+X-ray diffraction uses crystal structures from the Crystallography Open Database
+(https://www.crystallography.net/cod/, public domain, CC0): a few as test and example files
+(tests_ui/cod, data/examples) and, for phase identification, a reference pack of its inorganic
+entries built by .github/workflows/cod-pack.yml and published as its own release. Credit goes to
+the original authors of each structure, as the COD asks. Atomic form factors and anomalous
+scattering factors come from the Livermore Evaluated Photon Data Library (ENDF/B-VIII.0
+photo-atomic sublibrary, U.S. public data), sampled by tools/xray_data.py.
+
 Product and file-format names are trademarks of their owners and are used only to describe file compatibility.

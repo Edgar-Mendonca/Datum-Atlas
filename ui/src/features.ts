@@ -107,7 +107,7 @@ export const FEATURES: Feature[] = [
   ["H4", "Synthetic structures", "0.3.12", "Generate 2D grain structures with size spreads, phases, pores, orientations and texture."],
   ["H5", "EBSD", "0.3.14", "Orientation maps, grains, boundaries and twins, local misorientation, pole figures, Schmid factors."],
   ["H6", "DIC", "0.3.17", "Strain maps from displacement fields, statistics, and strain by grain linked to EBSD, with slip traces."],
-  ["H9", "Diffraction", "0.3.23", "Measured X-ray patterns: background, Kα2, peaks, crystallite size and strain; crystal structures from CIF files with calculated patterns; phase identification follows."],
+  ["H9", "Diffraction", "0.3.23", "Measured X-ray patterns: background, Kα2, peaks, crystallite size and strain; crystal structures from CIF files with calculated patterns; phase identification against the open crystallography database."],
   ["H7", "Corrosion", "0.3.21", "E–pH diagrams from referenced thermodynamic data, galvanic couples, kinetics, rates and allowance."],
   ["H8", "Heat treatment", "0.3.26", "Hardenability, tempering, welding preheat, and phase diagrams with the lever rule."],
 ];

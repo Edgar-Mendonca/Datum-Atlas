@@ -385,7 +385,17 @@ Sizes from peak broadening are those of coherently diffracting domains, often sm
 
 From a structure, Atlas works out its powder pattern: every reflection's position from Bragg's law, and its height from the structure factor, with each atom's scattering factor falling off with angle (from the Livermore photon data library, U.S. public data), the anomalous part for your tube's anode, occupancy and thermal motion (Debye–Waller), times the multiplicity and the Lorentz–polarisation factor (with a monochromator angle if your instrument has one). The lines (h k l, multiplicity, d, 2θ, intensity) go to a CSV file.
 
-**Over a measured pattern**: choose one of your patterns and tick the structures to lay over it. Each calculated pattern is scaled to the measured pattern's strongest point. Compare positions first: heights also depend on the sample (preferred orientation, absorption). Phase identification against the Crystallography Open Database comes next.
+**Over a measured pattern**: choose one of your patterns and tick the structures to lay over it. Each calculated pattern is scaled to the measured pattern's strongest point. Compare positions first: heights also depend on the sample (preferred orientation, absorption).
+
+**Phase ID.** Which crystalline phases are in your sample. The peaks of your pattern (found with the Peaks page's settings: set the anode and background there first) are compared with the strongest lines of every inorganic structure in the Crystallography Open Database.
+
+1. **The reference pack.** The first time, **Download the reference pack**: Atlas fetches it from its own release page, checks it against its checksum and keeps it on this computer; after that Phase ID works offline. On a computer without internet, download the file (cod-inorganic-….pack) on another computer and **Import a pack file**.
+2. **Search.** Choose the pattern. Narrow the search with elements if you know them: **Must contain** (all of these), **May also contain** (if filled, nothing else is allowed) and **Must not contain**. The **position tolerance** is how far a line may sit from a peak (0.15° suits most laboratory instruments).
+3. **Candidates** are ranked by a score: how many of their strong lines are found, how much of your pattern they explain, and how close the lines sit. Click a candidate to see its lines (amber, pointing down) under your pattern.
+4. **Accept** the one that fits. The search then ranks what explains the peaks that are left; accept the next phase, and so on. Accepted phases are kept with the project, and their lines are drawn in their colours.
+5. **Weight fractions**: rough fractions of the accepted phases by the reference intensity ratio, worked out from each structure (its strongest line of its own, |F|², cell volume and density). Preferred orientation and overlapping lines make them approximate.
+
+**Example: corundum + quartz** adds a made-up pattern of a 60:40 mixture by mass, calculated from two COD structures, to try the page. The score is a guide, not a verdict: check that every strong line of a candidate is present and that no strong peak of yours is left unexplained, and credit the authors of the structures you use (open the COD entry by its number at crystallography.net).
 
 ## Testing: tensile tests
 

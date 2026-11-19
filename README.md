@@ -50,7 +50,7 @@ Datum Atlas helps engineers, designers and students pick a material and show why
 | **EBSD** | Orientation maps from .ang and .ctf exports: orientation (IPF), phase and quality maps; grains, boundaries, Σ3 twins, local misorientation (KAM), Schmid factors, pole figures and inverse pole figures |
 | **DIC** | Strain maps from displacement fields: every strain component, statistics and profiles; strain by EBSD grain with Schmid factors and slip traces |
 | **Crystal** | The elements on a periodic table, with referenced values; compositions (wt % and at %); crystal structures, plane spacings and angles, X-ray powder patterns and stereographic projections |
-| **Diffraction** | Measured X-ray patterns: background, Kα2 stripping, fitted peaks, crystallite size (Scherrer) and strain (Williamson–Hall); crystal structures from CIF files with accurate calculated patterns over the measured ones; phase identification next |
+| **Diffraction** | Measured X-ray patterns: background, Kα2 stripping, fitted peaks, crystallite size (Scherrer) and strain (Williamson–Hall); crystal structures from CIF files with accurate calculated patterns over the measured ones; phase identification against the Crystallography Open Database with rough phase fractions |
 | **Corrosion** | E–pH (Pourbaix) diagrams from the NBS thermodynamic tables; galvanic couples from your potentials; kinetics, rates and corrosion allowance |
 
 On the way: heat treatment and phase diagrams.
